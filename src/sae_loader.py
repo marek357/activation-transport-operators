@@ -35,26 +35,6 @@ def pick_device(preferred: Optional[str] = None) -> str:
     return "cpu"
 
 
-def _resolve_release(cfg) -> str:
-    """Resolve release from sae config, supporting 'release' or 'release_template' with ${model.size}."""
-    sae_cfg = cfg.sae
-    if "release" in sae_cfg and sae_cfg.release:
-        return sae_cfg.release
-    if "release_template" in sae_cfg and sae_cfg.release_template:
-        # Let OmegaConf handle template interpolation if available
-        if OmegaConf is not None and not isinstance(sae_cfg.release_template, str):
-            # type: ignore[return-value]
-            return OmegaConf.to_container(sae_cfg.release_template, resolve=True)
-        try:
-            # Fallback: Python format with model.size
-            return sae_cfg.release_template.replace("${model.size}", str(cfg.model.size))
-        except Exception:  # noqa: BLE001
-            pass
-        return sae_cfg.release_template
-    raise ValueError(
-        "Provide either sae.release or sae.release_template in config.")
-
-
 def load_sae_from_cfg(cfg) -> Tuple[SAE, Dict[str, Any], Optional[torch.Tensor]]:
     """Load a Gemma Scope SAE using fields under cfg.sae.
 
@@ -63,10 +43,10 @@ def load_sae_from_cfg(cfg) -> Tuple[SAE, Dict[str, Any], Optional[torch.Tensor]]
     if not hasattr(cfg, "sae"):
         raise ValueError("Config missing 'sae' section.")
 
-    release = _resolve_release(cfg)
-    sae_id = cfg.sae.get("id") or cfg.sae.get("sae_id")
-    force_download = bool(cfg.sae.get("force_download", False))
-    preferred_device = cfg.sae.get("device")
+    release = cfg.sae.release
+    sae_id = cfg.sae.sae_id
+    force_download = bool(cfg.sae.force_download)
+    preferred_device = cfg.sae.device
 
     if not sae_id:
         raise ValueError(

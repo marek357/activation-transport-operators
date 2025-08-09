@@ -1,10 +1,7 @@
 # Gemma Scope Attention SAEs
-release_template: google/gemma-scope-${model.size}-pt-att
-
+release: gemma-scope-${model.size}-pt-att-canonical
 layer: 20
 width: 16k
-
-id: layer_${layer}/width_${width}/canonical
-
+sae_id: layer_${sae.layer}/width_${sae.width}/canonical
 device: auto
 force_download: false
