@@ -1,6 +1,0 @@
-# This file is deprecated. Use `+sae=mlp` instead.
-sae:
-  release: google/gemma-scope-2b-pt-mlp
-  # Example ID; change layer/width as needed
-  id: layer_20/width_16k/canonical
-  release_template: ${model.size}
