@@ -2,3 +2,5 @@ base/
 __pycache__/
 *.pyc
 outputs/
+
+venv/
