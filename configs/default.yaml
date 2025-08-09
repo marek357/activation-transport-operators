@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+  - logger: wandb_disabled
+  - model: gemma_2_2b
+  - sae: mlp
+
+# Global
+seed: 42
+experiment_name: todo

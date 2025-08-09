@@ -1,0 +1,8 @@
+# Gemma 2 2B base model configuration
+name: google/gemma-2-2b
+size: 2b
+context_size: 8192
+# dtype can be used when instantiating the LM in the future
+dtype: bfloat16
+# device preference for the model (not SAE); can be auto | cuda | mps | cpu
+device: auto
