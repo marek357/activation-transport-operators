@@ -407,7 +407,7 @@ class ActivationCollector:
 
             # Save remaining activations
             if activations_buffer:
-                filename = f"activations_part_{file_count:04d}.zarr"
+                filename = f"activations_part_{file_count:04d}.zarr.zip"
                 self.save_activations_to_zarr(activations_buffer, filename)
 
             logging.info("Activation collection complete!")
