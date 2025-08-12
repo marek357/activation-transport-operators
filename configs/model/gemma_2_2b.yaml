@@ -1,5 +1,6 @@
 # Gemma 2 2B base model configuration
 name: google/gemma-2-2b
+path: /nfs-share/as3623/models/gemma-2-2b
 size: 2b
 context_size: 8192
 # dtype can be used when instantiating the LM in the future

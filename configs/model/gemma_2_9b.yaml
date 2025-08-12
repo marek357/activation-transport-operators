@@ -1,5 +1,6 @@
 # Gemma 2 9B base model configuration
 name: google/gemma-2-9b
+# path: /path/to/local/model  # Optional: specify local path to model directory
 size: 9b
 context_size: 8192
 dtype: bfloat16

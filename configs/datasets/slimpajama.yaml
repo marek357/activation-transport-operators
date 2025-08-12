@@ -1,0 +1,4 @@
+# Use different dataset for variety
+dataset_name: "DKYoon/SlimPajama-6B"
+dataset_config: null
+dataset_split: "train"

@@ -1,0 +1,23 @@
+# Global settings
+seed: 42
+experiment_name: activation_collection_slimpajama
+
+# Optimized settings for large scale collection
+batch_size: 128 # Larger batch size for efficiency
+max_length: 256 # Shorter sequences for faster processing
+num_tokens: 500_000
+save_every_n_batches: 5 # Save more frequently for large runs
+
+# DataLoader optimization for large scale
+num_workers: 2 # More workers for faster data loading
+pin_memory: true
+prefetch_factor: 2 # Higher prefetch for better throughput
+
+# Memory management
+enable_memory_logging: true
+enable_garbage_collection: true
+
+# Storage configuration
+output_dir: "activations_slimpajama" # Directory to save activation files
+cache_dir: "./cache" # Directory to cache tokenized datasets
+storage_dtype: "bfloat16" # Data type for storing activations (saves memory)
