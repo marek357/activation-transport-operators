@@ -289,7 +289,7 @@ class ActivationCollector:
         attention_mask_concat = torch.cat(all_attention_masks, dim=0)
 
         # Create Zarr store
-        store = zarr.open(str(filepath), mode="w")
+        store = zarr.storage.ZipStore(str(filepath), mode="w")
 
         # Convert tensors to numpy arrays
         input_ids_data = input_ids_concat.numpy()
@@ -299,11 +299,16 @@ class ActivationCollector:
         compressors = zarr.codecs.BloscCodec(
             cname="zstd", clevel=9, shuffle=zarr.codecs.BloscShuffle.bitshuffle
         )
-        store.create_array(
-            "input_ids", data=input_ids_data, chunks="auto", compressors=compressors
+        zarr.create_array(
+            store=store,
+            name="input_ids",
+            data=input_ids_data,
+            chunks="auto",
+            compressors=compressors,
         )
-        store.create_array(
-            "attention_mask",
+        zarr.create_array(
+            store=store,
+            name="attention_mask",
             data=attention_mask_data,
             chunks="auto",
             compressors=compressors,
@@ -311,7 +316,7 @@ class ActivationCollector:
 
         # Save layer activations
         hidden_size = None
-        activations_group = store.create_group("activations")
+        activations_group = zarr.create_group(store=store, path="activations")
         for layer_name in layer_names:
             layer_activations = torch.cat(all_layer_activations[layer_name], dim=0)
             layer_data = layer_activations.numpy()
@@ -320,20 +325,21 @@ class ActivationCollector:
                 hidden_size = layer_data.shape[-1]
 
             activations_group.create_array(
-                layer_name,
+                name=layer_name,
                 data=layer_data,
                 chunks="auto",
                 compressors=compressors,
             )
 
-        # Save configuration as attributes
-        store.attrs["model_name"] = self.cfg.model.name
-        store.attrs["batch_size"] = self.batch_size
-        store.attrs["max_length"] = self.max_length
-        store.attrs["num_layers"] = len(layer_names)
-        store.attrs["hidden_size"] = hidden_size or 0
-        store.attrs["timestamp"] = datetime.now(tz=timezone.utc).isoformat()
-        store.attrs["max_seq_len"] = max_seq_len
+        # Save configuration as attributes to the root group
+        root_group = zarr.open_group(store=store, mode="r+")
+        root_group.attrs["model_name"] = self.cfg.model.name
+        root_group.attrs["batch_size"] = self.batch_size
+        root_group.attrs["max_length"] = self.max_length
+        root_group.attrs["num_layers"] = len(layer_names)
+        root_group.attrs["hidden_size"] = hidden_size or 0
+        root_group.attrs["timestamp"] = datetime.now(tz=timezone.utc).isoformat()
+        root_group.attrs["max_seq_len"] = max_seq_len
 
         logging.info(f"Saved activations to {filepath} (max_seq_len: {max_seq_len})")
 
@@ -384,7 +390,7 @@ class ActivationCollector:
 
                     # Save periodically to avoid memory issues
                     if batch_count % self.save_every_n_batches == 0:
-                        filename = f"activations_part_{file_count:04d}.zarr"
+                        filename = f"activations_part_{file_count:04d}.zarr.zip"
                         self.save_activations_to_zarr(activations_buffer, filename)
                         activations_buffer = []
                         file_count += 1
