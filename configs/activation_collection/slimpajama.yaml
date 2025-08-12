@@ -20,4 +20,4 @@ enable_garbage_collection: true
 # Storage configuration
 output_dir: "activations_slimpajama" # Directory to save activation files
 cache_dir: "./cache" # Directory to cache tokenized datasets
-storage_dtype: "bfloat16" # Data type for storing activations (saves memory)
+storage_dtype: "float16" # Data type for storing activations (saves memory)
