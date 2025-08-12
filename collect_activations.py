@@ -116,7 +116,10 @@ class ActivationCollector:
 
         # Load dataset with caching (not streaming)
         dataset = load_dataset(
-            dataset_name, dataset_config, split=split, cache_dir=str(self.cache_dir)
+            dataset_name,
+            dataset_config,
+            split=split,
+            cache_dir=str(self.cache_dir),
         )
         dataset = dataset.shuffle(seed=self.cfg.seed)  # Shuffle for randomness
         dataset = dataset.select(
