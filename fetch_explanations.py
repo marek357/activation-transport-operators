@@ -234,6 +234,7 @@ def load_explanations_dict(
 
     Returns:
             Dictionary mapping feature ID (int) to explanation data
+            Order is preserved if feature_ids list is provided.
 
     """
     s3_client = create_s3_client()
@@ -386,8 +387,14 @@ def main():
 
         # Save to file if requested
         if args.output:
+            # If specific feature IDs were provided, preserve their order
+            # Create ordered dictionary preserving input order
+            ordered_explanations = {}
+            for feature_id in args.feature_ids:
+                if feature_id in explanations_dict:
+                    ordered_explanations[feature_id] = explanations_dict[feature_id]
             with open(args.output, "w") as f:
-                json.dump(explanations_dict, f, indent=2)
+                json.dump(ordered_explanations, f, indent=2)
             print(f"\nSaved explanations to {args.output}")
 
     except Exception as e:
