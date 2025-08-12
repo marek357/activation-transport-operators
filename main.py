@@ -1,25 +1,21 @@
-from dotenv import load_dotenv
-import wandb
-import torch
-import hydra
-import random
-import numpy as np
-from transformers import set_seed
-from omegaconf import DictConfig, OmegaConf
 import logging
-import os
+import random
 import socket
 from typing import Any, cast
+
+import hydra
+import numpy as np
+import torch
+import wandb
+from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
+from transformers import set_seed
 
 # New: utility to load SAEs
 from src.sae_loader import load_sae_from_cfg
 
 
-@hydra.main(
-    version_base=None,
-    config_path="configs",
-    config_name="default"
-)
+@hydra.main(version_base=None, config_path="configs", config_name="default")
 def main(cfg: DictConfig):
     load_dotenv()
     print(socket.gethostname())
@@ -31,15 +27,14 @@ def main(cfg: DictConfig):
         project=cfg.logger.project,
         entity=cfg.logger.entity,
         name=cfg.experiment_name,
-        config=cast(dict[str, Any] | None,
-                    OmegaConf.to_container(cfg, resolve=True)),
-        mode=cfg.logger.wandb_mode  # NOTE: disabled by default
+        config=cast(dict[str, Any] | None, OmegaConf.to_container(cfg, resolve=True)),
+        mode=cfg.logger.wandb_mode,  # NOTE: disabled by default
     )
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%Y‑%m‑%d %H:%M:%S",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     logging.info("Loaded configuration:")
     logging.info(cfg)
@@ -49,5 +44,5 @@ def main(cfg: DictConfig):
     logging.info("SAE ready for use.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

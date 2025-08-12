@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Tuple, Dict, Any
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 from sae_lens import SAE
@@ -20,13 +20,18 @@ def pick_device(preferred: Optional[str] = None) -> str:
             preferred = None  # fall through to auto-selection
         elif p.startswith("cuda") and torch.cuda.is_available():
             return "cuda"
-        elif p in {"mps", "metal"} and getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+        elif (
+            p in {"mps", "metal"}
+            and getattr(torch.backends, "mps", None)
+            and torch.backends.mps.is_available()
+        ):
             return "mps"
         elif p == "cpu":
             return "cpu"
         else:
             logging.warning(
-                f"Preferred device '{preferred}' not available; auto-selecting.")
+                f"Preferred device '{preferred}' not available; auto-selecting."
+            )
 
     if torch.cuda.is_available():
         return "cuda"
@@ -49,12 +54,12 @@ def load_sae_from_cfg(cfg) -> Tuple[SAE, Dict[str, Any], Optional[torch.Tensor]]
     preferred_device = cfg.sae.device
 
     if not sae_id:
-        raise ValueError(
-            "cfg.sae.id must be set (e.g. 'layer_20/width_16k/canonical')")
+        raise ValueError("cfg.sae.id must be set (e.g. 'layer_20/width_16k/canonical')")
 
     device = pick_device(preferred_device)
     logging.info(
-        f"Loading SAE from release='{release}', id='{sae_id}' on device='{device}'...")
+        f"Loading SAE from release='{release}', id='{sae_id}' on device='{device}'..."
+    )
 
     sae, sae_cfg, log_sparsities = SAE.from_pretrained_with_cfg_and_sparsity(
         release=release,
