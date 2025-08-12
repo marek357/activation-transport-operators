@@ -229,15 +229,6 @@ class ActivationCollector:
 
         return batch_activations
 
-    def wait_for_pending_saves(self):
-        """Wait for all pending background saves to complete."""
-        for future in self.pending_saves:
-            try:
-                future.result()  # This will block until the save is complete
-            except Exception as e:
-                logging.error(f"Error in background save: {e}")
-        self.pending_saves.clear()
-
     def save_activations_to_zarr(
         self, activations_list: list[dict[str, torch.Tensor]], filename: str
     ):
@@ -412,10 +403,6 @@ class ActivationCollector:
             if activations_buffer:
                 filename = f"activations_part_{file_count:04d}.zarr"
                 self.save_activations_to_zarr(activations_buffer, filename)
-
-            # Wait for all background saves to complete
-            logging.info("Waiting for all background saves to complete...")
-            self.wait_for_pending_saves()
 
             logging.info("Activation collection complete!")
             logging.info(f"Total tokens processed: {total_tokens_processed:,}")
