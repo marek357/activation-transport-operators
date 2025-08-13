@@ -41,10 +41,64 @@ def main(cfg: DictConfig):
     transport_operators = {}
     for L in cfg.experiment.L:
         for k in cfg.experiment.k:
+            logging.info(f"Training transport operator for L={L}, k={k}")
+            
             train_dataset, val_dataset, test_dataset = get_train_val_test_datasets(L, k)
-            transport_operators[(L, k)] = TransportOperator()
-            # training loop
-            transport_operators[(L, k)].fit()
+            
+            # Initialize transport operator with better convergence settings
+            transport_operator = TransportOperator(
+                method=cfg.get('method', 'ridge'),  # Ridge is more stable than ElasticNet
+                regularization=cfg.get('regularization', 10.0),  # Higher regularization for stability
+                l1_ratio=cfg.get('l1_ratio', 0.1),  # Less L1, more L2 for ElasticNet
+                normalize=True,  # Enable normalization to prevent overflow
+                auto_tune=cfg.get('auto_tune', True),
+                cv_folds=cfg.get('cv_folds', 5),  # Reduce CV folds for faster training
+                random_state=cfg.seed,
+                max_iter=cfg.get('max_iter', 5000),  # Increase iterations for convergence
+                tol=cfg.get('tol', 1e-3)  # Relax tolerance slightly
+            )
+            
+            try:
+                # Fit the transport operator
+                transport_operator.fit(train_dataset)
+                
+                # Evaluate on validation set
+                val_metrics = transport_operator.evaluate_dataset(val_dataset)
+                logging.info(f"Validation metrics for L={L}, k={k}:")
+                logging.info(f"  R² Score: {val_metrics['r2_score']:.4f}")
+                logging.info(f"  RMSE: {val_metrics['rmse']:.6f}")
+                if 'num_outputs' in val_metrics:
+                    logging.info(f"  Per-output R² range: [{val_metrics['r2_per_output_min']:.4f}, {val_metrics['r2_per_output_max']:.4f}]")
+                
+                # Log key metrics to wandb
+                wandb_metrics = {
+                    f"val_r2_L{L}_k{k}": val_metrics['r2_score'],
+                    f"val_mse_L{L}_k{k}": val_metrics['mse'],
+                    f"val_rmse_L{L}_k{k}": val_metrics['rmse'],
+                    "L": L,
+                    "k": k
+                }
+                
+                # Add per-output summary metrics if available
+                if 'num_outputs' in val_metrics:
+                    wandb_metrics.update({
+                        f"val_r2_mean_per_output_L{L}_k{k}": val_metrics['r2_per_output_mean'],
+                        f"val_r2_std_per_output_L{L}_k{k}": val_metrics['r2_per_output_std'],
+                        f"val_r2_min_per_output_L{L}_k{k}": val_metrics['r2_per_output_min'],
+                        f"val_r2_max_per_output_L{L}_k{k}": val_metrics['r2_per_output_max'],
+                    })
+                
+                wandb.log(wandb_metrics)
+                
+                transport_operators[(L, k)] = transport_operator
+                
+            except Exception as e:
+                logging.error(f"Error training transport operator for L={L}, k={k}: {e}")
+                continue  # Continue with next L,k pair instead of crashing
+                
+    
+    logging.info(f"Successfully trained {len(transport_operators)} transport operators")
+    wandb.finish()
             
 if __name__ == "__main__":
     main()

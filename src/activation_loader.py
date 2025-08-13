@@ -16,8 +16,8 @@ class ActivationLoader:
                 raise ValueError("Either activation_dir_path must be provided or files_to_download must be specified.")
             # download the path from huggingface
             for file in files_to_download:
-                hf_hub_download(repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
-                self.activation_dir_path = Path(file).parent
+                path = hf_hub_download(repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
+                self.activation_dir_path = Path(path).parent
         self.store_objects: dict[int, StoreLike] = {}
         self.num_samples = 0
         self.samples_per_file = 0
@@ -199,7 +199,7 @@ def partition_loader(
 
 
 def get_train_val_test_datasets(L, k):
-    loader = ActivationLoader(files_to_download=["activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"])
+    loader = ActivationLoader(files_to_download=["activations-gemma2-2b-slimpajama-500k_sample10/activations_part_0000.zarr.zip"])
     train_indices, val_indices, test_indices = partition_loader(
         num_samples=len(loader),
         train_prop=0.8,
