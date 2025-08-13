@@ -1,0 +1,20 @@
+# Configuration for explain_features.py
+defaults:
+  - _self_
+
+
+sae_layer: 4
+sae_path: ${sae_layer}-gemmascope-res-16k
+
+# Feature IDs configuration
+# Either specify a JSON file containing a list of feature IDs:
+feature_ids_file: "./example_feature_ids.json"  # Path to JSON file with list of feature IDs, e.g., "feature_ids.json"
+
+# Cache directory for downloaded explanation files
+cache_dir: "./explanations_dict_cache"
+
+# Output file to save explanations (optional)
+output_file: "./test_explanations.json"
+
+# Experiment name
+experiment_name: "explain_features"

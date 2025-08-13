@@ -17,9 +17,15 @@ from pathlib import Path
 from typing import Optional
 
 import boto3
+import hydra
 from botocore import UNSIGNED
 from botocore.config import Config
+from omegaconf import DictConfig
 from tqdm import tqdm
+
+
+# Create module-level logger
+logger = logging.getLogger(__name__)
 
 
 def setup_logging(level: str = "INFO") -> None:
@@ -31,6 +37,42 @@ def setup_logging(level: str = "INFO") -> None:
     )
 
 
+def load_feature_ids_from_json(json_file_path: str) -> list[int]:
+    """Load feature IDs from a JSON file.
+
+    Args:
+        json_file_path: Path to JSON file containing a list of feature IDs
+
+    Returns:
+        List of feature IDs
+
+    Raises:
+        FileNotFoundError: If the JSON file doesn't exist
+        json.JSONDecodeError: If the JSON file is malformed
+        ValueError: If the JSON doesn't contain a list of integers
+    """
+    try:
+        with open(json_file_path, "r") as f:
+            data = json.load(f)
+
+        if not isinstance(data, list):
+            raise ValueError("JSON file must contain a list of feature IDs")
+
+        # Validate that all items are integers
+        feature_ids = []
+        for item in data:
+            if not isinstance(item, int):
+                raise ValueError(f"All feature IDs must be integers, found: {type(item)}")
+            feature_ids.append(item)
+
+        return feature_ids
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Feature IDs JSON file not found: {json_file_path}")
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"Invalid JSON in feature IDs file: {e}")
+
+
 def create_s3_client() -> boto3.client:
     """Create an S3 client with unsigned config for public bucket access."""
     return boto3.client(
@@ -39,21 +81,21 @@ def create_s3_client() -> boto3.client:
     )
 
 
-def list_explanation_files(s3_client: boto3.client, sae_id: str) -> list[str]:
-    """List all explanation files for a given SAE ID.
+def list_explanation_files(s3_client: boto3.client, sae_path: str) -> list[str]:
+    """List all explanation files for a given SAE path.
 
     Args:
         s3_client: Boto3 S3 client
-        sae_id: SAE identifier
+        sae_path: SAE path
 
     Returns:
         List of S3 object keys for explanation files
 
     """
     bucket_name = "neuronpedia-datasets"
-    prefix = f"v1/gemma-2-2b/{sae_id}/explanations/"
+    prefix = f"v1/gemma-2-2b/{sae_path}/explanations/"
 
-    logging.info(f"Listing files with prefix: {prefix}")
+    logger.info("Listing files with prefix: %s", prefix)
 
     try:
         paginator = s3_client.get_paginator("list_objects_v2")
@@ -67,11 +109,11 @@ def list_explanation_files(s3_client: boto3.client, sae_id: str) -> list[str]:
                     if key.endswith(".jsonl.gz"):
                         files.append(key)
 
-        logging.info(f"Found {len(files)} explanation files")
+        logger.info("Found %s explanation files", len(files))
         return files
 
-    except Exception as e:
-        logging.exception(f"Error listing files: {e}")
+    except Exception:
+        logger.exception("Error listing files")
         raise
 
 
@@ -107,8 +149,8 @@ def download_and_parse_file(
 
         return explanations
 
-    except Exception as e:
-        logging.exception(f"Error processing file {key}: {e}")
+    except Exception:
+        logger.exception("Error processing file %s", key)
         return []
 
 
@@ -152,8 +194,8 @@ def download_and_cache_file(
         with cache_path.open("wb") as f:
             f.write(response["Body"].read())
 
-    except Exception as e:
-        logging.exception(f"Error downloading file {key}: {e}")
+    except Exception:
+        logger.exception("Error downloading file %s", key)
         raise
 
 
@@ -178,8 +220,8 @@ def load_cached_file(cache_path: Path) -> list[dict]:
 
         return explanations
 
-    except Exception as e:
-        logging.exception(f"Error loading cached file {cache_path}: {e}")
+    except Exception:
+        logger.exception("Error loading cached file %s", cache_path)
         return []
 
 
@@ -209,11 +251,11 @@ def download_and_parse_file_with_cache(
     cache_path = get_cached_file_path(cache_dir, key)
 
     if cache_path.exists():
-        logging.info(f"Loading from cache: {cache_path}")
+        logger.info("Loading from cache: %s", cache_path)
         return load_cached_file(cache_path)
 
     # Download and cache the file
-    logging.info(f"Downloading and caching: {key}")
+    logger.info("Downloading and caching: %s", key)
     download_and_cache_file(s3_client, bucket_name, key, cache_path)
 
     # Load the cached file
@@ -221,14 +263,14 @@ def download_and_parse_file_with_cache(
 
 
 def load_explanations_dict(
-    sae_id: str,
+    sae_path: str,
     feature_ids: Optional[list[int]] = None,
     cache_dir: Optional[str] = None,
 ) -> dict[int, dict]:
     """Load explanations for specified feature IDs into a dictionary.
 
     Args:
-        sae_id: SAE identifier
+        sae_path: SAE path
         feature_ids: List of feature IDs to fetch. If None, fetch all.
         cache_dir: Optional directory to cache downloaded files
 
@@ -244,17 +286,18 @@ def load_explanations_dict(
     target_features: Optional[set[int]] = None
     if feature_ids is not None:
         target_features = set(feature_ids)
-        logging.info(
-            f"Fetching explanations for {len(target_features)} specific features",
+        logger.info(
+            "Fetching explanations for %s specific features",
+            len(target_features),
         )
     else:
-        logging.info("Fetching all available explanations")
+        logger.info("Fetching all available explanations")
 
     # List all explanation files
-    explanation_files = list_explanation_files(s3_client, sae_id)
+    explanation_files = list_explanation_files(s3_client, sae_path)
 
     if not explanation_files:
-        logging.warning(f"No explanation files found for SAE ID: {sae_id}")
+        logger.warning("No explanation files found for SAE ID: %s", sae_path)
         return {}
 
     # Dictionary to store explanations
@@ -285,11 +328,11 @@ def load_explanations_dict(
                 ):
                     remaining_features = target_features - set(explanations_dict.keys())
                     if not remaining_features:
-                        logging.info("Found all requested features, stopping early")
+                        logger.info("Found all requested features, stopping early")
                         break
 
-            except (KeyError, ValueError) as e:
-                logging.warning(f"Skipping malformed explanation entry: {e}")
+            except (KeyError, ValueError):
+                logger.warning("Skipping malformed explanation entry")
                 continue
 
         # Break out of outer loop if we found all features
@@ -300,109 +343,92 @@ def load_explanations_dict(
             if not remaining_features:
                 break
 
-    logging.info(f"Loaded {len(explanations_dict)} explanations")
+    logger.info("Loaded %s explanations", len(explanations_dict))
 
     # Report missing features if we were looking for specific ones
     if target_features is not None:
         missing_features = target_features - set(explanations_dict.keys())
         if missing_features:
-            logging.warning(
-                f"Could not find explanations for {len(missing_features)} features: {sorted(missing_features)}",
+            logger.warning(
+                "Could not find explanations for %s features: %s",
+                len(missing_features),
+                sorted(missing_features),
             )
 
     return explanations_dict
 
 
-def get_feature_explanation(
-    explanations_dict: dict[int, dict],
-    feature_id: int,
-) -> Optional[dict]:
-    """Get explanation for a specific feature ID.
-
-    Args:
-        explanations_dict: Dictionary of explanations
-        feature_id: Feature ID to look up
-
-    Returns:
-        Explanation dictionary or None if not found
-
-    """
-    return explanations_dict.get(feature_id)
-
-
-def print_explanation_summary(explanation: dict) -> None:
+def print_explanation_summary(explanation: dict, logger: logging.Logger) -> None:
     """Print a summary of an explanation."""
-    print(
-        f"Feature {explanation['index']}: {explanation.get('description', 'No description')}",
-    )
-    print(f"Model: {explanation.get('modelId', 'Unknown')}")
-    print(f"Layer: {explanation.get('layer', 'Unknown')}")
-    print(f"Author: {explanation.get('authorId', 'Unknown')}")
+    logger.info("Feature %s: %s", explanation["index"], explanation.get("description", "No description"))
+    logger.info("Model: %s", explanation.get("modelId", "Unknown"))
+    logger.info("Layer: %s", explanation.get("layer", "Unknown"))
+    logger.info("Author: %s", explanation.get("authorId", "Unknown"))
     if "umap_cluster" in explanation:
-        print(f"UMAP Cluster: {explanation['umap_cluster']}")
+        logger.info("UMAP Cluster: %s", explanation["umap_cluster"])
 
 
-def main():
-    """Main function for command-line usage."""
-    parser = argparse.ArgumentParser(
-        description="Fetch feature explanations from Neuronpedia",
-    )
-    parser.add_argument("sae_id", help="SAE identifier")
-    parser.add_argument(
-        "--feature-ids",
-        type=int,
-        nargs="+",
-        help="Specific feature IDs to fetch (if not provided, fetches all)",
-    )
-    parser.add_argument(
-        "--output",
-        help="Output JSON file to save explanations",
-    )
-    parser.add_argument(
-        "--cache-dir",
-        default="./explanation_dict_cache",
-        help="Directory to cache downloaded files (default: ./explanation_dict_cache)",
-    )
-
-    args = parser.parse_args()
+@hydra.main(version_base=None, config_path="configs", config_name="explain_features")
+def main(cfg: DictConfig) -> None:
+    """Run feature explanation fetching using Hydra configuration."""
     setup_logging()
+
+    sae_path = cfg.sae_path
+
+    logger.info("Using SAE ID: %s", sae_path)
+
+    # Get feature IDs from configuration
+    feature_ids = load_feature_ids_from_json(cfg.feature_ids_file)
+    logger.info("Loaded %s feature IDs from %s", len(feature_ids), cfg.feature_ids_file)
+
+    # Get cache directory
+    cache_dir = cfg.cache_dir
 
     try:
         # Load explanations with caching
         explanations_dict = load_explanations_dict(
-            args.sae_id,
-            args.feature_ids,
-            args.cache_dir,
+            sae_path,
+            feature_ids,
+            cache_dir,
         )
 
         # Print summary
-        print(f"\nLoaded {len(explanations_dict)} explanations")
+        logger.info("Loaded %s explanations", len(explanations_dict))
 
         # Show first few explanations as examples
         for i, (_, explanation) in enumerate(
             list(explanations_dict.items())[:3],
         ):
-            print(f"\n--- Example {i + 1} ---")
-            print_explanation_summary(explanation)
+            logger.info("--- Example %s ---", i + 1)
+            print_explanation_summary(explanation, logger)
 
         # Save to file if requested
-        if args.output:
+        output_file = cfg.get("output_file")
+        if output_file:
+            output_path = Path(output_file)
             # If specific feature IDs were provided, preserve their order
-            # Create ordered dictionary preserving input order
-            ordered_explanations = {}
-            for feature_id in args.feature_ids:
-                if feature_id in explanations_dict:
-                    ordered_explanations[feature_id] = explanations_dict[feature_id]
-            with open(args.output, "w") as f:
-                json.dump(ordered_explanations, f, indent=2)
-            print(f"\nSaved explanations to {args.output}")
+            if feature_ids:
+                ordered_explanations = [
+                    explanations_dict[feature_id] for feature_id in feature_ids if feature_id in explanations_dict
+                ]
 
-    except Exception as e:
-        logging.exception(f"Error: {e}")
-        return 1
+                explanations = {}
+                explanations["data"] = ordered_explanations
+                explanations["meta"] = {
+                    "sae_id": sae_path,
+                    "sae_layer": cfg.sae_layer,
+                    "feature_ids_file": cfg.feature_ids_file,
+                    "num_features": len(ordered_explanations),
+                }
+                with output_path.open("w") as f:
+                    json.dump(explanations, f, indent=2)
 
-    return 0
+            logger.info("Saved explanations to %s", output_file)
+
+    except Exception:
+        logger.exception("Error occurred")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
