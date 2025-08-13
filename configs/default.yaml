@@ -3,6 +3,7 @@ defaults:
   - logger: wandb_disabled
   - model: gemma_2_2b
   - sae: mlp
+  - experiment: residual_stream
 
 # Global
 seed: 42
