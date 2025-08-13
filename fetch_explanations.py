@@ -360,8 +360,8 @@ def main():
     )
     parser.add_argument(
         "--cache-dir",
-        default="./explanations_cache",
-        help="Directory to cache downloaded files (default: ./explanations_cache)",
+        default="./explanation_dict_cache",
+        help="Directory to cache downloaded files (default: ./explanation_dict_cache)",
     )
 
     args = parser.parse_args()
