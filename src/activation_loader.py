@@ -18,8 +18,7 @@ class ActivationLoader:
         self.create_store_objects_and_sample_map()
 
     def _get_file_list(self) -> list[str]:
-        return ["activations_part_0000.zarr.zip", "activations_part_0002.zarr.zip"]
-        # return os.listdir(self.activation_dir_path)
+        return os.listdir(self.activation_dir_path)
 
     def __len__(self) -> int:
         return self.num_samples
@@ -33,13 +32,9 @@ class ActivationLoader:
                 read_only=True,
             )
             self.store_objects[i] = store
-            self.num_samples += zarr.open(store, mode="r")["activations"][
-                "layer_0"
-            ].shape[0]
+            self.num_samples += zarr.open(store, mode="r")["activations"]["layer_0"].shape[0]
 
-        assert len(self.store_objects) == len(self._get_file_list()), (
-            "Not all files are loaded."
-        )
+        assert len(self.store_objects) == len(self._get_file_list()), "Not all files are loaded."
         z = zarr.open(self.store_objects[0], mode="r")
         batch_size = z["activations"]["layer_0"].shape[0]
 
@@ -130,9 +125,7 @@ class ActivationDataset(IterableDataset):
     ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
         for idx in self.idx_list:
             try:
-                sample_sequence_length = (
-                    self.activation_loader.get_sample_sequence_length(idx)
-                )
+                sample_sequence_length = self.activation_loader.get_sample_sequence_length(idx)
                 for pos in range(sample_sequence_length):
                     x_up = self.activation_loader.get_activation(
                         idx,
@@ -146,12 +139,8 @@ class ActivationDataset(IterableDataset):
                     )
 
                     # Ensure consistent tensor shapes (squeeze position dim since we're getting single positions)
-                    x_up = x_up.squeeze(0).squeeze(
-                        0
-                    )  # Remove position and layer dimension
-                    y_down = y_down.squeeze(0).squeeze(
-                        0
-                    )  # Remove position and layer dimension
+                    x_up = x_up.squeeze(0).squeeze(0)  # Remove position and layer dimension
+                    y_down = y_down.squeeze(0).squeeze(0)  # Remove position and layer dimension
 
                     yield (x_up, y_down)
             except (ValueError, IndexError) as e:
