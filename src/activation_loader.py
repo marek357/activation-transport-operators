@@ -4,18 +4,24 @@ from typing import Generator
 
 import torch
 import zarr
+from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 from zarr.storage import StoreLike
-from torch.utils.data import IterableDataset
 
 
 class ActivationLoader:
     def __init__(self, activation_dir_path: str):
         self.activation_dir_path = activation_dir_path
         self.store_objects: dict[int, StoreLike] = {}
-        self.sample_map: callable = None
         self.num_samples = 0
+        self.samples_per_file = 0
 
-        self.create_store_objects_and_sample_map()
+        self.create_store_objects()
+
+    def sample_map(self, idx: int) -> tuple[int, int]:
+        if self.samples_per_file == 0:
+            msg = "Sample map is not created."
+            raise ValueError(msg)
+        return (idx // self.samples_per_file, idx % self.samples_per_file)
 
     def _get_file_list(self) -> list[str]:
         return os.listdir(self.activation_dir_path)
@@ -23,7 +29,7 @@ class ActivationLoader:
     def __len__(self) -> int:
         return self.num_samples
 
-    def create_store_objects_and_sample_map(self) -> None:
+    def create_store_objects(self) -> None:
         for i, file_name in enumerate(self._get_file_list()):
             file_path = Path(self.activation_dir_path) / file_name
 
@@ -36,16 +42,9 @@ class ActivationLoader:
 
         assert len(self.store_objects) == len(self._get_file_list()), "Not all files are loaded."
         z = zarr.open(self.store_objects[0], mode="r")
-        batch_size = z["activations"]["layer_0"].shape[0]
-
-        # Note, this assumes each zarr activation part is of equal size
-        self.sample_map = lambda x: (x // batch_size, x % batch_size)
+        self.samples_per_file = z["activations"]["layer_0"].shape[0]
 
     def get_sample_sequence_length(self, sample_idx: int) -> int:
-        if self.sample_map is None:
-            msg = "Sample map is not created."
-            raise ValueError(msg)
-
         part_id, local_sample_id = self.sample_map(sample_idx)
         store = self.store_objects[part_id]
         z = zarr.open(store, mode="r")
@@ -69,9 +68,6 @@ class ActivationLoader:
             Note that the return format is (num_positions, num_layers, hidden_size).
 
         """
-        if self.sample_map is None:
-            msg = "Sample map is not created."
-            raise ValueError(msg)
         part_id, local_sample_id = self.sample_map(sample_idx)
         store = self.store_objects[part_id]
         z = zarr.open(store, mode="r")
@@ -120,10 +116,31 @@ class ActivationDataset(IterableDataset):
         self.L = L
         self.k = k
 
+    def _get_worker_indices(self) -> list[int]:
+        """Get the subset of indices that this worker should process."""
+        worker_info = get_worker_info()
+        if worker_info is None:
+            # Single-process data loading, return all indices
+            return self.idx_list
+
+        # Multi-process data loading, partition indices among workers
+        worker_id = worker_info.id
+        num_workers = worker_info.num_workers
+
+        # Partition indices for this worker
+        worker_indices = []
+        for i, idx in enumerate(self.idx_list):
+            if i % num_workers == worker_id:
+                worker_indices.append(idx)
+
+        return worker_indices
+
     def get_next_j_equals_i(
         self,
     ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
-        for idx in self.idx_list:
+        worker_indices = self._get_worker_indices()
+
+        for idx in worker_indices:
             try:
                 sample_sequence_length = self.activation_loader.get_sample_sequence_length(idx)
                 for pos in range(sample_sequence_length):
@@ -149,7 +166,7 @@ class ActivationDataset(IterableDataset):
                 continue
 
     def __iter__(self):
-        if self.j_policy == "i==j":
+        if self.j_policy == "j==i":
             return self.get_next_j_equals_i()
         else:
             msg = "Other j-policies are not yet implemented."
@@ -191,9 +208,16 @@ if __name__ == "__main__":
 
     print("Testing the IterableDataset")
     print("Total samples (sequences) in activation loader:", len(loader))
-    dataset = ActivationDataset(loader, [0, 1, 2, 3, 4], "i==j", 0, 2)
+    train_indices, val_indices, test_indices = partition_loader(
+        len(loader),
+        train_prop=0.8,
+        val_prop=0.1,
+        test_prop=0.1,
+    )
+    dataset = ActivationDataset(loader, train_indices, "j==i", 0, 2)
+    dataloader = DataLoader(dataset, batch_size=4, num_workers=2)
 
-    for x, y in dataset:
+    for x, y in dataloader:
         print("X shape:", x.shape)
         print("Y shape:", y.shape)
         break
