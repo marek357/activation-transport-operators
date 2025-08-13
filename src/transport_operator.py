@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from typing import Union, Tuple, Optional, Dict, Any, List
 from src.activation_loader import ActivationDataset
 import warnings
+import time
 
 class TransportOperator(BaseEstimator, TransformerMixin):
     """
@@ -17,14 +18,16 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     """
     
     def __init__(self, 
-                 method: str = 'linear', 
+                 method: str = 'ridge', 
                  regularization: Optional[float] = None,
-                 l1_ratio: Optional[float] = 0.5,
-                 normalize: bool = False,
-                 auto_tune: bool = False,
+                 l1_ratio: Optional[float] = 0.1,
+                 normalize: bool = True,
+                 auto_tune: bool = True,
                  cv_folds: int = 5,
                  scoring: str = 'r2',
-                 random_state: Optional[int] = None):
+                 random_state: Optional[int] = 42,
+                 max_iter: int = 5000,
+                 tol: float = 1e-3):
         """
         Initialize the transport operator.
         
@@ -37,6 +40,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             cv_folds: Number of cross-validation folds for hyperparameter tuning
             scoring: Scoring metric for cross-validation ('r2', 'neg_mean_squared_error')
             random_state: Random state for reproducibility
+            max_iter: Maximum iterations for iterative solvers
+            tol: Tolerance for convergence
         """
         self.method = method
         self.regularization = regularization
@@ -46,6 +51,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         self.cv_folds = cv_folds
         self.scoring = scoring
         self.random_state = random_state
+        self.max_iter = max_iter
+        self.tol = tol
         
         self.model = None
         self.scaler_X = None
@@ -58,12 +65,12 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def _get_param_grid(self) -> Dict[str, List]:
         """Get parameter grid for hyperparameter tuning."""
         if self.method == 'ridge':
-            return {'alpha': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]}
+            return {'alpha': [0.1, 1.0, 10.0, 100.0, 1000.0]}
         elif self.method == 'lasso':
-            return {'alpha': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]}
+            return {'alpha': [0.01, 0.1, 1.0, 10.0, 100.0]}
         elif self.method == 'elasticnet':
             return {
-                'alpha': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
+                'alpha': [0.1, 1.0, 10.0, 100.0],
                 'l1_ratio': [0.1, 0.3, 0.5, 0.7, 0.9]
             }
         else:
@@ -78,12 +85,13 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             return Ridge(alpha=alpha, fit_intercept=True, random_state=self.random_state)
         elif self.method == 'lasso':
             alpha = params.get('alpha', self.regularization or 1.0)
-            return Lasso(alpha=alpha, fit_intercept=True, random_state=self.random_state, max_iter=2000)
+            return Lasso(alpha=alpha, fit_intercept=True, random_state=self.random_state, 
+                        max_iter=self.max_iter, tol=self.tol)
         elif self.method == 'elasticnet':
             alpha = params.get('alpha', self.regularization or 1.0)
             l1_ratio = params.get('l1_ratio', self.l1_ratio)
             return ElasticNet(alpha=alpha, l1_ratio=l1_ratio, fit_intercept=True, 
-                            random_state=self.random_state, max_iter=2000)
+                            random_state=self.random_state, max_iter=self.max_iter, tol=self.tol)
         else:
             raise ValueError(f"Unknown method: {self.method}. Choose from 'linear', 'ridge', 'lasso', 'elasticnet'")
 
@@ -97,23 +105,34 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         Returns:
             self: Fitted transport operator
         """
-
+        start_time = time.time()
+        
         # Convert activation dataset object to X and y
         X_list = []
         y_list = []
         
-        print("Loading data from ActivationDataset...")
+        print("Loading training data...")
+        sample_count = 0
+        skipped_samples = 0
+        
         for i, (x_up, y_down) in enumerate(dataset):
             # Convert PyTorch tensors to numpy and ensure they're 1D vectors
             x_np = x_up.detach().cpu().numpy().flatten()
             y_np = y_down.detach().cpu().numpy().flatten()
             
+            # Check for NaN or inf values
+            if np.any(np.isnan(x_np)) or np.any(np.isinf(x_np)) or \
+               np.any(np.isnan(y_np)) or np.any(np.isinf(y_np)):
+                skipped_samples += 1
+                continue
+            
             X_list.append(x_np)
             y_list.append(y_np)
+            sample_count += 1
             
-            # Optional: Print progress for large datasets
-            if (i + 1) % 1000 == 0:
-                print(f"Loaded {i + 1} samples...")
+            # Progress update every 10k samples instead of 1k
+            if sample_count % 10000 == 0:
+                print(f"  Loaded {sample_count:,} samples...")
         
         if len(X_list) == 0:
             raise ValueError("No valid samples found in the dataset")
@@ -122,31 +141,33 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         X = np.vstack(X_list)
         y = np.vstack(y_list)
         
-        print(f"Dataset loaded: X shape {X.shape}, y shape {y.shape}")
+        load_time = time.time() - start_time
+        print(f"Data loading complete: {sample_count:,} samples loaded ({skipped_samples} skipped)")
+        print(f"  X shape: {X.shape}, y shape: {y.shape}")
+        print(f"  Loading time: {load_time:.2f}s")
 
-        X = np.asarray(X)
-        y = np.asarray(y)
-        
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(f"X and y must have same number of samples. Got {X.shape[0]} and {y.shape[0]}")
-        
-        if X.ndim != 2 or y.ndim != 2:
-            raise ValueError("X and y must be 2D arrays")
-        
         # Store original data for potential normalization
         X_fit, y_fit = X.copy(), y.copy()
         
         # Apply normalization if requested
         if self.normalize:
+            print("Applying feature normalization...")
             self.scaler_X = StandardScaler()
             self.scaler_y = StandardScaler()
             X_fit = self.scaler_X.fit_transform(X_fit)
             y_fit = self.scaler_y.fit_transform(y_fit)
         
+        # Model training
+        train_start = time.time()
+        
         # Hyperparameter tuning
         if self.auto_tune and self.method != 'linear':
             param_grid = self._get_param_grid()
             if param_grid:
+                print(f"Starting hyperparameter tuning for {self.method} regression...")
+                print(f"  Parameter grid: {param_grid}")
+                print(f"  CV folds: {self.cv_folds}")
+                
                 base_model = self._create_model()
                 
                 grid_search = GridSearchCV(
@@ -155,25 +176,38 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                     cv=self.cv_folds,
                     scoring=self.scoring,
                     n_jobs=-1,
-                    random_state=self.random_state
+                    # random_state=self.random_state
                 )
                 
                 grid_search.fit(X_fit, y_fit)
                 self.best_params_ = grid_search.best_params_
                 self.cv_results_ = grid_search.cv_results_
                 self.model = grid_search.best_estimator_
+                
+                print(f"  Best parameters: {self.best_params_}")
+                print(f"  Best CV score: {grid_search.best_score_:.4f}")
             else:
+                print(f"Training {self.method} regression model...")
                 self.model = self._create_model()
                 self.model.fit(X_fit, y_fit)
         else:
+            print(f"Training {self.method} regression model...")
             self.model = self._create_model()
             self.model.fit(X_fit, y_fit)
+        
+        train_time = time.time() - train_start
         
         # Calculate feature importance for regularized methods
         if hasattr(self.model, 'coef_'):
             self.feature_importance_ = np.abs(self.model.coef_).mean(axis=0)
         
         self.is_fitted_ = True
+        
+        total_time = time.time() - start_time
+        print(f"Training complete:")
+        print(f"  Training time: {train_time:.2f}s")
+        print(f"  Total time: {total_time:.2f}s")
+        
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -251,11 +285,108 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             'rmse': np.sqrt(mean_squared_error(y, y_pred))
         }
         
-        # Add per-output metrics for multi-output case
+        # Add per-output summary statistics for multi-output case
         if y.ndim > 1 and y.shape[1] > 1:
+            # Calculate per-output metrics
+            per_output_r2 = []
+            per_output_mse = []
+            
             for i in range(y.shape[1]):
-                metrics[f'r2_output_{i}'] = r2_score(y[:, i], y_pred[:, i])
-                metrics[f'mse_output_{i}'] = mean_squared_error(y[:, i], y_pred[:, i])
+                r2_i = r2_score(y[:, i], y_pred[:, i])
+                mse_i = mean_squared_error(y[:, i], y_pred[:, i])
+                per_output_r2.append(r2_i)
+                per_output_mse.append(mse_i)
+            
+            # Add summary statistics instead of individual values
+            per_output_r2 = np.array(per_output_r2)
+            per_output_mse = np.array(per_output_mse)
+            
+            metrics.update({
+                'r2_per_output_mean': per_output_r2.mean(),
+                'r2_per_output_std': per_output_r2.std(),
+                'r2_per_output_min': per_output_r2.min(),
+                'r2_per_output_max': per_output_r2.max(),
+                'r2_per_output_median': np.median(per_output_r2),
+                
+                'mse_per_output_mean': per_output_mse.mean(),
+                'mse_per_output_std': per_output_mse.std(),
+                'mse_per_output_min': per_output_mse.min(),
+                'mse_per_output_max': per_output_mse.max(),
+                'mse_per_output_median': np.median(per_output_mse),
+                
+                'num_outputs': y.shape[1]
+            })
+        
+        return metrics
+
+    def evaluate_dataset(self, dataset) -> Dict[str, float]:
+        """
+        Evaluate the model on an ActivationDataset.
+        
+        Args:
+            dataset: ActivationDataset to evaluate on
+            
+        Returns:
+            Dictionary with evaluation metrics
+        """
+        if not self.is_fitted_:
+            raise ValueError("Transport operator must be fitted before evaluation")
+        
+        start_time = time.time()
+        
+        # Convert dataset to X, y arrays
+        X_list = []
+        y_list = []
+        
+        print("Loading evaluation data...")
+        sample_count = 0
+        skipped_samples = 0
+        
+        for i, (x_up, y_down) in enumerate(dataset):
+            x_np = x_up.detach().cpu().numpy().flatten()
+            y_np = y_down.detach().cpu().numpy().flatten()
+            
+            # Check for NaN or inf values
+            if np.any(np.isnan(x_np)) or np.any(np.isinf(x_np)) or \
+               np.any(np.isnan(y_np)) or np.any(np.isinf(y_np)):
+                skipped_samples += 1
+                continue
+                
+            X_list.append(x_np)
+            y_list.append(y_np)
+            sample_count += 1
+            
+            # Less frequent progress updates
+            if sample_count % 5000 == 0:
+                print(f"  Loaded {sample_count:,} evaluation samples...")
+        
+        if len(X_list) == 0:
+            raise ValueError("No valid evaluation samples found")
+        
+        X = np.vstack(X_list)
+        y = np.vstack(y_list)
+        
+        load_time = time.time() - start_time
+        print(f"Evaluation data loaded: {sample_count:,} samples ({skipped_samples} skipped, {load_time:.2f}s)")
+        
+        # Evaluate
+        metrics = self.evaluate(X, y)
+        
+        # Log key metrics in a clean format
+        print(f"Evaluation results:")
+        print(f"  Overall R² Score: {metrics['r2_score']:.4f}")
+        print(f"  Overall RMSE: {metrics['rmse']:.6f}")
+        print(f"  Overall MSE: {metrics['mse']:.6f}")
+        
+        # Print per-output summary if multi-output
+        if 'num_outputs' in metrics:
+            print(f"  Multi-output summary ({metrics['num_outputs']} outputs):")
+            print(f"    R² per output - Mean: {metrics['r2_per_output_mean']:.4f}, "
+                  f"Std: {metrics['r2_per_output_std']:.4f}, "
+                  f"Range: [{metrics['r2_per_output_min']:.4f}, {metrics['r2_per_output_max']:.4f}]")
+            print(f"    MSE per output - Mean: {metrics['mse_per_output_mean']:.6f}, "
+                  f"Std: {metrics['mse_per_output_std']:.6f}, "
+                  f"Range: [{metrics['mse_per_output_min']:.6f}, {metrics['mse_per_output_max']:.6f}]")
         
         return metrics
 
@@ -327,7 +458,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             'auto_tune': self.auto_tune,
             'cv_folds': self.cv_folds,
             'scoring': self.scoring,
-            'random_state': self.random_state
+            'random_state': self.random_state,
+            'max_iter': self.max_iter,
+            'tol': self.tol
         }
 
     def set_params(self, **params) -> 'TransportOperator':
