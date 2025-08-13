@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
-from typing import Generator
-
+from typing import Generator, Optional, List
+from huggingface_hub import hf_hub_download
 import torch
 import zarr
 from zarr.storage import StoreLike
@@ -9,8 +9,11 @@ from torch.utils.data import IterableDataset
 
 
 class ActivationLoader:
-    def __init__(self, activation_dir_path: str):
+    def __init__(self, activation_dir_path: str = None, files_to_download: Optional[List[str]] = None):
         self.activation_dir_path = activation_dir_path
+        if not os.path.exists(self.activation_dir_path):
+            # download the path from huggingface
+            hf_hub_download(repo_id="TheRootOf3/ato-activations", filename="config.json")
         self.store_objects: dict[int, StoreLike] = {}
         self.sample_map: callable = None
         self.num_samples = 0
@@ -174,6 +177,22 @@ def partition_loader(
     return train_indices, val_indices, test_indices
 
 
+def get_train_val_test_datasets(L, k):
+    loader = ActivationLoader("https://huggingface.co/datasets/TheRootOf3/ato-activations/blob/main/activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip")
+    train_indices, val_indices, test_indices = partition_loader(
+        num_samples=len(loader),
+        train_prop=0.8,
+        val_prop=0.1,
+        test_prop=0.1
+    )
+
+    train_dataset = ActivationDataset(loader, train_indices, "i==j", L, k)
+    val_dataset = ActivationDataset(loader, val_indices, "i==j", L, k)
+    test_dataset = ActivationDataset(loader, test_indices, "i==j", L, k)
+
+    return train_dataset, val_dataset, test_dataset
+
+
 if __name__ == "__main__":
     loader = ActivationLoader("./activations-gemma2-2b-slimpajama-500k")
 
@@ -197,3 +216,4 @@ if __name__ == "__main__":
         print("X shape:", x.shape)
         print("Y shape:", y.shape)
         break
+
