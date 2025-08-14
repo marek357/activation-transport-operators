@@ -37,9 +37,8 @@ def load_sae_decoders(cfg: DictConfig, activation_dtype: torch.dtype) -> dict[in
 
     for layer in required_layers:
         # Create a copy of the SAE config and modify the layer
+        cfg.sae.layer = layer
         sae_cfg = OmegaConf.to_container(cfg.sae, resolve=True)
-        sae_cfg["layer"] = layer
-        sae_cfg = OmegaConf.create(sae_cfg)
 
         # Create a temporary config with the modified SAE config
         temp_cfg = OmegaConf.create({"sae": sae_cfg})
@@ -100,8 +99,7 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     y_pred_t = torch.from_numpy(y_pred).double()
 
     # Check for extremely large values that might cause overflow
-    max_val = max(torch.abs(y_true_t).max().item(),
-                  torch.abs(y_pred_t).max().item())
+    max_val = max(torch.abs(y_true_t).max().item(), torch.abs(y_pred_t).max().item())
     if max_val > 1e6:
         # Scale down values to prevent overflow
         scale_factor = 1e6 / max_val
@@ -120,14 +118,12 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     # Avoid division by zero and handle near-zero variance
     eps = 1e-12
     r2_per_dim = 1 - (ss_res / (ss_tot + eps))
-    r2_per_dim = torch.where(ss_tot < eps, torch.tensor(
-        0.0, dtype=torch.float64), r2_per_dim)
+    r2_per_dim = torch.where(ss_tot < eps, torch.tensor(0.0, dtype=torch.float64), r2_per_dim)
     r2_per_dim = torch.clamp(r2_per_dim, -1e6, 1.0)  # Clip extreme values
 
     # Only use finite values for mean
     finite_mask = torch.isfinite(r2_per_dim)
-    r2_mean = float(torch.mean(
-        r2_per_dim[finite_mask])) if finite_mask.any() else 0.0
+    r2_mean = float(torch.mean(r2_per_dim[finite_mask])) if finite_mask.any() else 0.0
 
     # MSE (mean across all elements)
     mse = float(torch.mean(diff**2))
@@ -138,10 +134,8 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     y_pred_norms = torch.norm(y_pred_t, dim=1, keepdim=True)
 
     # Handle zero norms
-    y_true_norms = torch.where(y_true_norms < eps, torch.tensor(
-        eps, dtype=torch.float64), y_true_norms)
-    y_pred_norms = torch.where(y_pred_norms < eps, torch.tensor(
-        eps, dtype=torch.float64), y_pred_norms)
+    y_true_norms = torch.where(y_true_norms < eps, torch.tensor(eps, dtype=torch.float64), y_true_norms)
+    y_pred_norms = torch.where(y_pred_norms < eps, torch.tensor(eps, dtype=torch.float64), y_pred_norms)
 
     y_true_norm = y_true_t / y_true_norms
     y_pred_norm = y_pred_t / y_pred_norms
@@ -200,37 +194,36 @@ class ComprehensiveMetricAggregator:
             self.sum_true_sq += torch.sum(a_true_f**2).item()
             self.sum_pred_sq += torch.sum(a_pred_f**2).item()
             self.sum_true_pred += torch.sum(a_true_f * a_pred_f).item()
-            self.sum_squared_error += torch.sum(
-                (a_true_f - a_pred_f) ** 2).item()
+            self.sum_squared_error += torch.sum((a_true_f - a_pred_f) ** 2).item()
 
             # Calibration metrics
             self.sum_abs_true += torch.sum(torch.abs(a_true_f)).item()
             self.sum_abs_pred += torch.sum(torch.abs(a_pred_f)).item()
-            self.sum_abs_diff += torch.sum(
-                torch.abs(a_true_f - a_pred_f)).item()
+            self.sum_abs_diff += torch.sum(torch.abs(a_true_f - a_pred_f)).item()
 
             # Relative error for non-zero true values
             eps_rel = 1e-8
             nonzero_mask = torch.abs(a_true_f) > eps_rel
             if nonzero_mask.any():
-                rel_errors = torch.abs(
-                    a_true_f[nonzero_mask] - a_pred_f[nonzero_mask]) / torch.abs(a_true_f[nonzero_mask])
+                rel_errors = torch.abs(a_true_f[nonzero_mask] - a_pred_f[nonzero_mask]) / torch.abs(
+                    a_true_f[nonzero_mask]
+                )
                 self.sum_rel_error += torch.sum(rel_errors).item()
 
                 # Log ratio for geometric mean-based calibration
                 # Only for pairs where both values are significantly non-zero
-                both_nonzero = (torch.abs(a_true_f) > eps_rel) & (
-                    torch.abs(a_pred_f) > eps_rel)
+                both_nonzero = (torch.abs(a_true_f) > eps_rel) & (torch.abs(a_pred_f) > eps_rel)
                 if both_nonzero.any():
-                    log_ratios = torch.log(
-                        torch.abs(a_pred_f[both_nonzero]) / torch.abs(a_true_f[both_nonzero]))
+                    log_ratios = torch.log(torch.abs(a_pred_f[both_nonzero]) / torch.abs(a_true_f[both_nonzero]))
                     self.sum_log_ratio_sq += torch.sum(log_ratios**2).item()
                     self.n_nonzero_pairs += both_nonzero.sum().item()
 
         except (OverflowError, RuntimeError):
             # Handle overflow by skipping this batch and warn
             warnings.warn(
-                "Numerical overflow detected in metric aggregation, skipping batch", stacklevel=2)
+                "Numerical overflow detected in metric aggregation, skipping batch",
+                stacklevel=2,
+            )
             self.n_samples -= batch_size
 
     def compute_correlation_metrics(self) -> dict[str, float]:
@@ -290,7 +283,7 @@ class ComprehensiveMetricAggregator:
                 "rel_error_mean": 0.0,
                 "log_mse_ratio": 0.0,
                 "rms_true": 0.0,
-                "rms_pred": 0.0
+                "rms_pred": 0.0,
             }
 
         eps = 1e-12
@@ -312,26 +305,21 @@ class ComprehensiveMetricAggregator:
         # Mean absolute values and their ratio
         mean_abs_true = self.sum_abs_true / self.n_samples
         mean_abs_pred = self.sum_abs_pred / self.n_samples
-        mean_abs_ratio = mean_abs_pred / \
-            (mean_abs_true + eps) if mean_abs_true > eps else 1.0
+        mean_abs_ratio = mean_abs_pred / (mean_abs_true + eps) if mean_abs_true > eps else 1.0
 
         # Mean values and their ratio (to detect systematic bias)
         mean_true = self.sum_true / self.n_samples
         mean_pred = self.sum_pred / self.n_samples
-        mean_ratio = mean_pred / \
-            (mean_true + eps) if abs(mean_true) > eps else 1.0
+        mean_ratio = mean_pred / (mean_true + eps) if abs(mean_true) > eps else 1.0
 
         # Mean Absolute Deviation ratio (normalized MAD)
-        mad_ratio = (self.sum_abs_diff / self.n_samples) / \
-            (mean_abs_true + eps) if mean_abs_true > eps else 0.0
+        mad_ratio = (self.sum_abs_diff / self.n_samples) / (mean_abs_true + eps) if mean_abs_true > eps else 0.0
 
         # Mean relative error
-        rel_error_mean = self.sum_rel_error / \
-            max(1, self.n_samples - (self.n_samples - self.n_nonzero_pairs))
+        rel_error_mean = self.sum_rel_error / max(1, self.n_samples - (self.n_samples - self.n_nonzero_pairs))
 
         # Log-scale calibration (geometric standard deviation of ratios)
-        log_mse_ratio = self.sum_log_ratio_sq / \
-            max(1, self.n_nonzero_pairs) if self.n_nonzero_pairs > 0 else 0.0
+        log_mse_ratio = self.sum_log_ratio_sq / max(1, self.n_nonzero_pairs) if self.n_nonzero_pairs > 0 else 0.0
 
         return {
             # Original geometric mean
@@ -351,7 +339,7 @@ class ComprehensiveMetricAggregator:
             # Reference RMS of true values
             "rms_true": float(rms_true),
             # RMS of predicted values
-            "rms_pred": float(rms_pred)
+            "rms_pred": float(rms_pred),
         }
 
     def compute_all_metrics(self) -> dict[str, float]:
@@ -456,8 +444,7 @@ def run_experiment(
     *,
     decoder_normalize: bool = True,
     val_batch_size: int = 32,
-    device: str = "cuda" if torch.cuda.is_available(
-    ) else "mps" if torch.backends.mps.is_available() else "cpu",
+    device: str = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu",
 ) -> dict[tuple[int, int, str, int], dict[str, float]]:
     """Run evaluation of transport operators on SAE features."""
     results = {}
@@ -472,13 +459,16 @@ def run_experiment(
     for layer_l in chosen_layers:
         for k in k_list:
             for j_policy in j_policy_list:
-                logger.info("Evaluating L=%d, k=%d, j_policy=%s",
-                            layer_l, k, j_policy)
+                logger.info("Evaluating L=%d, k=%d, j_policy=%s", layer_l, k, j_policy)
 
                 # Check if transport map exists
                 if (layer_l, k, j_policy) not in transport_maps:
                     logger.warning(
-                        "Transport map not found for (L=%d, k=%d, j_policy=%s)", layer_l, k, j_policy)
+                        "Transport map not found for (L=%d, k=%d, j_policy=%s)",
+                        layer_l,
+                        k,
+                        j_policy,
+                    )
                     continue
 
                 dataset = ActivationDataset(
@@ -502,13 +492,11 @@ def run_experiment(
                 # Prepare decoders for the target layer L+k
                 target_layer = layer_l + k
                 if target_layer not in sae_decoders:
-                    logger.warning(
-                        "SAE decoder not found for target layer %d", target_layer)
+                    logger.warning("SAE decoder not found for target layer %d", target_layer)
                     continue
 
                 if target_layer not in features_dict:
-                    logger.warning(
-                        "Feature list not found for target layer %d", target_layer)
+                    logger.warning("Feature list not found for target layer %d", target_layer)
                     continue
 
                 decoder_matrix = sae_decoders[target_layer].to(device)
@@ -516,8 +504,7 @@ def run_experiment(
                 # Initialize aggregators for each feature
                 feature_aggregators = {}
                 for feat_idx in features_dict[target_layer]:
-                    feature_aggregators[feat_idx] = ComprehensiveMetricAggregator(
-                    )
+                    feature_aggregators[feat_idx] = ComprehensiveMetricAggregator()
 
                 # For residual metrics (if needed)
                 residual_y_true_all = []
@@ -533,8 +520,7 @@ def run_experiment(
 
                     # Predict downstream residuals using transport operator
                     with torch.no_grad():
-                        y_hat_batch = torch.addmm(
-                            bias_b, x_up_batch, transport_t.T)
+                        y_hat_batch = torch.addmm(bias_b, x_up_batch, transport_t.T)
 
                     # Collect for residual metrics if needed (small memory overhead)
                     if collect_residual:
@@ -572,8 +558,13 @@ def run_experiment(
                             elapsed_time,
                         )
 
-                logger.info("Processed %d samples for L=%d, k=%d, j_policy=%s",
-                            total_samples, layer_l, k, j_policy)
+                logger.info(
+                    "Processed %d samples for L=%d, k=%d, j_policy=%s",
+                    total_samples,
+                    layer_l,
+                    k,
+                    j_policy,
+                )
 
                 # Compute residual-level metrics if needed
                 res_metrics = {}
@@ -585,14 +576,11 @@ def run_experiment(
                 # Finalize metrics for each feature
                 for feat_idx in features_dict[target_layer]:
                     # Get all metrics from the unified aggregator
-                    all_metrics = feature_aggregators[feat_idx].compute_all_metrics(
-                    )
+                    all_metrics = feature_aggregators[feat_idx].compute_all_metrics()
 
                     # Extract calibration metrics for interpretation
-                    calib_metrics = feature_aggregators[feat_idx].compute_calibration_metrics(
-                    )
-                    calib_interpretation = interpret_calibration_metrics(
-                        calib_metrics)
+                    calib_metrics = feature_aggregators[feat_idx].compute_calibration_metrics()
+                    calib_interpretation = interpret_calibration_metrics(calib_metrics)
 
                     results[(layer_l, k, j_policy, feat_idx)] = {
                         **all_metrics,
@@ -607,11 +595,9 @@ def run_experiment(
                         calib_metrics.get("rms_ratio", 1.0),
                         calib_interpretation.get("rms_assessment", "unknown"),
                         calib_metrics.get("mean_abs_ratio", 1.0),
-                        calib_interpretation.get(
-                            "magnitude_assessment", "unknown"),
+                        calib_interpretation.get("magnitude_assessment", "unknown"),
                         calib_interpretation.get("bias_assessment", "unknown"),
-                        calib_interpretation.get(
-                            "precision_assessment", "unknown"),
+                        calib_interpretation.get("precision_assessment", "unknown"),
                     )
 
     return results
@@ -625,7 +611,7 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
         "rel_errors": [],
         "log_mse_ratios": [],
         "assessments": {"excellent": 0, "good": 0, "fair": 0, "poor": 0},
-        "bias_directions": {"overestimation": 0, "underestimation": 0, "minimal": 0}
+        "bias_directions": {"overestimation": 0, "underestimation": 0, "minimal": 0},
     }
 
     for key, metrics in results.items():
@@ -633,12 +619,9 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
 
         # Collect numerical metrics
         calibration_summary["rms_ratios"].append(metrics.get("rms_ratio", 1.0))
-        calibration_summary["mean_abs_ratios"].append(
-            metrics.get("mean_abs_ratio", 1.0))
-        calibration_summary["rel_errors"].append(
-            metrics.get("rel_error_mean", 0.0))
-        calibration_summary["log_mse_ratios"].append(
-            metrics.get("log_mse_ratio", 0.0))
+        calibration_summary["mean_abs_ratios"].append(metrics.get("mean_abs_ratio", 1.0))
+        calibration_summary["rel_errors"].append(metrics.get("rel_error_mean", 0.0))
+        calibration_summary["log_mse_ratios"].append(metrics.get("log_mse_ratio", 0.0))
 
         # Count qualitative assessments
         interpretation = metrics.get("calib_interpretation", {})
@@ -655,27 +638,20 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
 
     # Compute aggregate statistics
     import numpy as np
+
     if calibration_summary["rms_ratios"]:
-        calibration_summary["rms_ratio_mean"] = float(
-            np.mean(calibration_summary["rms_ratios"]))
-        calibration_summary["rms_ratio_std"] = float(
-            np.std(calibration_summary["rms_ratios"]))
-        calibration_summary["mean_abs_ratio_mean"] = float(
-            np.mean(calibration_summary["mean_abs_ratios"]))
-        calibration_summary["mean_abs_ratio_std"] = float(
-            np.std(calibration_summary["mean_abs_ratios"]))
-        calibration_summary["rel_error_mean"] = float(
-            np.mean(calibration_summary["rel_errors"]))
-        calibration_summary["rel_error_std"] = float(
-            np.std(calibration_summary["rel_errors"]))
+        calibration_summary["rms_ratio_mean"] = float(np.mean(calibration_summary["rms_ratios"]))
+        calibration_summary["rms_ratio_std"] = float(np.std(calibration_summary["rms_ratios"]))
+        calibration_summary["mean_abs_ratio_mean"] = float(np.mean(calibration_summary["mean_abs_ratios"]))
+        calibration_summary["mean_abs_ratio_std"] = float(np.std(calibration_summary["mean_abs_ratios"]))
+        calibration_summary["rel_error_mean"] = float(np.mean(calibration_summary["rel_errors"]))
+        calibration_summary["rel_error_std"] = float(np.std(calibration_summary["rel_errors"]))
 
         # Overall calibration quality score (0-1, higher is better)
         total_features = len(calibration_summary["rms_ratios"])
         excellent_ratio = calibration_summary["assessments"]["excellent"] / total_features
-        good_ratio = calibration_summary["assessments"]["good"] / \
-            total_features
-        calibration_summary["overall_quality_score"] = excellent_ratio + \
-            0.7 * good_ratio
+        good_ratio = calibration_summary["assessments"]["good"] / total_features
+        calibration_summary["overall_quality_score"] = excellent_ratio + 0.7 * good_ratio
 
     return calibration_summary
 
@@ -695,8 +671,7 @@ def main(cfg: DictConfig) -> dict:
         project=cfg.logger.project,
         entity=cfg.logger.entity,
         name=cfg.experiment_name,
-        config=cast("dict[str, Any] | None",
-                    OmegaConf.to_container(cfg, resolve=True)),
+        config=cast("dict[str, Any] | None", OmegaConf.to_container(cfg, resolve=True)),
         mode=cfg.logger.wandb_mode,
     )
 
@@ -759,34 +734,47 @@ def main(cfg: DictConfig) -> dict:
         val_batch_size=cfg.eval.val_batch_size,
     )
 
-    logger.info(
-        "Evaluation completed. Generated %d result entries.", len(results))
+    logger.info("Evaluation completed. Generated %d result entries.", len(results))
 
     # Analyze calibration performance across all features
     calibration_summary = summarize_calibration_across_features(results)
     logger.info("=== CALIBRATION ANALYSIS SUMMARY ===")
-    logger.info("Overall Quality Score: %.3f",
-                calibration_summary.get("overall_quality_score", 0.0))
-    logger.info("RMS Ratio: %.3f ± %.3f",
-                calibration_summary.get("rms_ratio_mean", 1.0),
-                calibration_summary.get("rms_ratio_std", 0.0))
-    logger.info("Mean Abs Ratio: %.3f ± %.3f",
-                calibration_summary.get("mean_abs_ratio_mean", 1.0),
-                calibration_summary.get("mean_abs_ratio_std", 0.0))
-    logger.info("Relative Error: %.3f ± %.3f",
-                calibration_summary.get("rel_error_mean", 0.0),
-                calibration_summary.get("rel_error_std", 0.0))
+    logger.info(
+        "Overall Quality Score: %.3f",
+        calibration_summary.get("overall_quality_score", 0.0),
+    )
+    logger.info(
+        "RMS Ratio: %.3f ± %.3f",
+        calibration_summary.get("rms_ratio_mean", 1.0),
+        calibration_summary.get("rms_ratio_std", 0.0),
+    )
+    logger.info(
+        "Mean Abs Ratio: %.3f ± %.3f",
+        calibration_summary.get("mean_abs_ratio_mean", 1.0),
+        calibration_summary.get("mean_abs_ratio_std", 0.0),
+    )
+    logger.info(
+        "Relative Error: %.3f ± %.3f",
+        calibration_summary.get("rel_error_mean", 0.0),
+        calibration_summary.get("rel_error_std", 0.0),
+    )
 
     assessments = calibration_summary.get("assessments", {})
-    logger.info("Assessment distribution: Excellent=%d, Good=%d, Fair=%d, Poor=%d",
-                assessments.get("excellent", 0), assessments.get("good", 0),
-                assessments.get("fair", 0), assessments.get("poor", 0))
+    logger.info(
+        "Assessment distribution: Excellent=%d, Good=%d, Fair=%d, Poor=%d",
+        assessments.get("excellent", 0),
+        assessments.get("good", 0),
+        assessments.get("fair", 0),
+        assessments.get("poor", 0),
+    )
 
     bias_dirs = calibration_summary.get("bias_directions", {})
-    logger.info("Bias analysis: Overest=%d, Underest=%d, Minimal=%d",
-                bias_dirs.get("overestimation", 0), bias_dirs.get(
-                    "underestimation", 0),
-                bias_dirs.get("minimal", 0))
+    logger.info(
+        "Bias analysis: Overest=%d, Underest=%d, Minimal=%d",
+        bias_dirs.get("overestimation", 0),
+        bias_dirs.get("underestimation", 0),
+        bias_dirs.get("minimal", 0),
+    )
 
     # Save results to JSON
 
@@ -819,16 +807,18 @@ def main(cfg: DictConfig) -> dict:
     logger.info("Results saved to: %s", output_file)
 
     # Log summary to wandb
-    wandb.log({
-        "num_results": len(results),
-        "calibration_quality_score": calibration_summary.get("overall_quality_score", 0.0),
-        "rms_ratio_mean": calibration_summary.get("rms_ratio_mean", 1.0),
-        "rms_ratio_std": calibration_summary.get("rms_ratio_std", 0.0),
-        "mean_abs_ratio_mean": calibration_summary.get("mean_abs_ratio_mean", 1.0),
-        "rel_error_mean": calibration_summary.get("rel_error_mean", 0.0),
-        "excellent_calibrations": calibration_summary.get("assessments", {}).get("excellent", 0),
-        "poor_calibrations": calibration_summary.get("assessments", {}).get("poor", 0),
-    })
+    wandb.log(
+        {
+            "num_results": len(results),
+            "calibration_quality_score": calibration_summary.get("overall_quality_score", 0.0),
+            "rms_ratio_mean": calibration_summary.get("rms_ratio_mean", 1.0),
+            "rms_ratio_std": calibration_summary.get("rms_ratio_std", 0.0),
+            "mean_abs_ratio_mean": calibration_summary.get("mean_abs_ratio_mean", 1.0),
+            "rel_error_mean": calibration_summary.get("rel_error_mean", 0.0),
+            "excellent_calibrations": calibration_summary.get("assessments", {}).get("excellent", 0),
+            "poor_calibrations": calibration_summary.get("assessments", {}).get("poor", 0),
+        }
+    )
     wandb.finish()
 
     return json_results
