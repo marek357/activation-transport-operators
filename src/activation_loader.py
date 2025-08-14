@@ -126,7 +126,7 @@ class ActivationDataset(IterableDataset):
         self.L = L
         self.k = k
 
-    def _get_worker_indices(self) -> tuple[list[int], int]:
+    def _get_worker_indices(self) -> list[int]:
         """Get the subset of indices that this worker should process ."""
         worker_info = get_worker_info()
         if worker_info is None:
