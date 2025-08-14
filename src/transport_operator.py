@@ -4,10 +4,9 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler
-from typing import Union, Tuple, Optional, Dict, Any, List
+from typing import Tuple, Optional, Dict, List
 from src.activation_loader import ActivationDataset
 from torch.utils.data import DataLoader
-import warnings
 import time
 import os
 import hashlib
@@ -24,23 +23,27 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        method: str = 'ridge',
+        L: int,
+        k: int,
+        method: str = "ridge",
         regularization: Optional[float] = None,
         l1_ratio: Optional[float] = 0.1,
         normalize: bool = False,
         auto_tune: bool = True,
         cv_folds: int = 5,
-        scoring: str = 'r2',
+        scoring: str = "r2",
         random_state: Optional[int] = 42,
         max_iter: int = 5000,
         tol: float = 1e-3,
         cache_dir: Optional[str] = None,
-        use_cache: bool = True
+        use_cache: bool = True,
     ):
         """
         Initialize the transport operator.
 
         Args:
+            L: Layer number
+            k: Offset for the target layer
             method: Type of transformation ('linear', 'ridge', 'lasso', 'elasticnet')
             regularization: Regularization strength (alpha) for regularized methods
             l1_ratio: ElasticNet mixing parameter (0=Ridge, 1=Lasso)
@@ -54,6 +57,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             cache_dir: Directory to store cached X, y matrices. If None, uses 'cache' in current directory
             use_cache: Whether to use caching for X, y matrices
         """
+        self.L = L
+        self.k = k
         self.method = method
         self.regularization = regularization
         self.l1_ratio = l1_ratio
@@ -64,7 +69,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.max_iter = max_iter
         self.tol = tol
-        self.cache_dir = cache_dir or 'cache'
+        self.cache_dir = cache_dir or "cache"
         self.use_cache = use_cache
 
         self.model = None
@@ -77,45 +82,59 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
     def _get_param_grid(self) -> Dict[str, List]:
         """Get parameter grid for hyperparameter tuning."""
-        if self.method == 'ridge':
-            return {'alpha': [0.1, 1.0, 10.0, 100.0, 1000.0, 2000.0, 5000.0, 10000.0]}
-        elif self.method == 'lasso':
-            return {'alpha': [0.01, 0.1, 1.0, 10.0, 100.0]}
-        elif self.method == 'elasticnet':
+        if self.method == "ridge":
+            return {"alpha": [0.1, 1.0, 10.0, 100.0, 1000.0, 2000.0, 5000.0, 10000.0]}
+        elif self.method == "lasso":
+            return {"alpha": [0.01, 0.1, 1.0, 10.0, 100.0]}
+        elif self.method == "elasticnet":
             return {
-                'alpha': [0.1, 1.0, 10.0, 100.0],
-                'l1_ratio': [0.1, 0.3, 0.5, 0.7, 0.9]
+                "alpha": [0.1, 1.0, 10.0, 100.0],
+                "l1_ratio": [0.1, 0.3, 0.5, 0.7, 0.9],
             }
         else:
             return {}
 
     def _create_model(self, **params) -> BaseEstimator:
         """Create the appropriate regression model with given parameters."""
-        if self.method == 'linear':
+        if self.method == "linear":
             return LinearRegression(fit_intercept=True)
-        elif self.method == 'ridge':
-            alpha = params.get('alpha', self.regularization or 1.0)
-            return Ridge(alpha=alpha, fit_intercept=True, random_state=self.random_state)
-        elif self.method == 'lasso':
-            alpha = params.get('alpha', self.regularization or 1.0)
-            return Lasso(alpha=alpha, fit_intercept=True, random_state=self.random_state,
-                         max_iter=self.max_iter, tol=self.tol)
-        elif self.method == 'elasticnet':
-            alpha = params.get('alpha', self.regularization or 1.0)
-            l1_ratio = params.get('l1_ratio', self.l1_ratio)
-            return ElasticNet(alpha=alpha, l1_ratio=l1_ratio, fit_intercept=True,
-                              random_state=self.random_state, max_iter=self.max_iter, tol=self.tol)
+        elif self.method == "ridge":
+            alpha = params.get("alpha", self.regularization or 1.0)
+            return Ridge(
+                alpha=alpha, fit_intercept=True, random_state=self.random_state
+            )
+        elif self.method == "lasso":
+            alpha = params.get("alpha", self.regularization or 1.0)
+            return Lasso(
+                alpha=alpha,
+                fit_intercept=True,
+                random_state=self.random_state,
+                max_iter=self.max_iter,
+                tol=self.tol,
+            )
+        elif self.method == "elasticnet":
+            alpha = params.get("alpha", self.regularization or 1.0)
+            l1_ratio = params.get("l1_ratio", self.l1_ratio)
+            return ElasticNet(
+                alpha=alpha,
+                l1_ratio=l1_ratio,
+                fit_intercept=True,
+                random_state=self.random_state,
+                max_iter=self.max_iter,
+                tol=self.tol,
+            )
         else:
             raise ValueError(
-                f"Unknown method: {self.method}. Choose from 'linear', 'ridge', 'lasso', 'elasticnet'")
+                f"Unknown method: {self.method}. Choose from 'linear', 'ridge', 'lasso', 'elasticnet'"
+            )
 
     def _get_cache_filename(self, dataset: ActivationDataset) -> str:
         """Generate a unique cache filename based on dataset characteristics."""
         # Create a hash based on dataset properties that would affect the X, y matrices
         dataset_info = {
-            'dataset_type': type(dataset).__name__,
+            "dataset_type": type(dataset).__name__,
             # Add dataset id or other identifying properties if available
-            'dataset_id': getattr(dataset, 'dataset_id', 'default'),
+            "dataset_id": getattr(dataset, "dataset_id", "default"),
         }
 
         # Create hash from dataset info
@@ -128,22 +147,24 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         """Generate a unique model cache filename based on dataset and model parameters."""
         # Create a hash based on both dataset and model parameters
         dataset_info = {
-            'dataset_type': type(dataset).__name__,
-            'dataset_id': getattr(dataset, 'dataset_id', 'default'),
+            "dataset_type": type(dataset).__name__,
+            "dataset_id": getattr(dataset, "dataset_id", "default"),
         }
 
         # Include model parameters that affect training
         model_params = {
-            'method': self.method,
-            'regularization': self.regularization,
-            'l1_ratio': self.l1_ratio,
-            'normalize': self.normalize,
-            'auto_tune': self.auto_tune,
-            'cv_folds': self.cv_folds,
-            'scoring': self.scoring,
-            'random_state': self.random_state,
-            'max_iter': self.max_iter,
-            'tol': self.tol
+            "L": self.L,
+            "k": self.k,
+            "method": self.method,
+            "regularization": self.regularization,
+            "l1_ratio": self.l1_ratio,
+            "normalize": self.normalize,
+            "auto_tune": self.auto_tune,
+            "cv_folds": self.cv_folds,
+            "scoring": self.scoring,
+            "random_state": self.random_state,
+            "max_iter": self.max_iter,
+            "tol": self.tol,
         }
 
         # Combine dataset and model info
@@ -158,13 +179,13 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         try:
             os.makedirs(os.path.dirname(cache_path), exist_ok=True)
             cache_data = {
-                'X': X,
-                'y': y,
-                'timestamp': time.time(),
-                'X_shape': X.shape,
-                'y_shape': y.shape
+                "X": X,
+                "y": y,
+                "timestamp": time.time(),
+                "X_shape": X.shape,
+                "y_shape": y.shape,
             }
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(cache_data, f)
             print(f"  Cached data saved to: {cache_path}")
         except Exception as e:
@@ -175,18 +196,20 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         try:
             os.makedirs(os.path.dirname(cache_path), exist_ok=True)
             model_data = {
-                'model': self.model,
-                'scaler_X': self.scaler_X,
-                'scaler_y': self.scaler_y,
-                'is_fitted_': self.is_fitted_,
-                'best_params_': self.best_params_,
-                'cv_results_': self.cv_results_,
-                'feature_importance_': self.feature_importance_,
-                'timestamp': time.time(),
-                'method': self.method,
-                'normalize': self.normalize
+                "model": self.model,
+                "scaler_X": self.scaler_X,
+                "scaler_y": self.scaler_y,
+                "is_fitted_": self.is_fitted_,
+                "best_params_": self.best_params_,
+                "cv_results_": self.cv_results_,
+                "feature_importance_": self.feature_importance_,
+                "timestamp": time.time(),
+                "method": self.method,
+                "normalize": self.normalize,
+                "L": self.L,
+                "k": self.k,
             }
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(model_data, f)
             print(f"  Cached model saved to: {cache_path}")
         except Exception as e:
@@ -198,25 +221,29 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             if not os.path.exists(cache_path):
                 return False
 
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 model_data = pickle.load(f)
 
             # Validate that the cached model parameters match current instance
-            if (model_data.get('method') != self.method or
-                    model_data.get('normalize') != self.normalize):
+            if (
+                model_data.get("method") != self.method
+                or model_data.get("normalize") != self.normalize
+            ):
                 print(f"  Warning: Cached model parameters don't match, ignoring cache")
                 return False
 
             # Load the model state
-            self.model = model_data['model']
-            self.scaler_X = model_data['scaler_X']
-            self.scaler_y = model_data['scaler_y']
-            self.is_fitted_ = model_data['is_fitted_']
-            self.best_params_ = model_data['best_params_']
-            self.cv_results_ = model_data['cv_results_']
-            self.feature_importance_ = model_data['feature_importance_']
+            self.model = model_data["model"]
+            self.scaler_X = model_data["scaler_X"]
+            self.scaler_y = model_data["scaler_y"]
+            self.is_fitted_ = model_data["is_fitted_"]
+            self.best_params_ = model_data["best_params_"]
+            self.cv_results_ = model_data["cv_results_"]
+            self.feature_importance_ = model_data["feature_importance_"]
+            self.L = model_data["L"]
+            self.k = model_data["k"]
 
-            timestamp = model_data.get('timestamp', 0)
+            timestamp = model_data.get("timestamp", 0)
             cache_age = time.time() - timestamp
 
             print(f"  Loaded cached model from: {cache_path}")
@@ -228,18 +255,20 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             print(f"  Warning: Failed to load model cache: {e}")
             return False
 
-    def _load_cache(self, cache_path: str) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    def _load_cache(
+        self, cache_path: str
+    ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
         """Load X and y matrices from cache file."""
         try:
             if not os.path.exists(cache_path):
                 return None, None
 
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 cache_data = pickle.load(f)
 
-            X = cache_data['X']
-            y = cache_data['y']
-            timestamp = cache_data.get('timestamp', 0)
+            X = cache_data["X"]
+            y = cache_data["y"]
+            timestamp = cache_data.get("timestamp", 0)
 
             # Basic validation
             if X.ndim != 2 or y.ndim != 2:
@@ -276,8 +305,11 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 eval_cache_filename = f"eval_{cache_filename}"
                 model_cache_filename = self._get_model_cache_filename(dataset)
 
-                files_to_remove = [cache_filename,
-                                   eval_cache_filename, model_cache_filename]
+                files_to_remove = [
+                    cache_filename,
+                    eval_cache_filename,
+                    model_cache_filename,
+                ]
                 removed_count = 0
 
                 for filename in files_to_remove:
@@ -290,12 +322,12 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 if removed_count == 0:
                     print("No cache files found for the specified dataset.")
                 else:
-                    print(
-                        f"Cleared {removed_count} cache file(s) for dataset.")
+                    print(f"Cleared {removed_count} cache file(s) for dataset.")
             else:
                 # Clear all cache files
-                cache_files = [f for f in os.listdir(
-                    self.cache_dir) if f.endswith('.pkl')]
+                cache_files = [
+                    f for f in os.listdir(self.cache_dir) if f.endswith(".pkl")
+                ]
 
                 if not cache_files:
                     print("No cache files found.")
@@ -316,7 +348,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         except Exception as e:
             print(f"Error clearing cache: {e}")
 
-    def fit(self, dataset: ActivationDataset) -> 'TransportOperator':
+    def fit(self, dataset: ActivationDataset) -> "TransportOperator":
         """
         Fit the transport operator on upstream-downstream vector pairs.
 
@@ -331,8 +363,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         # Check for cached model first
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(
-                self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             print(f"Checking for cached model: {model_cache_path}")
 
             if self._load_model_cache(model_cache_path):
@@ -369,8 +400,12 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 y_np = y_down.detach().cpu().numpy()  # .flatten()
 
                 # Check for NaN or inf values
-                if np.any(np.isnan(x_np)) or np.any(np.isinf(x_np)) or \
-                   np.any(np.isnan(y_np)) or np.any(np.isinf(y_np)):
+                if (
+                    np.any(np.isnan(x_np))
+                    or np.any(np.isinf(x_np))
+                    or np.any(np.isnan(y_np))
+                    or np.any(np.isinf(y_np))
+                ):
                     skipped_samples += 1
                     continue
 
@@ -393,7 +428,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
             load_time = time.time() - start_time
             print(
-                f"Data loading complete: {sample_count:,} samples loaded ({skipped_samples} skipped)")
+                f"Data loading complete: {sample_count:,} samples loaded ({skipped_samples} skipped)"
+            )
             print(f"  X shape: {X.shape}, y shape: {y.shape}")
             print(f"  Loading time: {load_time:.2f}s")
 
@@ -421,11 +457,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         train_start = time.time()
 
         # Hyperparameter tuning
-        if self.auto_tune and self.method != 'linear':
+        if self.auto_tune and self.method != "linear":
             param_grid = self._get_param_grid()
             if param_grid:
-                print(
-                    f"Starting hyperparameter tuning for {self.method} regression...")
+                print(f"Starting hyperparameter tuning for {self.method} regression...")
                 print(f"  Parameter grid: {param_grid}")
                 print(f"  CV folds: {self.cv_folds}")
 
@@ -437,7 +472,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                     cv=self.cv_folds,
                     scoring=self.scoring,
                     n_jobs=-1,
-                    verbose=100
+                    verbose=100,
                     # random_state=self.random_state
                 )
 
@@ -460,7 +495,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         train_time = time.time() - train_start
 
         # Calculate feature importance for regularized methods
-        if hasattr(self.model, 'coef_'):
+        if hasattr(self.model, "coef_"):
             self.feature_importance_ = np.abs(self.model.coef_).mean(axis=0)
 
         self.is_fitted_ = True
@@ -468,8 +503,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         # Save trained model to cache if enabled
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(
-                self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             self._save_model_cache(model_cache_path)
 
         total_time = time.time() - start_time
@@ -491,7 +525,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         """
         if not self.is_fitted_:
             raise ValueError(
-                "Transport operator must be fitted before making predictions")
+                "Transport operator must be fitted before making predictions"
+            )
 
         X = np.asarray(X)
         if X.ndim != 2:
@@ -511,8 +546,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
         return y_pred
 
-    def cross_validate(self, X: np.ndarray, y: np.ndarray,
-                       cv: int = 5, scoring: str = 'r2') -> Dict[str, float]:
+    def cross_validate(
+        self, X: np.ndarray, y: np.ndarray, cv: int = 5, scoring: str = "r2"
+    ) -> Dict[str, float]:
         """
         Perform cross-validation to evaluate model performance.
 
@@ -531,9 +567,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         scores = cross_val_score(self.model, X, y, cv=cv, scoring=scoring)
 
         return {
-            f'{scoring}_mean': scores.mean(),
-            f'{scoring}_std': scores.std(),
-            'scores': scores
+            f"{scoring}_mean": scores.mean(),
+            f"{scoring}_std": scores.std(),
+            "scores": scores,
         }
 
     def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict[str, float]:
@@ -550,9 +586,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         y_pred = self.predict(X)
 
         metrics = {
-            'r2_score': r2_score(y, y_pred),
-            'mse': mean_squared_error(y, y_pred),
-            'rmse': np.sqrt(mean_squared_error(y, y_pred))
+            "r2_score": r2_score(y, y_pred),
+            "mse": mean_squared_error(y, y_pred),
+            "rmse": np.sqrt(mean_squared_error(y, y_pred)),
         }
 
         # Add per-output summary statistics for multi-output case
@@ -571,21 +607,21 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             per_output_r2 = np.array(per_output_r2)
             per_output_mse = np.array(per_output_mse)
 
-            metrics.update({
-                'r2_per_output_mean': per_output_r2.mean(),
-                'r2_per_output_std': per_output_r2.std(),
-                'r2_per_output_min': per_output_r2.min(),
-                'r2_per_output_max': per_output_r2.max(),
-                'r2_per_output_median': np.median(per_output_r2),
-
-                'mse_per_output_mean': per_output_mse.mean(),
-                'mse_per_output_std': per_output_mse.std(),
-                'mse_per_output_min': per_output_mse.min(),
-                'mse_per_output_max': per_output_mse.max(),
-                'mse_per_output_median': np.median(per_output_mse),
-
-                'num_outputs': y.shape[1]
-            })
+            metrics.update(
+                {
+                    "r2_per_output_mean": per_output_r2.mean(),
+                    "r2_per_output_std": per_output_r2.std(),
+                    "r2_per_output_min": per_output_r2.min(),
+                    "r2_per_output_max": per_output_r2.max(),
+                    "r2_per_output_median": np.median(per_output_r2),
+                    "mse_per_output_mean": per_output_mse.mean(),
+                    "mse_per_output_std": per_output_mse.std(),
+                    "mse_per_output_min": per_output_mse.min(),
+                    "mse_per_output_max": per_output_mse.max(),
+                    "mse_per_output_median": np.median(per_output_mse),
+                    "num_outputs": y.shape[1],
+                }
+            )
 
         return metrics
 
@@ -600,8 +636,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             Dictionary with evaluation metrics
         """
         if not self.is_fitted_:
-            raise ValueError(
-                "Transport operator must be fitted before evaluation")
+            raise ValueError("Transport operator must be fitted before evaluation")
 
         start_time = time.time()
 
@@ -631,8 +666,12 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 y_np = y_down.detach().cpu().numpy()
 
                 # Check for NaN or inf values
-                if np.any(np.isnan(x_np)) or np.any(np.isinf(x_np)) or \
-                   np.any(np.isnan(y_np)) or np.any(np.isinf(y_np)):
+                if (
+                    np.any(np.isnan(x_np))
+                    or np.any(np.isinf(x_np))
+                    or np.any(np.isnan(y_np))
+                    or np.any(np.isinf(y_np))
+                ):
                     skipped_samples += 1
                     continue
 
@@ -654,7 +693,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
             load_time = time.time() - start_time
             print(
-                f"Evaluation data loaded: {sample_count:,} samples ({skipped_samples} skipped, {load_time:.2f}s)")
+                f"Evaluation data loaded: {sample_count:,} samples ({skipped_samples} skipped, {load_time:.2f}s)"
+            )
 
             # Save to cache if enabled
             if self.use_cache:
@@ -675,15 +715,18 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         print(f"  Overall MSE: {metrics['mse']:.6f}")
 
         # Print per-output summary if multi-output
-        if 'num_outputs' in metrics:
+        if "num_outputs" in metrics:
+            print(f"  Multi-output summary ({metrics['num_outputs']} outputs):")
             print(
-                f"  Multi-output summary ({metrics['num_outputs']} outputs):")
-            print(f"    R² per output - Mean: {metrics['r2_per_output_mean']:.4f}, "
-                  f"Std: {metrics['r2_per_output_std']:.4f}, "
-                  f"Range: [{metrics['r2_per_output_min']:.4f}, {metrics['r2_per_output_max']:.4f}]")
-            print(f"    MSE per output - Mean: {metrics['mse_per_output_mean']:.6f}, "
-                  f"Std: {metrics['mse_per_output_std']:.6f}, "
-                  f"Range: [{metrics['mse_per_output_min']:.6f}, {metrics['mse_per_output_max']:.6f}]")
+                f"    R² per output - Mean: {metrics['r2_per_output_mean']:.4f}, "
+                f"Std: {metrics['r2_per_output_std']:.4f}, "
+                f"Range: [{metrics['r2_per_output_min']:.4f}, {metrics['r2_per_output_max']:.4f}]"
+            )
+            print(
+                f"    MSE per output - Mean: {metrics['mse_per_output_mean']:.6f}, "
+                f"Std: {metrics['mse_per_output_std']:.6f}, "
+                f"Range: [{metrics['mse_per_output_min']:.6f}, {metrics['mse_per_output_max']:.6f}]"
+            )
 
         return metrics
 
@@ -737,8 +780,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         """Return the coefficient of determination R^2 of the prediction."""
         if not self.is_fitted_:
-            raise ValueError(
-                "Transport operator must be fitted before scoring")
+            raise ValueError("Transport operator must be fitted before scoring")
 
         X_score = X.copy()
         if self.normalize and self.scaler_X is not None:
@@ -749,21 +791,21 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def get_params(self, deep: bool = True) -> dict:
         """Get parameters for this estimator."""
         return {
-            'method': self.method,
-            'regularization': self.regularization,
-            'l1_ratio': self.l1_ratio,
-            'normalize': self.normalize,
-            'auto_tune': self.auto_tune,
-            'cv_folds': self.cv_folds,
-            'scoring': self.scoring,
-            'random_state': self.random_state,
-            'max_iter': self.max_iter,
-            'tol': self.tol,
-            'cache_dir': self.cache_dir,
-            'use_cache': self.use_cache
+            "method": self.method,
+            "regularization": self.regularization,
+            "l1_ratio": self.l1_ratio,
+            "normalize": self.normalize,
+            "auto_tune": self.auto_tune,
+            "cv_folds": self.cv_folds,
+            "scoring": self.scoring,
+            "random_state": self.random_state,
+            "max_iter": self.max_iter,
+            "tol": self.tol,
+            "cache_dir": self.cache_dir,
+            "use_cache": self.use_cache,
         }
 
-    def set_params(self, **params) -> 'TransportOperator':
+    def set_params(self, **params) -> "TransportOperator":
         """Set parameters for this estimator."""
         for key, value in params.items():
             setattr(self, key, value)
@@ -771,6 +813,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
     def __repr__(self) -> str:
         """String representation of the transport operator."""
-        params = ', '.join(
-            [f'{k}={v}' for k, v in self.get_params().items() if v is not None])
+        params = ", ".join(
+            [f"{k}={v}" for k, v in self.get_params().items() if v is not None]
+        )
         return f"TransportOperator({params})"
