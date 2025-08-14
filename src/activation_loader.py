@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from typing import Generator, Optional, List
 from huggingface_hub import hf_hub_download
+from typing import Generator, Optional, List
+from huggingface_hub import hf_hub_download
 import torch
 import zarr
 from torch.utils.data import DataLoader, IterableDataset, get_worker_info
@@ -9,6 +11,8 @@ from zarr.storage import StoreLike
 
 
 class ActivationLoader:
+    def __init__(self, activation_dir_path: str = None, files_to_download: Optional[List[str]] = None):
+
     def __init__(self, activation_dir_path: str = None, files_to_download: Optional[List[str]] = None):
         self.activation_dir_path = activation_dir_path
         if activation_dir_path is None or not os.path.exists(self.activation_dir_path):
