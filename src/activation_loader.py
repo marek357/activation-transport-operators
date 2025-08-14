@@ -13,10 +13,12 @@ class ActivationLoader:
         self.activation_dir_path = activation_dir_path
         if activation_dir_path is None or not os.path.exists(self.activation_dir_path):
             if files_to_download is None:
-                raise ValueError("Either activation_dir_path must be provided or files_to_download must be specified.")
+                raise ValueError(
+                    "Either activation_dir_path must be provided or files_to_download must be specified.")
             # download the path from huggingface
             for file in files_to_download:
-                path = hf_hub_download(repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
+                path = hf_hub_download(
+                    repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
                 self.activation_dir_path = Path(path).parent
         self.store_objects: dict[int, StoreLike] = {}
         self.num_samples = 0
@@ -45,9 +47,11 @@ class ActivationLoader:
                 read_only=True,
             )
             self.store_objects[i] = store
-            self.num_samples += zarr.open(store, mode="r")["activations"]["layer_0"].shape[0]
+            self.num_samples += zarr.open(store,
+                                          mode="r")["activations"]["layer_0"].shape[0]
 
-        assert len(self.store_objects) == len(self._get_file_list()), "Not all files are loaded."
+        assert len(self.store_objects) == len(
+            self._get_file_list()), "Not all files are loaded."
         z = zarr.open(self.store_objects[0], mode="r")
         self.samples_per_file = z["activations"]["layer_0"].shape[0]
 
@@ -94,13 +98,15 @@ class ActivationLoader:
 
         if layer_idx != -1:
             return torch.tensor(
-                z["activations"][f"layer_{layer_idx}"][local_sample_id, pos_slice, :],
+                z["activations"][f"layer_{layer_idx}"][local_sample_id,
+                                                       pos_slice, :],
             ).unsqueeze(1)
 
         return torch.stack(
             [
                 torch.tensor(
-                    z["activations"][f"layer_{layer}"][local_sample_id, pos_slice, :],
+                    z["activations"][f"layer_{layer}"][local_sample_id,
+                                                       pos_slice, :],
                 )
                 for layer in range(len(z["activations"]))
             ],
@@ -149,7 +155,8 @@ class ActivationDataset(IterableDataset):
 
         for idx in worker_indices:
             try:
-                sample_sequence_length = self.activation_loader.get_sample_sequence_length(idx)
+                sample_sequence_length = self.activation_loader.get_sample_sequence_length(
+                    idx)
                 for pos in range(sample_sequence_length):
                     x_up = self.activation_loader.get_activation(
                         idx,
@@ -163,8 +170,10 @@ class ActivationDataset(IterableDataset):
                     )
 
                     # Ensure consistent tensor shapes (squeeze position dim since we're getting single positions)
-                    x_up = x_up.squeeze(0).squeeze(0)  # Remove position and layer dimension
-                    y_down = y_down.squeeze(0).squeeze(0)  # Remove position and layer dimension
+                    # Remove position and layer dimension
+                    x_up = x_up.squeeze(0).squeeze(0)
+                    # Remove position and layer dimension
+                    y_down = y_down.squeeze(0).squeeze(0)
 
                     yield (x_up, y_down)
             except (ValueError, IndexError) as e:
@@ -199,7 +208,8 @@ def partition_loader(
 
 
 def get_train_val_test_datasets(L, k):
-    loader = ActivationLoader(files_to_download=["activations-gemma2-2b-slimpajama-500k_sample10/activations_part_0000.zarr.zip"])
+    loader = ActivationLoader(files_to_download=[
+                              "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"])
     train_indices, val_indices, test_indices = partition_loader(
         num_samples=len(loader),
         train_prop=0.8,
@@ -244,4 +254,3 @@ if __name__ == "__main__":
         print("X shape:", x.shape)
         print("Y shape:", y.shape)
         break
-
