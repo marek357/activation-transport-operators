@@ -78,7 +78,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def _get_param_grid(self) -> Dict[str, List]:
         """Get parameter grid for hyperparameter tuning."""
         if self.method == 'ridge':
-            return {'alpha': [0.1, 1.0, 10.0, 100.0, 1000.0]}
+            return {'alpha': [0.1, 1.0, 10.0, 100.0, 1000.0, 2000.0, 5000.0, 10000.0]}
         elif self.method == 'lasso':
             return {'alpha': [0.01, 0.1, 1.0, 10.0, 100.0]}
         elif self.method == 'elasticnet':
@@ -356,17 +356,17 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
             sample_count = 0
             skipped_samples = 0
+            batch_size = 128
 
             # use dataloader with 8 workers and batches
             dataloader = DataLoader(
-                dataset, batch_size=128, num_workers=8, persistent_workers=True
+                dataset, batch_size=batch_size, num_workers=8, persistent_workers=True
             )
 
             for i, (x_up, y_down) in enumerate(dataloader):
-                # TODO: concat X and y along the batch dimension
                 # Convert PyTorch tensors to numpy and ensure they're 1D vectors
-                x_np = x_up.detach().cpu().numpy().flatten()
-                y_np = y_down.detach().cpu().numpy().flatten()
+                x_np = x_up.detach().cpu().numpy()  # .flatten()
+                y_np = y_down.detach().cpu().numpy()  # .flatten()
 
                 # Check for NaN or inf values
                 if np.any(np.isnan(x_np)) or np.any(np.isinf(x_np)) or \
@@ -376,10 +376,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
                 X_list.append(x_np)
                 y_list.append(y_np)
-                sample_count += 1
+                sample_count += batch_size
 
-                # Progress update every 10k samples instead of 1k
-                if sample_count % 10000 == 0:
+                # Progress update every 10 batches
+                if sample_count % (10 * batch_size) == 0:
                     print(f"  Loaded {sample_count:,} samples...")
 
             if len(X_list) == 0:
@@ -437,7 +437,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                     cv=self.cv_folds,
                     scoring=self.scoring,
                     n_jobs=-1,
-                    verbose=10
+                    verbose=100
                     # random_state=self.random_state
                 )
 
@@ -621,10 +621,14 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
             sample_count = 0
             skipped_samples = 0
+            batch_size = 128
 
-            for i, (x_up, y_down) in enumerate(dataset):
-                x_np = x_up.detach().cpu().numpy().flatten()
-                y_np = y_down.detach().cpu().numpy().flatten()
+            dataloader = DataLoader(
+                dataset, batch_size=batch_size, num_workers=8, persistent_workers=True
+            )
+            for i, (x_up, y_down) in enumerate(dataloader):
+                x_np = x_up.detach().cpu().numpy()
+                y_np = y_down.detach().cpu().numpy()
 
                 # Check for NaN or inf values
                 if np.any(np.isnan(x_np)) or np.any(np.isinf(x_np)) or \
@@ -634,17 +638,19 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
                 X_list.append(x_np)
                 y_list.append(y_np)
-                sample_count += 1
+                sample_count += batch_size
 
                 # Less frequent progress updates
-                if sample_count % 5000 == 0:
+                if sample_count % (batch_size * 10) == 0:
                     print(f"  Loaded {sample_count:,} evaluation samples...")
 
             if len(X_list) == 0:
                 raise ValueError("No valid evaluation samples found")
 
-            X = np.vstack(X_list)
-            y = np.vstack(y_list)
+            # X = np.vstack(X_list)
+            # y = np.vstack(y_list)
+            X = np.concatenate(X_list, axis=0)
+            y = np.concatenate(y_list, axis=0)
 
             load_time = time.time() - start_time
             print(

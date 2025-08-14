@@ -5,14 +5,13 @@ from huggingface_hub import hf_hub_download
 from typing import Generator, Optional, List
 from huggingface_hub import hf_hub_download
 import torch
+from tqdm import tqdm
 import zarr
 from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 from zarr.storage import StoreLike
 
 
 class ActivationLoader:
-    def __init__(self, activation_dir_path: str = None, files_to_download: Optional[List[str]] = None):
-
     def __init__(self, activation_dir_path: str = None, files_to_download: Optional[List[str]] = None):
         self.activation_dir_path = activation_dir_path
         if activation_dir_path is None or not os.path.exists(self.activation_dir_path):
@@ -158,7 +157,7 @@ class ActivationDataset(IterableDataset):
     ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
         worker_indices = self._get_worker_indices()
 
-        for idx in worker_indices:
+        for idx in tqdm(worker_indices, desc="Processing samples for worker"):
             try:
                 sample_sequence_length = self.activation_loader.get_sample_sequence_length(
                     idx)
@@ -220,9 +219,9 @@ def get_train_val_test_datasets(L, k, loader: ActivationLoader):
         test_prop=0.1
     )
 
-    train_dataset = ActivationDataset(loader, train_indices, "i==j", L, k)
-    val_dataset = ActivationDataset(loader, val_indices, "i==j", L, k)
-    test_dataset = ActivationDataset(loader, test_indices, "i==j", L, k)
+    train_dataset = ActivationDataset(loader, train_indices, "j==i", L, k)
+    val_dataset = ActivationDataset(loader, val_indices, "j==i", L, k)
+    test_dataset = ActivationDataset(loader, test_indices, "j==i", L, k)
 
     return train_dataset, val_dataset, test_dataset
 

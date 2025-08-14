@@ -55,7 +55,7 @@ def main(cfg: DictConfig):
             # Initialize transport operator with better convergence settings
             transport_operator = TransportOperator(
                 # Ridge is more stable than ElasticNet
-                method=cfg.get('method', 'elasticnet'),
+                method=cfg.get('method', 'ridge'),
                 # Higher regularization for stability
                 normalize=cfg.get('normalize', False),
                 regularization=cfg.get('regularization', 10.0),
@@ -67,7 +67,7 @@ def main(cfg: DictConfig):
                 cv_folds=cfg.get('cv_folds', 5),
                 random_state=cfg.seed,
                 # Increase iterations for convergence
-                max_iter=cfg.get('max_iter', 5000),
+                max_iter=cfg.get('max_iter', 500),
                 tol=cfg.get('tol', 1e-3)  # Relax tolerance slightly
             )
 
