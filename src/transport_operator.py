@@ -389,10 +389,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             skipped_samples = 0
             batch_size = 128
 
-            # use dataloader with 8 workers and batches
-            dataloader = DataLoader(
-                dataset, batch_size=batch_size, num_workers=8, persistent_workers=True
-            )
+            # use dataloader with 10 workers and batches
+            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
 
             for i, (x_up, y_down) in enumerate(dataloader):
                 # Convert PyTorch tensors to numpy and ensure they're 1D vectors
@@ -658,9 +656,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             skipped_samples = 0
             batch_size = 128
 
-            dataloader = DataLoader(
-                dataset, batch_size=batch_size, num_workers=8, persistent_workers=True
-            )
+            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
             for i, (x_up, y_down) in enumerate(dataloader):
                 x_np = x_up.detach().cpu().numpy()
                 y_np = y_down.detach().cpu().numpy()

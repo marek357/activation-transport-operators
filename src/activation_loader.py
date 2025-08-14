@@ -1,7 +1,6 @@
+import logging
 import os
 from pathlib import Path
-from typing import Generator, Optional, List
-from huggingface_hub import hf_hub_download
 from typing import Generator, Optional, List
 from huggingface_hub import hf_hub_download
 import torch
@@ -10,16 +9,28 @@ import zarr
 from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 from zarr.storage import StoreLike
 
+logger = logging.getLogger(__name__)
+
 
 class ActivationLoader:
-    def __init__(self, activation_dir_path: str = None, files_to_download: Optional[List[str]] = None):
+    def __init__(
+        self,
+        activation_dir_path: str = None,
+        files_to_download: Optional[List[str]] = None,
+    ):
         self.activation_dir_path = activation_dir_path
         if activation_dir_path is None or not os.path.exists(self.activation_dir_path):
             if files_to_download is None:
-                raise ValueError("Either activation_dir_path must be provided or files_to_download must be specified.")
+                raise ValueError(
+                    "Either activation_dir_path must be provided or files_to_download must be specified."
+                )
             # download the path from huggingface
             for file in files_to_download:
-                path = hf_hub_download(repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
+                path = hf_hub_download(
+                    repo_id="TheRootOf3/ato-activations",
+                    filename=file,
+                    repo_type="dataset",
+                )
                 self.activation_dir_path = Path(path).parent
         self.store_objects: dict[int, StoreLike] = {}
         self.num_samples = 0
@@ -34,7 +45,7 @@ class ActivationLoader:
         return (idx // self.samples_per_file, idx % self.samples_per_file)
 
     def _get_file_list(self) -> list[str]:
-        return os.listdir(self.activation_dir_path)
+        return sorted(os.listdir(self.activation_dir_path))
 
     def __len__(self) -> int:
         return self.num_samples
@@ -48,9 +59,13 @@ class ActivationLoader:
                 read_only=True,
             )
             self.store_objects[i] = store
-            self.num_samples += zarr.open(store, mode="r")["activations"]["layer_0"].shape[0]
+            self.num_samples += zarr.open(store, mode="r")["activations"][
+                "layer_0"
+            ].shape[0]
 
-        assert len(self.store_objects) == len(self._get_file_list()), "Not all files are loaded."
+        assert len(self.store_objects) == len(self._get_file_list()), (
+            "Not all files are loaded."
+        )
         z = zarr.open(self.store_objects[0], mode="r")
         self.samples_per_file = z["activations"]["layer_0"].shape[0]
 
@@ -155,12 +170,15 @@ class ActivationDataset(IterableDataset):
 
         for idx in tqdm(
             worker_indices,
-            desc="Processing samples for " + str(f"worker id: {worker_id} (out of {num_workers})")
+            desc="Processing sequence activations for "
+            + str(f"worker id: {worker_id} (out of {num_workers})")
             if worker_id != -1
             else "the main process",
         ):
             try:
-                sample_sequence_length = self.activation_loader.get_sample_sequence_length(idx)
+                sample_sequence_length = (
+                    self.activation_loader.get_sample_sequence_length(idx)
+                )
                 for pos in range(sample_sequence_length):
                     x_up = self.activation_loader.get_activation(
                         idx,
@@ -181,8 +199,9 @@ class ActivationDataset(IterableDataset):
 
                     yield (x_up, y_down)
             except (ValueError, IndexError) as e:
-                # TODO: Replace with logging
-                print(f"Warning: Skipping sample {idx} due to error: {e}")
+                logger.warning(
+                    "Skipping sample %d due to error: %s", idx, str(e), exc_info=True
+                )
                 continue
 
     def __iter__(self):
@@ -211,7 +230,9 @@ def partition_loader(
     return train_indices, val_indices, test_indices
 
 
-def get_train_val_test_datasets(L: int, k: int, loader: ActivationLoader, j_policy: str = "j==i"):
+def get_train_val_test_datasets(
+    L: int, k: int, loader: ActivationLoader, j_policy: str = "j==i"
+):
     train_indices, val_indices, test_indices = partition_loader(
         num_samples=len(loader), train_prop=0.8, val_prop=0.1, test_prop=0.1
     )
