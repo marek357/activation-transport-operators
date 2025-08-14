@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from transformers import set_seed
 
-from src.activation_loader import ActivationDataset, ActivationLoader, partition_loader
+from src.activation_loader import ActivationDataset, ActivationLoader, get_train_val_test_datasets
 from src.sae_loader import load_sae_from_cfg
 
 logger = logging.getLogger(__name__)
@@ -448,13 +448,8 @@ def run_experiment(
 ) -> dict[tuple[int, int, str, int], dict[str, float]]:
     """Run evaluation of transport operators on SAE features."""
     results = {}
-    _, _, test_idx = partition_loader(
-        len(activation_loader),
-        *(0.8, 0.1, 0.1),
-    )
 
     logger.info("Using device: %s", device)
-    logger.info("Evaluating on %d test samples", len(test_idx))
 
     for layer_l in chosen_layers:
         for k in k_list:
@@ -471,13 +466,14 @@ def run_experiment(
                     )
                     continue
 
-                dataset = ActivationDataset(
-                    activation_loader,
-                    test_idx,
-                    j_policy,
+                _, _, dataset = get_train_val_test_datasets(
                     layer_l,
                     k,
+                    activation_loader,
+                    j_policy,
                 )
+                logger.info("Evaluating on %d test samples", len(dataset.idx_list))
+
                 dataloader = torch.utils.data.DataLoader(
                     dataset,
                     batch_size=val_batch_size,

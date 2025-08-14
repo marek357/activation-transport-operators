@@ -16,13 +16,10 @@ class ActivationLoader:
         self.activation_dir_path = activation_dir_path
         if activation_dir_path is None or not os.path.exists(self.activation_dir_path):
             if files_to_download is None:
-                raise ValueError(
-                    "Either activation_dir_path must be provided or files_to_download must be specified.")
+                raise ValueError("Either activation_dir_path must be provided or files_to_download must be specified.")
             # download the path from huggingface
             for file in files_to_download:
-                path = hf_hub_download(
-                    repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset"
-                )
+                path = hf_hub_download(repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
                 self.activation_dir_path = Path(path).parent
         self.store_objects: dict[int, StoreLike] = {}
         self.num_samples = 0
@@ -51,11 +48,9 @@ class ActivationLoader:
                 read_only=True,
             )
             self.store_objects[i] = store
-            self.num_samples += zarr.open(store,
-                                          mode="r")["activations"]["layer_0"].shape[0]
+            self.num_samples += zarr.open(store, mode="r")["activations"]["layer_0"].shape[0]
 
-        assert len(self.store_objects) == len(
-            self._get_file_list()), "Not all files are loaded."
+        assert len(self.store_objects) == len(self._get_file_list()), "Not all files are loaded."
         z = zarr.open(self.store_objects[0], mode="r")
         self.samples_per_file = z["activations"]["layer_0"].shape[0]
 
@@ -102,15 +97,13 @@ class ActivationLoader:
 
         if layer_idx != -1:
             return torch.tensor(
-                z["activations"][f"layer_{layer_idx}"][local_sample_id,
-                                                       pos_slice, :],
+                z["activations"][f"layer_{layer_idx}"][local_sample_id, pos_slice, :],
             ).unsqueeze(1)
 
         return torch.stack(
             [
                 torch.tensor(
-                    z["activations"][f"layer_{layer}"][local_sample_id,
-                                                       pos_slice, :],
+                    z["activations"][f"layer_{layer}"][local_sample_id, pos_slice, :],
                 )
                 for layer in range(len(z["activations"]))
             ],
@@ -133,8 +126,8 @@ class ActivationDataset(IterableDataset):
         self.L = L
         self.k = k
 
-    def _get_worker_indices(self) -> list[int]:
-        """Get the subset of indices that this worker should process."""
+    def _get_worker_indices(self) -> tuple[list[int], int]:
+        """Get the subset of indices that this worker should process ."""
         worker_info = get_worker_info()
         if worker_info is None:
             # Single-process data loading, return all indices
@@ -156,11 +149,18 @@ class ActivationDataset(IterableDataset):
         self,
     ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
         worker_indices = self._get_worker_indices()
+        worker_info = get_worker_info()
+        worker_id = worker_info.id if worker_info else -1
+        num_workers = worker_info.num_workers if worker_info else 0
 
-        for idx in tqdm(worker_indices, desc="Processing samples for worker"):
+        for idx in tqdm(
+            worker_indices,
+            desc="Processing samples for " + str(f"worker id: {worker_id} (out of {num_workers})")
+            if worker_id != -1
+            else "the main process",
+        ):
             try:
-                sample_sequence_length = self.activation_loader.get_sample_sequence_length(
-                    idx)
+                sample_sequence_length = self.activation_loader.get_sample_sequence_length(idx)
                 for pos in range(sample_sequence_length):
                     x_up = self.activation_loader.get_activation(
                         idx,
@@ -211,17 +211,14 @@ def partition_loader(
     return train_indices, val_indices, test_indices
 
 
-def get_train_val_test_datasets(L, k, loader: ActivationLoader):
+def get_train_val_test_datasets(L: int, k: int, loader: ActivationLoader, j_policy: str = "j==i"):
     train_indices, val_indices, test_indices = partition_loader(
-        num_samples=len(loader),
-        train_prop=0.8,
-        val_prop=0.1,
-        test_prop=0.1
+        num_samples=len(loader), train_prop=0.8, val_prop=0.1, test_prop=0.1
     )
 
-    train_dataset = ActivationDataset(loader, train_indices, "j==i", L, k)
-    val_dataset = ActivationDataset(loader, val_indices, "j==i", L, k)
-    test_dataset = ActivationDataset(loader, test_indices, "j==i", L, k)
+    train_dataset = ActivationDataset(loader, train_indices, j_policy, L, k)
+    val_dataset = ActivationDataset(loader, val_indices, j_policy, L, k)
+    test_dataset = ActivationDataset(loader, test_indices, j_policy, L, k)
 
     return train_dataset, val_dataset, test_dataset
 
