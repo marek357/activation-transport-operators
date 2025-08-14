@@ -18,7 +18,8 @@ class ActivationLoader:
             # download the path from huggingface
             for file in files_to_download:
                 path = hf_hub_download(
-                    repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset")
+                    repo_id="TheRootOf3/ato-activations", filename=file, repo_type="dataset"
+                )
                 self.activation_dir_path = Path(path).parent
         self.store_objects: dict[int, StoreLike] = {}
         self.num_samples = 0
@@ -207,9 +208,7 @@ def partition_loader(
     return train_indices, val_indices, test_indices
 
 
-def get_train_val_test_datasets(L, k):
-    loader = ActivationLoader(files_to_download=[
-                              "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"])
+def get_train_val_test_datasets(L, k, loader: ActivationLoader):
     train_indices, val_indices, test_indices = partition_loader(
         num_samples=len(loader),
         train_prop=0.8,

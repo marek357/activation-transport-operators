@@ -6,6 +6,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler
 from typing import Union, Tuple, Optional, Dict, Any, List
 from src.activation_loader import ActivationDataset
+from torch.utils.data import DataLoader
 import warnings
 import time
 import os
@@ -21,19 +22,21 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     (upstream) to another layer (downstream) in a neural network's residual stream.
     """
 
-    def __init__(self,
-                 method: str = 'ridge',
-                 regularization: Optional[float] = None,
-                 l1_ratio: Optional[float] = 0.1,
-                 normalize: bool = True,
-                 auto_tune: bool = True,
-                 cv_folds: int = 5,
-                 scoring: str = 'r2',
-                 random_state: Optional[int] = 42,
-                 max_iter: int = 5000,
-                 tol: float = 1e-3,
-                 cache_dir: Optional[str] = None,
-                 use_cache: bool = True):
+    def __init__(
+        self,
+        method: str = 'ridge',
+        regularization: Optional[float] = None,
+        l1_ratio: Optional[float] = 0.1,
+        normalize: bool = False,
+        auto_tune: bool = True,
+        cv_folds: int = 5,
+        scoring: str = 'r2',
+        random_state: Optional[int] = 42,
+        max_iter: int = 5000,
+        tol: float = 1e-3,
+        cache_dir: Optional[str] = None,
+        use_cache: bool = True
+    ):
         """
         Initialize the transport operator.
 
@@ -354,7 +357,13 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             sample_count = 0
             skipped_samples = 0
 
-            for i, (x_up, y_down) in enumerate(dataset):
+            # use dataloader with 8 workers and batches
+            dataloader = DataLoader(
+                dataset, batch_size=128, num_workers=8, persistent_workers=True
+            )
+
+            for i, (x_up, y_down) in enumerate(dataloader):
+                # TODO: concat X and y along the batch dimension
                 # Convert PyTorch tensors to numpy and ensure they're 1D vectors
                 x_np = x_up.detach().cpu().numpy().flatten()
                 y_np = y_down.detach().cpu().numpy().flatten()
@@ -377,8 +386,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 raise ValueError("No valid samples found in the dataset")
 
             # Convert lists to numpy arrays
-            X = np.vstack(X_list)
-            y = np.vstack(y_list)
+            # X = np.vstack(X_list)
+            # y = np.vstack(y_list)
+            X = np.concatenate(X_list, axis=0)
+            y = np.concatenate(y_list, axis=0)
 
             load_time = time.time() - start_time
             print(

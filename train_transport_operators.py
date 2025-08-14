@@ -3,7 +3,7 @@ import random
 import socket
 from typing import Any, cast
 from src.transport_operator import TransportOperator
-from src.activation_loader import get_train_val_test_datasets
+from src.activation_loader import ActivationLoader, get_train_val_test_datasets
 
 import hydra
 import numpy as np
@@ -40,22 +40,28 @@ def main(cfg: DictConfig):
     logging.info(cfg)
 
     transport_operators = {}
+    loader = ActivationLoader(
+        files_to_download=[
+            "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
+        ]
+    )
     for L in cfg.experiment.L:
         for k in cfg.experiment.k:
             logging.info(f"Training transport operator for L={L}, k={k}")
-
             train_dataset, val_dataset, test_dataset = get_train_val_test_datasets(
-                L, k)
+                L, k, loader
+            )
 
             # Initialize transport operator with better convergence settings
             transport_operator = TransportOperator(
                 # Ridge is more stable than ElasticNet
                 method=cfg.get('method', 'elasticnet'),
                 # Higher regularization for stability
+                normalize=cfg.get('normalize', False),
                 regularization=cfg.get('regularization', 10.0),
                 # Less L1, more L2 for ElasticNet
                 l1_ratio=cfg.get('l1_ratio', 0.1),
-                normalize=True,  # Enable normalization to prevent overflow
+                # normalize=True,  # Enable normalization to prevent overflow
                 auto_tune=cfg.get('auto_tune', True),
                 # Reduce CV folds for faster training
                 cv_folds=cfg.get('cv_folds', 5),
