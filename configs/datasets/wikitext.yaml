@@ -1,4 +1,6 @@
 # Dataset configuration
 dataset_name: "wikitext"
 dataset_config: "wikitext-2-raw-v1"
+dataset_data_dir: null
+text_column_name: "text"
 dataset_split: "train"
