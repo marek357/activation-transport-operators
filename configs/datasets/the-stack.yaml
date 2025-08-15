@@ -1,0 +1,6 @@
+# Use different dataset for variety
+dataset_name: "bigcode/the-stack"
+dataset_config: null
+dataset_data_dir: data/json
+text_column_name: "content"
+dataset_split: "train"
