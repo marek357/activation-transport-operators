@@ -1,0 +1,68 @@
+# Configuration for running orthogonal complement analysis
+# Add this to your eval config to enable orthogonal complement testing
+
+# Example config for matched rank analysis with orthogonal complement test
+defaults:
+  - _self_
+
+experiment_name: "orthogonal_complement_study"
+activation_dtype: "float16"
+seed: 42
+
+# Enable matched rank analysis
+run_matched_rank: true
+matched_rank_only: false  # Set to true if you only want this analysis
+
+# Matched rank configuration with orthogonal complement testing
+matched_rank:
+  # Ranks to evaluate for both PCA and transport operators
+  ranks: [8, 16, 32, 64, 128]
+  
+  # Regularization strengths to try for transport operators
+  alpha_grid: [0.01, 0.1, 1.0, 10.0]
+  
+  # ORTHOGONAL COMPLEMENT TEST: ranks for testing signal beyond PCA
+  # These are the ranks used for PCA projection in orthogonal complement analysis
+  # E.g., [16, 32] means:
+  # - Test signal orthogonal to top-16 PCA components
+  # - Test signal orthogonal to top-32 PCA components
+  orthogonal_test_ranks: [16, 32, 64]
+  
+  # Limit samples for computational efficiency (optional)
+  max_samples: 2000
+  
+  # Generate visualization plots
+  generate_plots: true
+
+# Your usual evaluation configuration
+eval:
+  Ls: [6]  # Start with one layer for testing
+  ks: [6]  # One offset
+  j_policy: ["j==i"]  # One policy
+  
+  val_batch_size: 32
+  
+  decoders:
+    normalize: true
+  
+  scoring:
+    include_residual_metrics: false  # Focus on SAE feature metrics
+
+# SAE configuration (adjust paths as needed)
+sae:
+  # Your SAE configuration here
+  repo_id: "your_sae_repo"
+  filename: "your_sae_file.pt"
+  layer: 6  # Will be overridden per layer
+
+# Activation data
+activation_dir: "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
+
+# Outputs
+output_dir: "outputs/orthogonal_study"
+
+# Logging
+logger:
+  project: "activation-transport-operators"
+  entity: "your_wandb_entity"
+  wandb_mode: "online"  # or "disabled" for no wandb

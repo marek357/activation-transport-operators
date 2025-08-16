@@ -54,6 +54,8 @@ def main(cfg: DictConfig):
 
             # Initialize transport operator with better convergence settings
             transport_operator = TransportOperator(
+                L=L,
+                k=k,
                 # Ridge is more stable than ElasticNet
                 method=cfg.get('method', 'ridge'),
                 # Higher regularization for stability

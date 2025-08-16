@@ -322,7 +322,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 if removed_count == 0:
                     print("No cache files found for the specified dataset.")
                 else:
-                    print(f"Cleared {removed_count} cache file(s) for dataset.")
+                    print(
+                        f"Cleared {removed_count} cache file(s) for dataset.")
             else:
                 # Clear all cache files
                 cache_files = [
@@ -363,7 +364,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         # Check for cached model first
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(
+                self.cache_dir, model_cache_filename)
             print(f"Checking for cached model: {model_cache_path}")
 
             if self._load_model_cache(model_cache_path):
@@ -390,7 +392,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             batch_size = 128
 
             # use dataloader with 10 workers and batches
-            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
+            dataloader = DataLoader(
+                dataset, batch_size=batch_size, num_workers=8)
 
             for i, (x_up, y_down) in enumerate(dataloader):
                 # Convert PyTorch tensors to numpy and ensure they're 1D vectors
@@ -458,7 +461,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         if self.auto_tune and self.method != "linear":
             param_grid = self._get_param_grid()
             if param_grid:
-                print(f"Starting hyperparameter tuning for {self.method} regression...")
+                print(
+                    f"Starting hyperparameter tuning for {self.method} regression...")
                 print(f"  Parameter grid: {param_grid}")
                 print(f"  CV folds: {self.cv_folds}")
 
@@ -501,7 +505,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         # Save trained model to cache if enabled
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(
+                self.cache_dir, model_cache_filename)
             self._save_model_cache(model_cache_path)
 
         total_time = time.time() - start_time
@@ -634,7 +639,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             Dictionary with evaluation metrics
         """
         if not self.is_fitted_:
-            raise ValueError("Transport operator must be fitted before evaluation")
+            raise ValueError(
+                "Transport operator must be fitted before evaluation")
 
         start_time = time.time()
 
@@ -656,7 +662,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             skipped_samples = 0
             batch_size = 128
 
-            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
+            dataloader = DataLoader(
+                dataset, batch_size=batch_size, num_workers=8)
             for i, (x_up, y_down) in enumerate(dataloader):
                 x_np = x_up.detach().cpu().numpy()
                 y_np = y_down.detach().cpu().numpy()
@@ -712,7 +719,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
         # Print per-output summary if multi-output
         if "num_outputs" in metrics:
-            print(f"  Multi-output summary ({metrics['num_outputs']} outputs):")
+            print(
+                f"  Multi-output summary ({metrics['num_outputs']} outputs):")
             print(
                 f"    R² per output - Mean: {metrics['r2_per_output_mean']:.4f}, "
                 f"Std: {metrics['r2_per_output_std']:.4f}, "
@@ -776,7 +784,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         """Return the coefficient of determination R^2 of the prediction."""
         if not self.is_fitted_:
-            raise ValueError("Transport operator must be fitted before scoring")
+            raise ValueError(
+                "Transport operator must be fitted before scoring")
 
         X_score = X.copy()
         if self.normalize and self.scaler_X is not None:
@@ -813,3 +822,187 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             [f"{k}={v}" for k, v in self.get_params().items() if v is not None]
         )
         return f"TransportOperator({params})"
+
+
+class PCABaselineTransportOperator(TransportOperator):
+    """
+    Baseline transport operator that runs PCA of the downstream residual stream vector to analyse how many principal components are needed to explain the variance.
+    """
+
+    def __init__(self, L: int, k: int, n_components: Optional[int] = None, **kwargs):
+        """
+        Initialize the PCA baseline transport operator.
+
+        Args:
+            L: Layer number
+            k: Offset for the target layer
+            n_components: Number of principal components to keep (if None, all components are kept)
+            **kwargs: Additional parameters for TransportOperator
+        """
+        super().__init__(L, k, method="PCA", **kwargs)
+        self.n_components = n_components
+
+    def fit(self, dataset: ActivationDataset) -> "PCABaselineTransportOperator":
+        """
+        Fit the PCA baseline transport operator on downstream vectors.
+
+        Args:
+            dataset: ActivationDataset containing upstream-downstream vector pairs.
+
+        Returns:
+            self: Fitted PCA baseline on the downstream vectors only.
+        """
+
+        start_time = time.time()
+
+        # Check for cached model first
+        if self.use_cache:
+            model_cache_filename = self._get_model_cache_filename(dataset)
+            model_cache_path = os.path.join(
+                self.cache_dir, model_cache_filename)
+            print(f"Checking for cached PCA model: {model_cache_path}")
+
+            if self._load_model_cache(model_cache_path):
+                total_time = time.time() - start_time
+                print(f"PCA model loaded from cache in {total_time:.2f}s")
+                return self
+
+        # Load downstream vectors from dataset
+        print("Loading downstream vectors from dataset...")
+        y_list = []
+
+        sample_count = 0
+        skipped_samples = 0
+        batch_size = 128
+
+        dataloader = DataLoader(
+            dataset, batch_size=batch_size, num_workers=8)
+
+        for i, (x_up, y_down) in enumerate(dataloader):
+            y_np = y_down.detach().cpu().numpy()
+
+            # Check for NaN or inf values
+            if np.any(np.isnan(y_np)) or np.any(np.isinf(y_np)):
+                skipped_samples += 1
+                continue
+
+            y_list.append(y_np)
+            sample_count += batch_size
+
+            # Progress update every 10 batches
+            if sample_count % (10 * batch_size) == 0:
+                print(f"  Loaded {sample_count:,} samples...")
+
+        if len(y_list) == 0:
+            raise ValueError("No valid samples found in the dataset")
+
+        # Concatenate all batches into a single array
+        y = np.concatenate(y_list, axis=0)
+
+        load_time = time.time() - start_time
+        print(
+            f"Data loading complete: {sample_count:,} samples loaded ({skipped_samples} skipped)"
+        )
+        print(f"  y shape: {y.shape}")
+        print(f"  Loading time: {load_time:.2f}s")
+
+        # Save to cache if enabled
+        if self.use_cache:
+            cache_filename = self._get_cache_filename(dataset)
+            cache_path = os.path.join(self.cache_dir, cache_filename)
+            self._save_cache(None, y, cache_path)
+
+        # Fit PCA on the downstream vectors
+        from sklearn.decomposition import PCA
+
+        print("Fitting PCA on downstream vectors...")
+        self.model = PCA(n_components=self.n_components)
+        self.model.fit(y)
+
+        self.is_fitted_ = True
+
+        return self
+
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """
+        Apply PCA dimensionality reduction to downstream vectors.
+
+        Args:
+            X: Downstream residual stream vectors, shape (n_samples, n_features_downstream)
+
+        Returns:
+            Transformed downstream vectors, shape (n_samples, n_components)
+        """
+        if not self.is_fitted_:
+            raise ValueError("PCA transport operator must be fitted first")
+
+        X = np.asarray(X)
+        if X.ndim != 2:
+            raise ValueError("X must be a 2D array")
+
+        # Apply PCA transformation
+        y_pred = self.model.transform(X)
+
+        return y_pred
+
+    @property
+    def explained_variance_ratio(self) -> np.ndarray:
+        """
+        Get the explained variance ratio of each principal component.
+
+        Returns:
+            Explained variance ratio, shape (n_components,)
+        """
+        if not self.is_fitted_:
+            raise ValueError("PCA transport operator must be fitted first")
+
+        return self.model.explained_variance_ratio_
+
+
+class IdentityBaselineTransportOperator(TransportOperator):
+    """
+    Baseline transport operator that simply returns the upstream vectors as they are.
+    This is useful for comparing against more complex models.
+    """
+
+    def __init__(self, L: int, k: int, **kwargs):
+        """
+        Initialize the Identity baseline transport operator.
+
+        Args:
+            L: Layer number
+            k: Offset for the target layer
+            **kwargs: Additional parameters for TransportOperator
+        """
+        super().__init__(L, k, method="identity", **kwargs)
+        self.is_fitted_ = True  # Identity operator does not require fitting
+
+    def fit(self, dataset: ActivationDataset) -> "IdentityBaselineTransportOperator":
+        """
+        Fit the identity transport operator on downstream vectors.
+
+        Args:
+            dataset: ActivationDataset containing upstream-downstream vector pairs.
+
+        Returns:
+            self: Fitted identity transport operator (no actual fitting needed).
+        """
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict downstream vectors by returning upstream vectors as they are.
+
+        Args:
+            X: Upstream residual stream vectors, shape (n_samples, n_features_upstream)
+
+        Returns:
+            Predicted downstream vectors, shape (n_samples, n_features_upstream)
+        """
+
+        X = np.asarray(X)
+        if X.ndim != 2:
+            raise ValueError("X must be a 2D array")
+
+        return X

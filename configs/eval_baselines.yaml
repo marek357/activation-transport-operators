@@ -1,0 +1,48 @@
+# Evaluation configuration with baselines enabled
+defaults:
+  - _self_
+  - logger: wandb_disabled
+  - model: gemma_2_2b
+  - sae: residual_stream
+
+# Global
+seed: 42
+experiment_name: eval_transport_baselines
+
+# Evaluation mode: "baselines", "operators", or "maps"
+eval_mode: baselines
+
+# Evaluation parameters
+eval:
+  # List of layers to evaluate
+  Ls: [0]
+  
+  # List of k values (layer offsets)
+  ks: [1, 2]
+  
+  # List of j_policy values
+  j_policy: ["j==i"]
+  
+  # Decoder configuration
+  decoders:
+    normalize: true
+    device: auto
+  
+  # Scoring configuration
+  scoring:
+    include_residual_metrics: true
+  
+  val_batch_size: 64
+
+# Baseline transport operators configuration
+baselines:
+  # Enable PCA baseline transport operator
+  enable_pca: true
+  # Number of PCA components (null = all components, int = specific number)
+  pca_n_components: 50
+  
+  # Enable Identity baseline transport operator  
+  enable_identity: true
+
+activation_dir: ./activations-gemma2-2b-slimpajama-500k
+activation_dtype: float16

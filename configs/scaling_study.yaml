@@ -1,0 +1,28 @@
+defaults:
+  - _self_
+  - logger: wandb_disabled
+  - model: gemma_2_2b
+  - sae: residual_stream
+  - experiment: residual_stream
+
+# Global
+seed: 42
+experiment_name: scaling_study
+
+# Scaling study specific configuration
+scaling_study:
+  # Data fractions to test (what percentage of training data to use)
+  data_fractions: [0.1, 0.25, 0.5, 0.75, 1.0]
+  
+  # Alternative configuration for more fine-grained analysis
+  # data_fractions: [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+# Transport operator configuration
+method: ridge
+normalize: false
+regularization: 10.0
+l1_ratio: 0.1
+auto_tune: true
+cv_folds: 5
+max_iter: 500
+tol: 0.001
