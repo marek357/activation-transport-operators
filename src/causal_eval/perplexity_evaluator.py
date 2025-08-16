@@ -87,6 +87,13 @@ class PerplexityEvaluator:
             split=dataset_cfg.get("dataset_split", "test"),
             streaming=True,
         )
+        if (
+            self.cfg.causal_eval.get("skip_initial_n_samples_from_dataset", None)
+            is not None
+        ):
+            dataset = dataset.skip(
+                self.cfg.causal_eval.skip_initial_n_samples_from_dataset
+            )
         return dataset
 
     def _compute_log_perplexity_single(
