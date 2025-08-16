@@ -1,0 +1,13 @@
+max_samples: 5
+max_length: 256
+js: 
+  - [10]
+  - [50]
+  - [100]
+
+
+L: 2
+k: 1
+j_policy: "j==i"
+
+cache_dir: "./cache"                # Directory containing pre-trained transport operators
