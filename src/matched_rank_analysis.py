@@ -193,7 +193,40 @@ def variance_weighted_r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
         y_pred: Predicted values [n_samples, n_features]
 
     Returns:
-        Variance-weighted R^2 score
+    Compute a variance-weighted multi-output R² score, robust to low-variance dimensions.
+
+    This metric is designed for multi-output regression tasks where each output dimension
+    may have a different variance. Standard R² (as in sklearn) averages R² across dimensions,
+    which can cause low-variance dimensions to dominate the mean R², even if they are not
+    meaningful. This function instead weights each dimension's R² by its variance in the
+    true data, so that high-variance (more informative) outputs contribute more to the
+    overall score.
+
+    Mathematical formulation:
+        For each output dimension d:
+            R²_d = 1 - SSE_d / (SST_d + eps)
+            where SSE_d = sum_i (y_true[i, d] - y_pred[i, d])²
+                  SST_d = sum_i (y_true[i, d] - mean(y_true[:, d]))²
+        The variance weight for dimension d is:
+            w_d = SST_d / sum_j SST_j
+        The final score is:
+            weighted_R² = sum_d w_d * R²_d
+        Only dimensions with SST_d > eps are included (to avoid division by zero).
+
+    When to use:
+        - Prefer this metric over standard R² when output dimensions have very different
+          variances, or when you want the score to reflect performance on high-variance
+          (more important) outputs.
+        - This is especially useful in neuroscience, genomics, or other domains where
+          some outputs are much noisier or less informative than others.
+        - Use standard R² if all outputs are equally important and have similar variance.
+
+    Args:
+        y_true: True target values [n_samples, n_features]
+        y_pred: Predicted values [n_samples, n_features]
+
+    Returns:
+        Variance-weighted R² score (float)
     """
     y_true = np.asarray(y_true, dtype=np.float64)  # Use double precision
     y_pred = np.asarray(y_pred, dtype=np.float64)
