@@ -9,14 +9,26 @@ defaults:
 seed: 42
 experiment_name: eval_transport_operators
 
+# Evaluation mode: "baselines", "pretrained", or "dummy"
+eval_mode: pretrained
+
+
+# Matched-rank specific settings
+matched_rank:
+  ranks: [8, 16, 64, 128, 256, 512, 1024, 2048, 2304]
+  alpha_grid: [1500.0]
+  orthogonal_test_ranks: [16, 32, 64]
+  # max_samples: 5000
+  generate_plots: true
+
 
 # Evaluation parameters
 eval:
   # List of layers to evaluate
-  Ls: [0]
+  Ls: [10, 11, 12]
   
   # List of k values (layer offsets)
-  ks: [1, 2, 3]
+  ks: [3, 5, 8]
   
   # List of j_policy values
   j_policy: ["j==i"]
@@ -32,5 +44,19 @@ eval:
   
   val_batch_size: 128
 
-activation_dir: ./activations-gemma2-2b-slimpajama-500k
+run_matched_rank: true
+matched_rank_only: true
+
+# Baseline transport operators configuration
+baselines:
+  # Enable PCA baseline transport operator
+  enable_pca: true
+  # Number of PCA components (null = all components)
+  pca_n_components: null
+  
+  # Enable Identity baseline transport operator  
+  enable_identity: false
+
+activation_dir: "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
+
 activation_dtype: float16

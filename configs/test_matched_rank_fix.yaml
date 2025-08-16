@@ -1,0 +1,47 @@
+# Quick test config for the fixed matched-rank analysis
+defaults:
+  - _self_
+  - logger: wandb_disabled
+  - model: gemma_2_2b
+  - sae: residual_stream
+
+# Global
+seed: 42
+experiment_name: test_matched_rank_fix
+
+# Evaluation mode
+eval_mode: pretrained
+
+run_matched_rank: true
+matched_rank_only: true
+
+# Minimal matched-rank settings for quick testing
+matched_rank:
+  ranks: [8, 16, 32]  # Just 3 ranks
+  alpha_grid: [1.0, 10.0]  # Just 2 alpha values
+  orthogonal_test_ranks: []  # Skip orthogonal test for this quick test
+  max_samples: 200  # Very small sample size for speed
+  generate_plots: false
+
+# Minimal evaluation parameters
+eval:
+  Ls: [10]  # Just one layer
+  ks: [1]   # Just one offset
+  j_policy: ["j==i"]
+  
+  decoders:
+    normalize: true
+    device: auto
+  
+  scoring:
+    include_residual_metrics: false
+  
+  val_batch_size: 32
+
+# Baselines (optional)
+baselines:
+  enable_pca: false
+  enable_identity: false
+
+activation_dir: "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
+activation_dtype: float16
