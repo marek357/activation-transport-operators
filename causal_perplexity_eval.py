@@ -49,15 +49,15 @@ def load_transport_operator(
 
 def print_evaluation_results(results: Dict[str, PerplexityResult]) -> None:
     """Print evaluation results in a formatted table."""
-    print("\n" + "=" * 80)
+    print("\n" + "=" * 100)
     print("EVALUATION RESULTS")
-    print("=" * 80)
+    print("=" * 100)
 
     # Print header
     print(
         f"{'Method':<40} {'Log PPL':<10} {'Change':<10} {'Sequences':<10} {'Tokens':<12} {'Avg Len':<8}"
     )
-    print("-" * 80)
+    print("-" * 100)
 
     baseline_log_ppl = results["baseline"].log_perplexity
 
@@ -80,12 +80,10 @@ def print_evaluation_results(results: Dict[str, PerplexityResult]) -> None:
             f"{result.num_sequences:>8,}   {result.total_tokens:>10,}   {avg_seq_length:6.1f}"
         )
 
-    print("=" * 80)
+    print("=" * 100)
 
 
-@hydra.main(
-    version_base=None, config_path="configs", config_name="perplexity_eval_single_js"
-)
+@hydra.main(version_base=None, config_path="configs", config_name="causal_eval")
 def main(cfg: DictConfig):
     """Main evaluation function."""
     load_dotenv()
@@ -119,14 +117,14 @@ def main(cfg: DictConfig):
 
     # Define the two hooks to test
     # Hook 1: Transport intervention (capture from source layer, transport, substitute into target layer)
-    L = cfg.eval.get("L", 0)
-    k = cfg.eval.get("k", 1)
-    js = cfg.eval.get("js", [[1], [50, 100]])
+    L = cfg.causal_eval.get("L", 0)
+    k = cfg.causal_eval.get("k", 1)
+    js = cfg.causal_eval.get("js", [[1], [50, 100]])
 
     transport_operator = load_transport_operator(
         L=L,
         k=k,
-        operators_dir=cfg.eval.get("cache_dir", "./cache"),
+        operators_dir=cfg.causal_eval.get("cache_dir", "./cache"),
     )
 
     intervention_hooks = create_j_hook_family(

@@ -120,8 +120,8 @@ class PerplexityEvaluator:
         """Evaluate with current model state."""
         dataset = self._load_dataset()
         text_column = self.cfg.datasets.get("text_column_name", "text")
-        max_samples = self.cfg.eval.get("max_samples", 1000)
-        max_length = self.cfg.eval.get("max_length", 1024)
+        max_samples = self.cfg.causal_eval.get("max_samples", 1000)
+        max_length = self.cfg.causal_eval.get("max_length", 1024)
 
         total_loss = 0.0
         total_tokens = 0
@@ -130,7 +130,7 @@ class PerplexityEvaluator:
 
         logger.info(f"Evaluating {modification_name}...")
 
-        with tqdm(desc=f"Eval {modification_name}", unit="samples") as pbar:
+        with tqdm(desc="Eval", unit="samples") as pbar:
             for i, sample in enumerate(dataset):
                 if total_samples >= max_samples:
                     break
@@ -151,12 +151,8 @@ class PerplexityEvaluator:
                 input_ids = encodings["input_ids"].to(self.device)
                 attention_mask = encodings["attention_mask"].to(self.device)
 
-                # Check if sequence is long enough for the required positions
-                max_j = max([max(j) for j in self.cfg.eval.js])
-                if input_ids.size(1) <= max_j:
-                    # logging.warning(
-                    #     f"Input sequence is shorter than required: {input_ids.size(1)} <= {max_j}. Skipping."
-                    # )
+                # We only want to process full sequences
+                if input_ids.size(1) < max_length:
                     continue
 
                 try:
