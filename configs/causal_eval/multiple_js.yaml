@@ -10,3 +10,4 @@ k: 1
 j_policy: "j==i"
 
 cache_dir: "./cache"                # Directory containing pre-trained transport operators
+skip_initial_n_samples_from_dataset: 10000
