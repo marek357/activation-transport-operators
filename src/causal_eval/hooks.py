@@ -179,7 +179,7 @@ class TransportHook:
                     return output
                 elif isinstance(output, tuple):
                     modified_output = list(output)
-                    modified_output[0] = output[0]
+                    modified_output[0] = output[0].clone()
                     for j, j_position in enumerate(self.target_j_positions):
                         modified_output[0][:, j_position, :] = transported[:, j, :]
                     return tuple(modified_output)
@@ -212,7 +212,7 @@ def create_j_hook_family(
     target_layer: str,
     js: list[list[int]],
     prefix: str,
-) -> dict[int, TransportHook]:
+) -> dict[str, TransportHook]:
     """Create a family of transport operator hooks for a specific layer."""
     hooks = {}
     for j in js:

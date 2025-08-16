@@ -65,7 +65,7 @@ class PerplexityEvaluator:
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
-        print(f"Model {model_name} loaded successfully with dtype {dtype}.")
+        logger.info(f"Model {model_name} loaded successfully with dtype {dtype}.")
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
