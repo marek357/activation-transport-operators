@@ -136,7 +136,7 @@ def main(cfg: DictConfig):
     )
     ablation_hooks = create_j_hook_family(
         transport_operator,
-        source_layer=f"model.layers.{L + k}",
+        source_layer=None,
         target_layer=f"model.layers.{L + k}",
         js=js,
         prefix="ablation",

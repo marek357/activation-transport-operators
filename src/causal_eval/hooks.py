@@ -139,8 +139,8 @@ class TransportHook:
                     )
                     null_input = torch.zeros(
                         batch_size,
-                        input_features,
                         len(self.target_j_positions),
+                        input_features,
                         dtype=output[0].dtype,
                         device=output[0].device,
                     )
@@ -220,13 +220,13 @@ def create_j_hook_family(
             transport_operator,
             source_layer=source_layer,
             target_layer=target_layer,
-            j_position=j,
+            j_positions=j,
         )
     return hooks
 
 
 def create_transport_hook(
-    transport_operator, source_layer: str, target_layer: str, j_position: int
+    transport_operator, source_layer: str, target_layer: str, j_positions: list[int]
 ) -> TransportHook:
     """Create a transport operator hook that captures from source and transports to target."""
     return TransportHook(
@@ -234,7 +234,7 @@ def create_transport_hook(
         source_layer,
         target_layer,
         transport_operator,
-        j_position,
+        j_positions,
     )
 
 
