@@ -19,7 +19,7 @@ class ActivationLoader:
         files_to_download: Optional[List[str]] = None,
     ):
         self.activation_dir_path = activation_dir_path
-        if activation_dir_path is None or not os.path.exists(self.activation_dir_path):
+        if activation_dir_path is None:
             if files_to_download is None:
                 raise ValueError(
                     "Either activation_dir_path must be provided or files_to_download must be specified."
@@ -32,6 +32,10 @@ class ActivationLoader:
                     repo_type="dataset",
                 )
                 self.activation_dir_path = Path(path).parent
+        elif not os.path.exists(self.activation_dir_path):
+            raise ValueError(
+                f"Activation directory {self.activation_dir_path} does not exist."
+            )
         self.store_objects: dict[int, StoreLike] = {}
         self.num_samples = 0
         self.samples_per_file = 0
@@ -112,13 +116,15 @@ class ActivationLoader:
 
         if layer_idx != -1:
             return torch.tensor(
-                z["activations"][f"layer_{layer_idx}"][local_sample_id, pos_slice, :],
+                z["activations"][f"layer_{layer_idx}"][local_sample_id,
+                                                       pos_slice, :],
             ).unsqueeze(1)
 
         return torch.stack(
             [
                 torch.tensor(
-                    z["activations"][f"layer_{layer}"][local_sample_id, pos_slice, :],
+                    z["activations"][f"layer_{layer}"][local_sample_id,
+                                                       pos_slice, :],
                 )
                 for layer in range(len(z["activations"]))
             ],
@@ -134,12 +140,14 @@ class ActivationDataset(IterableDataset):
         j_policy: str,
         L: int,
         k: int,
+        dataset_id: str = "default",
     ):
         self.activation_loader = activation_loader
         self.idx_list = idx_list
         self.j_policy = j_policy
         self.L = L
         self.k = k
+        self.dataset_id = dataset_id
 
     def _get_worker_indices(self) -> list[int]:
         """Get the subset of indices that this worker should process ."""
@@ -237,9 +245,12 @@ def get_train_val_test_datasets(
         num_samples=len(loader), train_prop=0.8, val_prop=0.1, test_prop=0.1
     )
 
-    train_dataset = ActivationDataset(loader, train_indices, j_policy, L, k)
-    val_dataset = ActivationDataset(loader, val_indices, j_policy, L, k)
-    test_dataset = ActivationDataset(loader, test_indices, j_policy, L, k)
+    train_dataset = ActivationDataset(
+        loader, train_indices, j_policy, L, k, f"train_L{L}_k{k}")
+    val_dataset = ActivationDataset(
+        loader, val_indices, j_policy, L, k, f"val_L{L}_k{k}")
+    test_dataset = ActivationDataset(
+        loader, test_indices, j_policy, L, k, f"test_L{L}_k{k}")
 
     return train_dataset, val_dataset, test_dataset
 
@@ -267,7 +278,8 @@ if __name__ == "__main__":
         val_prop=0.1,
         test_prop=0.1,
     )
-    dataset = ActivationDataset(loader, train_indices, "j==i", 0, 2)
+    dataset = ActivationDataset(
+        loader, train_indices, "j==i", 0, 2, "test_dataset")
     dataloader = DataLoader(dataset, batch_size=4, num_workers=2)
 
     for x, y in dataloader:

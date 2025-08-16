@@ -1,0 +1,70 @@
+# Configuration for matched-rank curves analysis
+# This extends the existing eval configuration to include matched-rank functionality
+
+# To enable matched-rank analysis, add the following to your eval config:
+
+# Enable matched-rank analysis
+run_matched_rank: true
+
+# Run only matched-rank analysis (skip regular evaluation)
+matched_rank_only: false  # Set to true to only run matched-rank analysis
+
+# Matched-rank analysis configuration
+matched_rank:
+  # Ranks to evaluate for both PCA ceiling and transport operators
+  ranks: [8, 16, 32, 64, 128, 190, 256]
+  
+  # Ridge regression regularization strengths to try
+  alpha_grid: [0.01, 0.1, 1.0, 10.0, 100.0]
+  
+  # Ranks for orthogonal complement analysis (optional)
+  orthogonal_test_ranks: [16, 32, 64]
+  
+  # Maximum number of samples per dataset (for computational efficiency)
+  # Set to null to use all samples
+  max_samples: 10000
+  
+  # Whether to generate and display plots
+  generate_plots: true
+
+# Example full config structure:
+defaults:
+  - eval
+  - _self_
+
+experiment_name: "matched_rank_analysis_experiment"
+
+# Enable matched-rank analysis
+run_matched_rank: true
+matched_rank_only: false
+
+# Matched-rank specific settings
+matched_rank:
+  ranks: [8, 16, 32, 64, 128, 256]
+  alpha_grid: [0.1, 1.0, 10.0, 100.0]
+  orthogonal_test_ranks: [16, 32, 64]
+  max_samples: 5000
+  generate_plots: true
+
+# Standard eval settings (required even for matched-rank analysis)
+eval:
+  Ls: [6, 8, 10]  # Source layers
+  ks: [1, 2]      # Target layer offsets (L+k)
+  j_policy: ["random", "top_k"]  # Feature selection policies
+
+# Other required settings...
+activation_dir: "${oc.env:ACTIVATION_DIR}"
+seed: 42
+activation_dtype: "float16"
+
+# Logging configuration
+logger:
+  project: "activation-transport-matched-rank"
+  entity: "${oc.env:WANDB_ENTITY}"
+  wandb_mode: "online"
+
+# SAE configuration (still needed for data loading)
+sae:
+  release: "gpt2-small-res-jb"
+  layer: 6  # Will be overridden for each layer
+  trainer_id: 0
