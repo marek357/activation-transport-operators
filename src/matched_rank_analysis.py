@@ -8,7 +8,46 @@ This module implements the core matched-rank analysis that compares:
 
 The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible 
 rank-r Y-only reconstruction). The gap shows how much of compressible variance 
-is actually predictable from X.
+This module provides tools to analyze the relationship between the variance explained by a rank-r principal component analysis (PCA) reconstruction of target data (the "PCA ceiling") and the variance explained by a rank-r transport operator mapping from source to target data. The key mathematical relationship is:
+
+    R²_T(r) ≤ R²_PCA(r)
+
+where:
+    - R²_PCA(r): The variance explained (R²) by reconstructing Y_test using the top r principal components learned from Y_train.
+    - R²_T(r): The variance explained (R²) by predicting Y_test from X_test using a transport operator (linear regression) constrained to rank r (via SVD truncation).
+
+**Key Concepts:**
+- *PCA ceiling*: The best possible rank-r approximation of Y_test, using only information from Y_train.
+- *Rank-r transport operator*: A linear mapping from X to Y, fit on training data, and truncated to rank r.
+- *Matched-rank analysis*: For each rank r, compare R²_T(r) to R²_PCA(r). The gap between the two curves quantifies how much of the compressible variance in Y is actually predictable from X.
+- *Efficiency ratio*: The ratio R²_T(r) / R²_PCA(r) for each r, indicating the fraction of the best possible (compressible) variance that is predictable from X.
+
+**Expected Usage Pattern:**
+1. Fit PCA on Y_train, and compute R²_PCA(r) for a range of ranks r by reconstructing Y_test.
+2. Fit a transport operator (e.g., linear regression) from X_train to Y_train, truncate to rank r, and compute R²_T(r) by predicting Y_test from X_test.
+3. For each r, compare R²_T(r) and R²_PCA(r). The efficiency ratio R²_T(r) / R²_PCA(r) summarizes how much of the compressible variance in Y is predictable from X.
+
+**Example:**
+
+```python
+from src.matched_rank_analysis import pca_ceiling, fit_transport_rank_r
+
+# Assume x_train, y_train, x_test, y_test are numpy arrays
+ranks = [1, 2, 5, 10, 20]
+
+# Compute PCA ceiling
+pca_results = pca_ceiling(y_train, y_test, ranks)
+# pca_results[r]['r2'] gives R²_PCA(r)
+
+# Compute transport operator R² for each rank
+transport_results = fit_transport_rank_r(
+    x_train, y_train, x_train, y_train, x_test, y_test, ranks, alpha_grid=[0.0]
+)
+# transport_results[r]['r2'] gives R²_T(r)
+
+# Compare R²_T(r) and R²_PCA(r)
+for r in ranks:
+    print(f"Rank {r}: R²_T(r) = {transport_results[r]['r2']:.3f}, R²_PCA(r) = {pca_results[r]['r2']:.3f}, Efficiency = {transport_results[r]['r2']/pca_results[r]['r2']:.2%}")
 """
 from __future__ import annotations
 
