@@ -107,6 +107,7 @@ def main() -> None:
         "--target_dir",
         "-t",
         type=str,
+        required=True,
         help=("Path to the target zarr directory"),
     )
     parser.add_argument(
