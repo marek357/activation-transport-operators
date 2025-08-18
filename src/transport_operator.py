@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.model_selection import GridSearchCV, cross_val_score
@@ -322,8 +323,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 if removed_count == 0:
                     print("No cache files found for the specified dataset.")
                 else:
-                    print(
-                        f"Cleared {removed_count} cache file(s) for dataset.")
+                    print(f"Cleared {removed_count} cache file(s) for dataset.")
             else:
                 # Clear all cache files
                 cache_files = [
@@ -364,8 +364,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         # Check for cached model first
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(
-                self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             print(f"Checking for cached model: {model_cache_path}")
 
             if self._load_model_cache(model_cache_path):
@@ -392,8 +391,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             batch_size = 128
 
             # use dataloader with 10 workers and batches
-            dataloader = DataLoader(
-                dataset, batch_size=batch_size, num_workers=8)
+            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
 
             for i, (x_up, y_down) in enumerate(dataloader):
                 # Convert PyTorch tensors to numpy and ensure they're 1D vectors
@@ -417,6 +415,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 # Progress update every 10 batches
                 if sample_count % (10 * batch_size) == 0:
                     print(f"  Loaded {sample_count:,} samples...")
+
+                # Progress update every 10 batches
+                if sample_count >= 50_000:
+                    break
 
             if len(X_list) == 0:
                 raise ValueError("No valid samples found in the dataset")
@@ -461,8 +463,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         if self.auto_tune and self.method != "linear":
             param_grid = self._get_param_grid()
             if param_grid:
-                print(
-                    f"Starting hyperparameter tuning for {self.method} regression...")
+                print(f"Starting hyperparameter tuning for {self.method} regression...")
                 print(f"  Parameter grid: {param_grid}")
                 print(f"  CV folds: {self.cv_folds}")
 
@@ -505,8 +506,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         # Save trained model to cache if enabled
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(
-                self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             self._save_model_cache(model_cache_path)
 
         total_time = time.time() - start_time
@@ -639,8 +639,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             Dictionary with evaluation metrics
         """
         if not self.is_fitted_:
-            raise ValueError(
-                "Transport operator must be fitted before evaluation")
+            raise ValueError("Transport operator must be fitted before evaluation")
 
         start_time = time.time()
 
@@ -662,8 +661,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             skipped_samples = 0
             batch_size = 128
 
-            dataloader = DataLoader(
-                dataset, batch_size=batch_size, num_workers=8)
+            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
             for i, (x_up, y_down) in enumerate(dataloader):
                 x_np = x_up.detach().cpu().numpy()
                 y_np = y_down.detach().cpu().numpy()
@@ -685,6 +683,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 # Less frequent progress updates
                 if sample_count % (batch_size * 10) == 0:
                     print(f"  Loaded {sample_count:,} evaluation samples...")
+
+                if sample_count >= 50_000:
+                    break
 
             if len(X_list) == 0:
                 raise ValueError("No valid evaluation samples found")
@@ -719,8 +720,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
         # Print per-output summary if multi-output
         if "num_outputs" in metrics:
-            print(
-                f"  Multi-output summary ({metrics['num_outputs']} outputs):")
+            print(f"  Multi-output summary ({metrics['num_outputs']} outputs):")
             print(
                 f"    R² per output - Mean: {metrics['r2_per_output_mean']:.4f}, "
                 f"Std: {metrics['r2_per_output_std']:.4f}, "
@@ -784,8 +784,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         """Return the coefficient of determination R^2 of the prediction."""
         if not self.is_fitted_:
-            raise ValueError(
-                "Transport operator must be fitted before scoring")
+            raise ValueError("Transport operator must be fitted before scoring")
 
         X_score = X.copy()
         if self.normalize and self.scaler_X is not None:
@@ -858,8 +857,7 @@ class PCABaselineTransportOperator(TransportOperator):
         # Check for cached model first
         if self.use_cache:
             model_cache_filename = self._get_model_cache_filename(dataset)
-            model_cache_path = os.path.join(
-                self.cache_dir, model_cache_filename)
+            model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             print(f"Checking for cached PCA model: {model_cache_path}")
 
             if self._load_model_cache(model_cache_path):
@@ -875,8 +873,7 @@ class PCABaselineTransportOperator(TransportOperator):
         skipped_samples = 0
         batch_size = 128
 
-        dataloader = DataLoader(
-            dataset, batch_size=batch_size, num_workers=8)
+        dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
 
         for i, (x_up, y_down) in enumerate(dataloader):
             y_np = y_down.detach().cpu().numpy()
@@ -1006,3 +1003,24 @@ class IdentityBaselineTransportOperator(TransportOperator):
             raise ValueError("X must be a 2D array")
 
         return X
+
+
+def load_transport_operator(
+    L: int,
+    k: int,
+    operators_dir: str,
+) -> TransportOperator:
+    """Load the transport operator from the cache or create a new one."""
+    # Warning: This is a temporary and arguably a little bit dodgy, duck tape solution
+    operator = TransportOperator(
+        L,
+        k,
+        regularization=10.0,
+        max_iter=500,
+    )
+    dummy_ds = ActivationDataset(None, [], "", 0, 0)
+    file_name = operator._get_model_cache_filename(dummy_ds)
+    is_loaded = operator._load_model_cache(Path(operators_dir) / file_name)
+    if not is_loaded:
+        raise FileNotFoundError(f"Transport operator model not found: {file_name}")
+    return operator
