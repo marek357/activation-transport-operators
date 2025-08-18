@@ -1156,11 +1156,7 @@ def run_experiment(
                 residual_y_pred_all = []
                 collect_residual = score_residual is not None
 
-                # Track statistics for feature activation filtering
-                total_features_evaluated = 0
-                total_batches_processed = 0
-
-                # Track how many times each feature is activated
+                # Track how many times each feature is activated at sample level
                 feature_activation_counts = {
                     feat_idx: 0 for feat_idx in features_dict[target_layer]
                 }
@@ -1195,17 +1191,14 @@ def run_experiment(
                             features_dict[target_layer],
                         )
 
-                        # Count total sample activations across all features
-                        batch_sample_activations = sum(
-                            mask.sum().item() for mask in feature_masks.values()
-                        )
-                        total_features_evaluated += batch_sample_activations
-                        total_batches_processed += 1
-
                         # Update per-feature sample activation counts
                         for feat_idx, mask in feature_masks.items():
                             feature_activation_counts[feat_idx] += mask.sum().item()
 
+                        # Count total sample activations for debugging
+                        batch_sample_activations = sum(
+                            mask.sum().item() for mask in feature_masks.values()
+                        )
                         if batch_sample_activations == 0:
                             logger.debug(
                                 "Batch %d: No features activated in any sample.",
@@ -1215,7 +1208,6 @@ def run_experiment(
                         # Evaluate all features - count all samples for each feature
                         feature_masks = {}
                         batch_size = y_dn_batch.shape[0]
-                        total_batches_processed += 1
                         for feat_idx in features_dict[target_layer]:
                             # All samples are "activated" when filtering is disabled
                             feature_masks[feat_idx] = torch.ones(
@@ -1277,12 +1269,7 @@ def run_experiment(
                 )
 
                 # Log feature activation statistics if filtering was enabled
-                if filter_inactive_features and total_batches_processed > 0:
-                    # Convert to sample-level statistics
-                    avg_sample_activations_per_batch = (
-                        total_features_evaluated / total_batches_processed
-                    )
-
+                if filter_inactive_features:
                     # Get SAE architecture for logging
                     sae_arch = (
                         getattr(target_sae.cfg, "architecture", "standard")
@@ -1292,13 +1279,11 @@ def run_experiment(
 
                     logger.info(
                         "Feature activation stats for L=%d, k=%d, j_policy=%s (%s SAE): "
-                        "%.1f avg sample activations/batch, %d total sample activations, %d total samples",
+                        "%d total samples processed",
                         layer_l,
                         k,
                         j_policy,
                         sae_arch,
-                        avg_sample_activations_per_batch,
-                        total_features_evaluated,
                         total_samples,
                     )
 
@@ -1393,7 +1378,7 @@ def run_experiment(
                             **res_metrics,
                             "feature_never_activated": True,
                             "activation_count": feature_activation_counts[feat_idx],
-                            "total_batches": total_batches_processed,
+                            "total_samples": total_samples,
                             "activation_rate": 0.0,
                             "calib_interpretation": {
                                 "rms_assessment": "no_data",
@@ -1425,10 +1410,10 @@ def run_experiment(
                             **res_metrics,
                             "feature_never_activated": False,
                             "activation_count": feature_activation_counts[feat_idx],
-                            "total_batches": total_batches_processed,
+                            "total_samples": total_samples,
                             "activation_rate": feature_activation_counts[feat_idx]
-                            / total_batches_processed
-                            if total_batches_processed > 0
+                            / total_samples
+                            if total_samples > 0
                             else 0.0,
                             "calib_interpretation": calib_interpretation,
                         }
@@ -1462,8 +1447,9 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
             "total_features": 0,
             "never_activated_features": 0,
             "activated_features": 0,
-            "activation_rates": [],  # List of activation rates for all features
+            "activation_rates": [],  # List of activation rates for all features (0-1 scale, not percentages)
             "activation_counts": [],  # List of activation counts for all features
+            "total_samples": 0,  # Total number of samples processed
         },
     }
 
@@ -1499,12 +1485,20 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
         # Collect activation statistics for all features
         activation_count = metrics.get("activation_count", 0)
         activation_rate = metrics.get("activation_rate", 0.0)
+        total_samples_feat = metrics.get("total_samples", 0)
+
         calibration_summary["activation_summary"]["activation_counts"].append(
             activation_count
         )
         calibration_summary["activation_summary"]["activation_rates"].append(
             activation_rate
         )
+
+        # Track total samples (should be consistent across features)
+        if calibration_summary["activation_summary"]["total_samples"] == 0:
+            calibration_summary["activation_summary"]["total_samples"] = (
+                total_samples_feat
+            )
 
         if metrics.get("feature_never_activated", False):
             calibration_summary["activation_summary"]["never_activated_features"] += 1
@@ -1590,6 +1584,12 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
             np.max(activation_rates)
         )
 
+        # Add metadata to clarify units
+        calibration_summary["activation_summary"]["activation_rate_units"] = "ratio"
+        calibration_summary["activation_summary"]["activation_rate_description"] = (
+            "Values are in 0-1 range, not percentages"
+        )
+
         # Categorize features by activation frequency
         always_active = sum(1 for rate in activation_rates if rate >= 0.99)
         often_active = sum(1 for rate in activation_rates if 0.5 <= rate < 0.99)
@@ -1672,6 +1672,7 @@ def main(cfg: DictConfig) -> dict:
     # Load activation loader
     logger.info("Loading activation data...")
     activation_loader = ActivationLoader(files_to_download=[cfg.activation_dir])
+    # activation_loader = ActivationLoader("activations-gemma2-2b-slimpajama-500k_zstd4")
 
     # Generate feature lists
     logger.info("Generating feature lists...")
