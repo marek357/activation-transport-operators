@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import os
+import pickle
 import random
 import time
-import warnings
 from pathlib import Path
 from typing import Any, cast, Callable
 
@@ -17,7 +19,6 @@ from omegaconf import DictConfig, OmegaConf
 from transformers import set_seed
 
 from src.activation_loader import (
-    ActivationDataset,
     ActivationLoader,
     get_train_val_test_datasets,
 )
@@ -33,6 +34,335 @@ from src.matched_rank_analysis import run_matched_rank_analysis_from_datasets
 logger = logging.getLogger(__name__)
 
 
+def _get_eval_cache_filename(
+    layer_l: int,
+    k: int,
+    j_policy: str,
+    dataset_id: str = "default",
+    dataset_num_sequences: int = 0,
+) -> str:
+    """Generate a unique cache filename for evaluation data."""
+    cache_info = {
+        "layer_l": layer_l,
+        "k": k,
+        "j_policy": j_policy,
+        "dataset_id": dataset_id,
+        "dataset_num_sequences": dataset_num_sequences,
+    }
+    cache_str = str(sorted(cache_info.items()))
+    cache_hash = hashlib.md5(cache_str.encode()).hexdigest()[:8]
+    return f"eval_data_{cache_hash}.pkl"
+
+
+def _save_eval_cache(
+    x_up_all: np.ndarray,
+    y_dn_all: np.ndarray,
+    y_hat_all: np.ndarray,
+    feature_masks_all: dict[int, np.ndarray],
+    cache_path: str,
+) -> None:
+    """Save evaluation data to cache file."""
+    try:
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        cache_data = {
+            "x_up_all": x_up_all,
+            "y_dn_all": y_dn_all,
+            "y_hat_all": y_hat_all,
+            "feature_masks_all": feature_masks_all,
+            "timestamp": time.time(),
+            "x_shape": x_up_all.shape,
+            "y_shape": y_dn_all.shape,
+            "y_hat_shape": y_hat_all.shape,
+        }
+        with open(cache_path, "wb") as f:
+            pickle.dump(cache_data, f)
+        logger.info(f"  Cached evaluation data saved to: {cache_path}")
+    except Exception as e:
+        logger.warning(f"  Warning: Failed to save cache: {e}")
+
+
+def _load_eval_cache(
+    cache_path: str,
+) -> (
+    tuple[np.ndarray, np.ndarray, np.ndarray, dict[int, np.ndarray]]
+    | tuple[None, None, None, None]
+):
+    """Load evaluation data from cache file."""
+    try:
+        if not os.path.exists(cache_path):
+            return None, None, None, None
+
+        with open(cache_path, "rb") as f:
+            cache_data = pickle.load(f)
+
+        x_up_all = cache_data["x_up_all"]
+        y_dn_all = cache_data["y_dn_all"]
+        y_hat_all = cache_data["y_hat_all"]
+        feature_masks_all = cache_data["feature_masks_all"]
+        timestamp = cache_data.get("timestamp", 0)
+
+        # Basic validation
+        if x_up_all.ndim != 2 or y_dn_all.ndim != 2 or y_hat_all.ndim != 2:
+            logger.warning("  Invalid cached data dimensions")
+            return None, None, None, None
+
+        cache_age = time.time() - timestamp
+        logger.info(f"  Loaded cached evaluation data from: {cache_path}")
+        logger.info(f"  Cache age: {cache_age / 3600:.1f} hours")
+        logger.info(
+            f"  X shape: {x_up_all.shape}, Y shape: {y_dn_all.shape}, Y_hat shape: {y_hat_all.shape}"
+        )
+
+        return x_up_all, y_dn_all, y_hat_all, feature_masks_all
+
+    except Exception as e:
+        logger.warning(f"  Warning: Failed to load cache: {e}")
+        return None, None, None, None
+
+
+def compute_all_feature_metrics(
+    y_dn_all: np.ndarray,
+    y_hat_all: np.ndarray,
+    decoder_matrix: torch.Tensor,
+    feature_list: list[int],
+    feature_masks_all: dict[int, np.ndarray] | None = None,
+    *,
+    normalize_decoder: bool = True,
+) -> dict[int, dict[str, float]]:
+    """
+    Compute metrics for all features in one go without batching/aggregation.
+
+    Args:
+        y_dn_all: All true residual stream activations [n_samples, d_model]
+        y_hat_all: All predicted residual stream activations [n_samples, d_model]
+        decoder_matrix: SAE decoder matrix [n_features, d_model]
+        feature_list: List of feature indices to evaluate
+        feature_masks_all: Optional masks indicating which samples to include for each feature
+        normalize_decoder: Whether to normalize decoder vectors
+
+    Returns:
+        Dictionary mapping feature_idx -> metrics dict
+    """
+    results = {}
+
+    # Convert to tensors for efficient computation
+    y_dn_tensor = torch.from_numpy(y_dn_all).double()
+    y_hat_tensor = torch.from_numpy(y_hat_all).double()
+
+    total_samples = y_dn_all.shape[0]
+
+    for feat_idx in feature_list:
+        # Get decoder vector
+        d_f = decoder_matrix[feat_idx].double()
+
+        if normalize_decoder:
+            d_f = d_f / (torch.norm(d_f) + 1e-12)
+
+        # Project residuals onto feature direction
+        a_true = torch.matmul(y_dn_tensor, d_f)  # [n_samples]
+        a_pred = torch.matmul(y_hat_tensor, d_f)  # [n_samples]
+
+        # Apply feature mask if provided (for filtering inactive features)
+        if feature_masks_all is not None and feat_idx in feature_masks_all:
+            mask = feature_masks_all[feat_idx]
+            if not np.any(mask):
+                # Feature never activated
+                results[feat_idx] = {
+                    "r2_lat": 0.0,
+                    "mse_lat": 0.0,
+                    "r_pearson": 0.0,
+                    "calibration": 0.0,
+                    "rms_ratio": 1.0,
+                    "mean_abs_ratio": 1.0,
+                    "mean_ratio": 1.0,
+                    "mad_ratio": 0.0,
+                    "rel_error_mean": 0.0,
+                    "log_mse_ratio": 0.0,
+                    "rms_true": 0.0,
+                    "rms_pred": 0.0,
+                    "feature_never_activated": True,
+                    "activation_count": 0,
+                    "total_samples": total_samples,
+                    "activation_rate": 0.0,
+                }
+                continue
+
+            # Filter to activated samples
+            mask_tensor = torch.from_numpy(mask)
+            a_true = a_true[mask_tensor]
+            a_pred = a_pred[mask_tensor]
+            activation_count = mask.sum()
+        else:
+            # Use all samples
+            activation_count = total_samples
+
+        n_samples = a_true.shape[0]
+
+        if n_samples == 0:
+            # No samples to evaluate
+            results[feat_idx] = {
+                "r2_lat": 0.0,
+                "mse_lat": 0.0,
+                "r_pearson": 0.0,
+                "calibration": 0.0,
+                "rms_ratio": 1.0,
+                "mean_abs_ratio": 1.0,
+                "mean_ratio": 1.0,
+                "mad_ratio": 0.0,
+                "rel_error_mean": 0.0,
+                "log_mse_ratio": 0.0,
+                "rms_true": 0.0,
+                "rms_pred": 0.0,
+                "feature_never_activated": True,
+                "activation_count": 0,
+                "total_samples": total_samples,
+                "activation_rate": 0.0,
+            }
+            continue
+
+        # Compute all metrics at once
+        metrics = _compute_single_feature_metrics(a_true, a_pred)
+
+        # Add metadata
+        metrics.update(
+            {
+                "feature_never_activated": False,
+                "activation_count": int(activation_count),
+                "total_samples": total_samples,
+                "activation_rate": float(activation_count) / total_samples
+                if total_samples > 0
+                else 0.0,
+            }
+        )
+
+        results[feat_idx] = metrics
+
+    return results
+
+
+def _compute_single_feature_metrics(
+    a_true: torch.Tensor, a_pred: torch.Tensor
+) -> dict[str, float]:
+    """Compute all metrics for a single feature without aggregation."""
+    n_samples = a_true.shape[0]
+
+    if n_samples < 2:
+        return {
+            "r2_lat": 0.0,
+            "mse_lat": 0.0,
+            "r_pearson": 0.0,
+            "calibration": 0.0,
+            "rms_ratio": 1.0,
+            "mean_abs_ratio": 1.0,
+            "mean_ratio": 1.0,
+            "mad_ratio": 0.0,
+            "rel_error_mean": 0.0,
+            "log_mse_ratio": 0.0,
+            "rms_true": 0.0,
+            "rms_pred": 0.0,
+        }
+
+    eps = 1e-12
+
+    # Basic statistics
+    mean_true = torch.mean(a_true)
+    mean_pred = torch.mean(a_pred)
+
+    # MSE
+    mse = torch.mean((a_true - a_pred) ** 2)
+
+    # R-squared
+    ss_tot = torch.sum((a_true - mean_true) ** 2)
+    if ss_tot < eps:
+        r2 = 0.0
+    else:
+        ss_res = torch.sum((a_true - a_pred) ** 2)
+        r2 = 1 - (ss_res / ss_tot)
+        r2 = max(-1e6, min(1.0, r2))  # Clamp extreme values
+
+    # Pearson correlation
+    cov = torch.mean((a_true - mean_true) * (a_pred - mean_pred))
+    var_true = torch.mean((a_true - mean_true) ** 2)
+    var_pred = torch.mean((a_pred - mean_pred) ** 2)
+
+    denominator = torch.sqrt(var_true * var_pred)
+    if denominator < eps:
+        r_pearson = 0.0
+    else:
+        r_pearson = cov / denominator
+        r_pearson = max(-1.0, min(1.0, r_pearson))  # Clamp to valid range
+
+    # Calibration metrics
+    sum_true_sq = torch.sum(a_true**2)
+    sum_pred_sq = torch.sum(a_pred**2)
+    sum_true_pred = torch.sum(a_true * a_pred)
+
+    # Geometric mean calibration
+    det = sum_true_sq * sum_pred_sq
+    if abs(det) < eps:
+        calibration = 0.0
+    else:
+        calibration = float(sum_true_pred / torch.sqrt(det))
+
+    # RMS values and ratio
+    rms_true = torch.sqrt(torch.mean(a_true**2))
+    rms_pred = torch.sqrt(torch.mean(a_pred**2))
+    rms_ratio = rms_pred / (rms_true + eps) if rms_true > eps else 1.0
+
+    # Mean absolute values and ratio
+    mean_abs_true = torch.mean(torch.abs(a_true))
+    mean_abs_pred = torch.mean(torch.abs(a_pred))
+    mean_abs_ratio = (
+        mean_abs_pred / (mean_abs_true + eps) if mean_abs_true > eps else 1.0
+    )
+
+    # Mean ratio (bias detection)
+    mean_ratio = mean_pred / (mean_true + eps) if abs(mean_true) > eps else 1.0
+
+    # Mean Absolute Deviation ratio
+    mad_ratio = (
+        torch.mean(torch.abs(a_true - a_pred)) / (mean_abs_true + eps)
+        if mean_abs_true > eps
+        else 0.0
+    )
+
+    # Relative error
+    eps_rel = 1e-12
+    nonzero_mask = torch.abs(a_true) > eps_rel
+    if nonzero_mask.any():
+        rel_errors = torch.abs(a_true[nonzero_mask] - a_pred[nonzero_mask]) / torch.abs(
+            a_true[nonzero_mask]
+        )
+        rel_error_mean = torch.mean(rel_errors)
+    else:
+        rel_error_mean = 0.0
+
+    # Log-scale calibration
+    both_nonzero = (torch.abs(a_true) > eps_rel) & (torch.abs(a_pred) > eps_rel)
+    if both_nonzero.any():
+        log_ratios = torch.log(
+            torch.abs(a_pred[both_nonzero]) / torch.abs(a_true[both_nonzero])
+        )
+        log_mse_ratio = torch.mean(log_ratios**2)
+    else:
+        log_mse_ratio = 0.0
+
+    return {
+        "r2_lat": float(r2),
+        "mse_lat": float(mse),
+        "r_pearson": float(r_pearson),
+        "calibration": float(calibration),
+        "rms_ratio": float(rms_ratio),
+        "mean_abs_ratio": float(mean_abs_ratio),
+        "mean_ratio": float(mean_ratio),
+        "mad_ratio": float(mad_ratio),
+        "rel_error_mean": float(rel_error_mean),
+        "log_mse_ratio": float(log_mse_ratio),
+        "rms_true": float(rms_true),
+        "rms_pred": float(rms_pred),
+    }
+
+
 def load_sae_decoders(
     cfg: DictConfig, activation_dtype: torch.dtype
 ) -> dict[int, torch.Tensor]:
@@ -42,7 +372,6 @@ def load_sae_decoders(
     # Get all unique layers that we need SAEs for (both source and target layers)
     required_layers = set()
     for layer_l in cfg.eval.Ls:
-        required_layers.add(layer_l)  # Source layer
         for k in cfg.eval.ks:
             required_layers.add(layer_l + k)  # Target layer L+k
 
@@ -83,7 +412,6 @@ def load_full_saes(cfg: DictConfig) -> dict[int, Any]:
     # Get all unique layers that we need SAEs for (both source and target layers)
     required_layers = set()
     for layer_l in cfg.eval.Ls:
-        required_layers.add(layer_l)  # Source layer
         for k in cfg.eval.ks:
             required_layers.add(layer_l + k)  # Target layer L+k
 
@@ -114,29 +442,29 @@ def load_full_saes(cfg: DictConfig) -> dict[int, Any]:
 
 
 def get_sample_feature_activations(
-    y_dn_batch: torch.Tensor,
+    y_dn_tensor: torch.Tensor,
     sae: Any,
     available_features: list[int],
 ) -> dict[int, torch.Tensor]:
     """
-    Get sample-level feature activation masks for the current batch.
+    Get sample-level feature activation masks for the given tensor.
 
     For JumpReLU SAEs, this properly handles learnable thresholds.
 
     Args:
-        y_dn_batch: Batch of residual stream activations [batch_size, d_model]
+        y_dn_tensor: Residual stream activations [n_samples, d_model]
         sae: SAE model for encoding (supports both ReLU and JumpReLU architectures)
         available_features: List of feature indices to check
 
     Returns:
-        Dictionary mapping feature_idx -> boolean mask [batch_size] indicating
-        which samples in the batch have that feature activated
+        Dictionary mapping feature_idx -> boolean mask [n_samples] indicating
+        which samples have that feature activated
     """
     with torch.no_grad():
-        # Move SAE to the same device as the batch
+        # Move SAE to the same device as the tensor
         sae_device = next(iter(sae.parameters())).device
-        if sae_device != y_dn_batch.device:
-            sae = sae.to(y_dn_batch.device)
+        if sae_device != y_dn_tensor.device:
+            sae = sae.to(y_dn_tensor.device)
 
         # Check SAE architecture to handle different activation functions
         sae_arch = (
@@ -148,7 +476,7 @@ def get_sample_feature_activations(
         # Get feature activations using the SAE's encode method
         # This should handle JumpReLU, TopK, and other architectures automatically
         try:
-            feature_activations = sae.encode(y_dn_batch)  # [batch_size, d_sae]
+            feature_activations = sae.encode(y_dn_tensor)  # [n_samples, d_sae]
         except Exception as e:
             logger.exception("Failed to encode features using SAE")
             raise RuntimeError("SAE encode failed") from e
@@ -158,12 +486,10 @@ def get_sample_feature_activations(
         # We create boolean masks indicating which samples have each feature activated.
 
         feature_masks = {}
-        activation_threshold = (
-            1e-12  # Very small threshold for detecting any activation
-        )
+        activation_threshold = 1e-6  # Very small threshold for detecting any activation
 
         for feat_idx in available_features:
-            feat_acts = feature_activations[:, feat_idx]  # [batch_size]
+            feat_acts = feature_activations[:, feat_idx]  # [n_samples]
 
             # Boolean mask: True where feature is activated for each sample
             feature_masks[feat_idx] = feat_acts > activation_threshold
@@ -206,8 +532,6 @@ def create_baseline_transport_operators(
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
             for j_policy in cfg.eval.j_policy:
-                key = (layer_l, k, j_policy)
-
                 # Get training dataset for fitting baselines
                 train_dataset, _, _ = get_train_val_test_datasets(
                     layer_l, k, activation_loader, j_policy
@@ -370,7 +694,7 @@ def score_latent_default(
     # R-squared
     ss_res = torch.sum((a_true - a_pred) ** 2)
     ss_tot = torch.sum((a_true - torch.mean(a_true)) ** 2)
-    r2 = 1 - (ss_res / (ss_tot + 1e-8))
+    r2 = 1 - (ss_res / (ss_tot + 1e-12))
 
     # MSE
     mse = torch.mean((a_true - a_pred) ** 2)
@@ -447,221 +771,6 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     }
 
 
-class ComprehensiveMetricAggregator:
-    """Aggregate all metrics (correlation, calibration, etc.) across batches for efficient computation."""
-
-    def __init__(self) -> None:
-        """Initialize the comprehensive metric aggregator."""
-        self.reset()
-
-    def reset(self) -> None:
-        """Reset all aggregated statistics."""
-        # Basic statistics
-        self.n_samples = 0
-        self.sum_true = 0.0
-        self.sum_pred = 0.0
-        self.sum_true_sq = 0.0
-        self.sum_pred_sq = 0.0
-        self.sum_true_pred = 0.0
-        self.sum_squared_error = 0.0
-
-        # Calibration-specific statistics
-        self.sum_abs_true = 0.0
-        self.sum_abs_pred = 0.0
-        self.sum_abs_diff = 0.0
-        self.sum_rel_error = 0.0
-        self.sum_log_ratio_sq = 0.0
-        self.n_nonzero_pairs = 0
-
-    def update(self, a_true: torch.Tensor, a_pred: torch.Tensor) -> None:
-        """Update aggregated statistics with a batch."""
-        batch_size = a_true.shape[0]
-        self.n_samples += batch_size
-
-        # Convert to double precision for numerical stability
-        a_true_f = a_true.double()
-        a_pred_f = a_pred.double()
-
-        # Update sums with overflow protection
-        try:
-            # Basic metrics
-            self.sum_true += torch.sum(a_true_f).item()
-            self.sum_pred += torch.sum(a_pred_f).item()
-            self.sum_true_sq += torch.sum(a_true_f**2).item()
-            self.sum_pred_sq += torch.sum(a_pred_f**2).item()
-            self.sum_true_pred += torch.sum(a_true_f * a_pred_f).item()
-            self.sum_squared_error += torch.sum((a_true_f - a_pred_f) ** 2).item()
-
-            # Calibration metrics
-            self.sum_abs_true += torch.sum(torch.abs(a_true_f)).item()
-            self.sum_abs_pred += torch.sum(torch.abs(a_pred_f)).item()
-            self.sum_abs_diff += torch.sum(torch.abs(a_true_f - a_pred_f)).item()
-
-            # Relative error for non-zero true values
-            eps_rel = 1e-8
-            nonzero_mask = torch.abs(a_true_f) > eps_rel
-            if nonzero_mask.any():
-                rel_errors = torch.abs(
-                    a_true_f[nonzero_mask] - a_pred_f[nonzero_mask]
-                ) / torch.abs(a_true_f[nonzero_mask])
-                self.sum_rel_error += torch.sum(rel_errors).item()
-
-                # Log ratio for geometric mean-based calibration
-                # Only for pairs where both values are significantly non-zero
-                both_nonzero = (torch.abs(a_true_f) > eps_rel) & (
-                    torch.abs(a_pred_f) > eps_rel
-                )
-                if both_nonzero.any():
-                    log_ratios = torch.log(
-                        torch.abs(a_pred_f[both_nonzero])
-                        / torch.abs(a_true_f[both_nonzero])
-                    )
-                    self.sum_log_ratio_sq += torch.sum(log_ratios**2).item()
-                    self.n_nonzero_pairs += both_nonzero.sum().item()
-
-        except (OverflowError, RuntimeError):
-            # Handle overflow by skipping this batch and warn
-            warnings.warn(
-                "Numerical overflow detected in metric aggregation, skipping batch",
-                stacklevel=2,
-            )
-            self.n_samples -= batch_size
-
-    def compute_correlation_metrics(self) -> dict[str, float]:
-        """Compute correlation-based metrics (R², MSE, Pearson correlation)."""
-        if self.n_samples == 0:
-            return {"r2_lat": 0.0, "mse_lat": 0.0, "r_pearson": 0.0}
-
-        # Constants for numerical stability
-        EPS = 1e-12
-        MIN_SAMPLES = 2
-
-        if self.n_samples < MIN_SAMPLES:
-            return {"r2_lat": 0.0, "mse_lat": 0.0, "r_pearson": 0.0}
-
-        # Means
-        mean_true = self.sum_true / self.n_samples
-        mean_pred = self.sum_pred / self.n_samples
-
-        # MSE
-        mse = self.sum_squared_error / self.n_samples
-
-        # R-squared with numerical stability
-        ss_tot = self.sum_true_sq - self.n_samples * mean_true**2
-        if ss_tot < EPS:
-            r2 = 0.0  # No variance in true values
-        else:
-            r2 = 1.0 - (self.sum_squared_error / ss_tot)
-            r2 = max(-1e6, min(1.0, r2))  # Clip extreme values
-
-        # Pearson correlation with numerical stability
-        cov = self.sum_true_pred - self.n_samples * mean_true * mean_pred
-        var_true = self.sum_true_sq - self.n_samples * mean_true**2
-        var_pred = self.sum_pred_sq - self.n_samples * mean_pred**2
-
-        denominator = (var_true * var_pred) ** 0.5
-        if denominator < EPS:
-            r_pearson = 0.0
-        else:
-            r_pearson = cov / denominator
-            r_pearson = max(-1.0, min(1.0, r_pearson))  # Clip to valid range
-
-        return {
-            "r2_lat": float(r2),
-            "mse_lat": float(mse),
-            "r_pearson": float(r_pearson),
-        }
-
-    def compute_calibration_metrics(self) -> dict[str, float]:
-        """Compute comprehensive calibration metrics."""
-        if self.n_samples < 2:
-            return {
-                "calibration": 0.0,
-                "rms_ratio": 1.0,
-                "mean_abs_ratio": 1.0,
-                "mean_ratio": 1.0,
-                "mad_ratio": 0.0,
-                "rel_error_mean": 0.0,
-                "log_mse_ratio": 0.0,
-                "rms_true": 0.0,
-                "rms_pred": 0.0,
-            }
-
-        eps = 1e-12
-
-        # Original geometric mean calibration
-        det = self.sum_true_sq * self.sum_pred_sq
-        if abs(det) < eps:
-            calibration = 0.0
-        else:
-            calibration = float(det**0.5 / self.n_samples)
-
-        # RMS values
-        rms_true = (self.sum_true_sq / self.n_samples) ** 0.5
-        rms_pred = (self.sum_pred_sq / self.n_samples) ** 0.5
-
-        # RMS ratio (ideal = 1.0)
-        rms_ratio = rms_pred / (rms_true + eps) if rms_true > eps else 1.0
-
-        # Mean absolute values and their ratio
-        mean_abs_true = self.sum_abs_true / self.n_samples
-        mean_abs_pred = self.sum_abs_pred / self.n_samples
-        mean_abs_ratio = (
-            mean_abs_pred / (mean_abs_true + eps) if mean_abs_true > eps else 1.0
-        )
-
-        # Mean values and their ratio (to detect systematic bias)
-        mean_true = self.sum_true / self.n_samples
-        mean_pred = self.sum_pred / self.n_samples
-        mean_ratio = mean_pred / (mean_true + eps) if abs(mean_true) > eps else 1.0
-
-        # Mean Absolute Deviation ratio (normalized MAD)
-        mad_ratio = (
-            (self.sum_abs_diff / self.n_samples) / (mean_abs_true + eps)
-            if mean_abs_true > eps
-            else 0.0
-        )
-
-        # Mean relative error
-        rel_error_mean = self.sum_rel_error / max(
-            1, self.n_samples - (self.n_samples - self.n_nonzero_pairs)
-        )
-
-        # Log-scale calibration (geometric standard deviation of ratios)
-        log_mse_ratio = (
-            self.sum_log_ratio_sq / max(1, self.n_nonzero_pairs)
-            if self.n_nonzero_pairs > 0
-            else 0.0
-        )
-
-        return {
-            # Original geometric mean
-            "calibration": float(calibration),
-            # RMS_pred / RMS_true (ideal: 1.0)
-            "rms_ratio": float(rms_ratio),
-            # Mean|pred| / Mean|true| (ideal: 1.0)
-            "mean_abs_ratio": float(mean_abs_ratio),
-            # Mean_pred / Mean_true (bias detection)
-            "mean_ratio": float(mean_ratio),
-            # Normalized Mean Absolute Deviation
-            "mad_ratio": float(mad_ratio),
-            # Mean relative error
-            "rel_error_mean": float(rel_error_mean),
-            # Log-scale variance of ratios
-            "log_mse_ratio": float(log_mse_ratio),
-            # Reference RMS of true values
-            "rms_true": float(rms_true),
-            # RMS of predicted values
-            "rms_pred": float(rms_pred),
-        }
-
-    def compute_all_metrics(self) -> dict[str, float]:
-        """Compute all metrics (correlation + calibration) in one call."""
-        correlation_metrics = self.compute_correlation_metrics()
-        calibration_metrics = self.compute_calibration_metrics()
-        return {**correlation_metrics, **calibration_metrics}
-
-
 def interpret_calibration_metrics(calib_metrics: dict[str, float]) -> dict[str, str]:
     """Interpret calibration metrics and provide qualitative assessments."""
     interpretation = {}
@@ -725,69 +834,6 @@ def interpret_calibration_metrics(calib_metrics: dict[str, float]) -> dict[str, 
     return interpretation
 
 
-def _evaluate_batch_feature_with_mask(
-    y_dn_batch: torch.Tensor,
-    y_hat_batch: torch.Tensor,
-    decoder_vector: torch.Tensor,
-    metric_aggregator: ComprehensiveMetricAggregator,
-    activation_mask: torch.Tensor,
-    *,
-    normalize_decoder: bool = True,
-):
-    """
-    Evaluate a single feature on a batch, but only for samples where the feature is activated.
-
-    Args:
-        y_dn_batch: Batch of true residual stream activations [batch_size, d_model]
-        y_hat_batch: Batch of predicted residual stream activations [batch_size, d_model]
-        decoder_vector: Feature decoder vector [d_model]
-        metric_aggregator: Aggregator to update with metrics
-        activation_mask: Boolean mask [batch_size] indicating which samples to include
-        normalize_decoder: Whether to normalize the decoder vector
-    """
-    if not torch.any(activation_mask):
-        # No samples have this feature activated - skip
-        return
-
-    d_f = decoder_vector
-
-    if normalize_decoder:
-        d_f = d_f / (torch.norm(d_f) + 1e-8)
-
-    # Project residuals onto feature direction
-    a_true = torch.matmul(y_dn_batch, d_f)  # [batch_size]
-    a_pred = torch.matmul(y_hat_batch, d_f)  # [batch_size]
-
-    # Only include samples where the feature is activated
-    a_true_filtered = a_true[activation_mask]  # [num_activated_samples]
-    a_pred_filtered = a_pred[activation_mask]  # [num_activated_samples]
-
-    # Update aggregator with filtered samples
-    metric_aggregator.update(a_true_filtered, a_pred_filtered)
-
-
-def _evaluate_batch_feature(
-    y_dn_batch: torch.Tensor,
-    y_hat_batch: torch.Tensor,
-    decoder_vector: torch.Tensor,
-    metric_aggregator: ComprehensiveMetricAggregator,
-    *,
-    normalize_decoder: bool = True,
-):
-    """Evaluate a single feature on a batch and update aggregators."""
-    d_f = decoder_vector
-
-    if normalize_decoder:
-        d_f = d_f / (torch.norm(d_f) + 1e-8)
-
-    # Project residuals onto feature direction
-    a_true = torch.matmul(y_dn_batch, d_f)  # [batch_size]
-    a_pred = torch.matmul(y_hat_batch, d_f)  # [batch_size]
-
-    # Update single aggregator with all metrics
-    metric_aggregator.update(a_true, a_pred)
-
-
 def run_pca_eval():
     pass
 
@@ -820,7 +866,7 @@ def run_matched_rank_experiment(
     # Limit samples for computational efficiency
     max_samples = matched_rank_cfg.get("max_samples", None)
 
-    logger.info(f"Matched-rank configuration:")
+    logger.info("Matched-rank configuration:")
     logger.info(f"  Ranks to evaluate: {ranks}")
     logger.info(f"  Alpha grid: {alpha_grid}")
     logger.info(f"  Orthogonal test ranks: {orthogonal_test_ranks}")
@@ -1026,7 +1072,6 @@ def run_experiment(
     score_residual: Callable | None = None,
     *,
     decoder_normalize: bool = True,
-    val_batch_size: int = 32,
     filter_inactive_features: bool = True,
     device: str = "cuda"
     if torch.cuda.is_available()
@@ -1113,13 +1158,6 @@ def run_experiment(
                 )
                 logger.info("Evaluating on %d test samples", len(dataset.idx_list))
 
-                dataloader = torch.utils.data.DataLoader(
-                    dataset,
-                    batch_size=val_batch_size,
-                    num_workers=8,
-                    persistent_workers=True,
-                )
-
                 # Prepare decoders for the target layer L+k
                 target_layer = layer_l + k
                 if target_layer not in sae_decoders:
@@ -1146,164 +1184,168 @@ def run_experiment(
                     saes.get(target_layer) if filter_inactive_features else None
                 )
 
-                # Initialize aggregators for each feature
-                feature_aggregators = {}
-                for feat_idx in features_dict[target_layer]:
-                    feature_aggregators[feat_idx] = ComprehensiveMetricAggregator()
+                # Use cache directory similar to transport operator
+                cache_dir = "cache"
 
-                # For residual metrics (if needed)
-                residual_y_true_all = []
-                residual_y_pred_all = []
-                collect_residual = score_residual is not None
+                # Check for cached evaluation data first
+                dataset_id = getattr(dataset, "dataset_id", "default")
+                dataset_num_sequences = len(dataset.idx_list)
+                cache_filename = _get_eval_cache_filename(
+                    layer_l, k, j_policy, dataset_id, dataset_num_sequences
+                )
+                cache_path = os.path.join(cache_dir, cache_filename)
 
-                # Track how many times each feature is activated at sample level
-                feature_activation_counts = {
-                    feat_idx: 0 for feat_idx in features_dict[target_layer]
-                }
+                logger.info(f"Checking for cached evaluation data: {cache_path}")
+                x_up_all, y_dn_all, y_hat_all, feature_masks_all = _load_eval_cache(
+                    cache_path
+                )
 
-                # Process batches one by one
-                total_samples = 0
-                batch_start_time = time.time()
-                for batch_idx, (x_up_batch, y_dn_batch) in enumerate(dataloader):
-                    x_up_batch: torch.Tensor = x_up_batch.to(device)
-                    y_dn_batch: torch.Tensor = y_dn_batch.to(device)
+                # If no cached data found, load from dataset
+                if x_up_all is None:
+                    logger.info("Loading evaluation data from dataset...")
 
-                    # Predict downstream residuals using transport operator
-                    with torch.no_grad():
-                        # Use transport operator to predict
-                        x_np = x_up_batch.cpu().numpy()
-                        y_hat_np = transport_op.predict(x_np)
-                        y_hat_batch = (
-                            torch.from_numpy(y_hat_np).to(y_dn_batch.dtype).to(device)
-                        )
+                    # Load all data at once using DataLoader
+                    dataloader = torch.utils.data.DataLoader(
+                        dataset,
+                        batch_size=256,  # Larger batch size for efficient loading
+                        num_workers=8,
+                    )
 
-                    # Collect for residual metrics if needed (small memory overhead)
-                    if collect_residual:
-                        residual_y_true_all.append(y_dn_batch.cpu())
-                        residual_y_pred_all.append(y_hat_batch.cpu())
+                    x_up_list = []
+                    y_dn_list = []
+                    y_hat_list = []
 
-                    # Determine which features to evaluate for this batch and get sample-level masks
+                    total_samples = 0
+                    load_start_time = time.time()
+
+                    for batch_idx, (x_up_batch, y_dn_batch) in enumerate(dataloader):
+                        x_up_batch = x_up_batch.to(device)
+                        y_dn_batch = y_dn_batch.to(device)
+
+                        # Predict using transport operator
+                        with torch.no_grad():
+                            x_np = x_up_batch.cpu().numpy()
+                            y_hat_np = transport_op.predict(x_np)
+                            y_hat_batch = (
+                                torch.from_numpy(y_hat_np)
+                                .to(y_dn_batch.dtype)
+                                .to(device)
+                            )
+
+                        # Collect data
+                        x_up_list.append(x_up_batch.cpu().numpy())
+                        y_dn_list.append(y_dn_batch.cpu().numpy())
+                        y_hat_list.append(y_hat_batch.cpu().numpy())
+
+                        total_samples += x_up_batch.shape[0]
+
+                        # Log progress
+                        if (batch_idx + 1) % 50 == 0:
+                            elapsed_time = time.time() - load_start_time
+                            samples_per_sec = total_samples / elapsed_time
+                            logger.info(
+                                f"  Loaded {batch_idx + 1} batches ({total_samples} samples) - "
+                                f"{samples_per_sec:.1f} samples/sec"
+                            )
+
+                    # Stack all data
+                    x_up_all = np.concatenate(x_up_list, axis=0)
+                    y_dn_all = np.concatenate(y_dn_list, axis=0)
+                    y_hat_all = np.concatenate(y_hat_list, axis=0)
+
+                    load_time = time.time() - load_start_time
+                    logger.info(
+                        f"Data loading complete: {total_samples:,} samples in {load_time:.2f}s"
+                    )
+                    logger.info(
+                        f"  X shape: {x_up_all.shape}, Y shape: {y_dn_all.shape}, Y_hat shape: {y_hat_all.shape}"
+                    )
+
+                    # Compute feature masks if filtering is enabled
                     if filter_inactive_features and target_sae is not None:
-                        # Get sample-level feature activation masks
-                        feature_masks = get_sample_feature_activations(
-                            y_dn_batch,
+                        logger.info("Computing feature activation masks...")
+
+                        # Convert to tensors for SAE processing
+                        y_dn_tensor = torch.from_numpy(y_dn_all).to(device)
+
+                        # Get feature masks for all samples
+                        feature_masks_all = get_sample_feature_activations(
+                            y_dn_tensor,
                             target_sae,
                             features_dict[target_layer],
                         )
 
-                        # Update per-feature sample activation counts
-                        for feat_idx, mask in feature_masks.items():
-                            feature_activation_counts[feat_idx] += mask.sum().item()
+                        # Convert masks to numpy for caching
+                        feature_masks_all = {
+                            feat_idx: mask.cpu().numpy()
+                            for feat_idx, mask in feature_masks_all.items()
+                        }
 
-                        # Count total sample activations for debugging
-                        batch_sample_activations = sum(
-                            mask.sum().item() for mask in feature_masks.values()
+                        # Log activation statistics
+                        total_activations = sum(
+                            mask.sum() for mask in feature_masks_all.values()
                         )
-                        if batch_sample_activations == 0:
-                            logger.debug(
-                                "Batch %d: No features activated in any sample.",
-                                batch_idx,
-                            )
-                    else:
-                        # Evaluate all features - count all samples for each feature
-                        feature_masks = {}
-                        batch_size = y_dn_batch.shape[0]
-                        for feat_idx in features_dict[target_layer]:
-                            # All samples are "activated" when filtering is disabled
-                            feature_masks[feat_idx] = torch.ones(
-                                batch_size, dtype=torch.bool, device=y_dn_batch.device
-                            )
-                            feature_activation_counts[feat_idx] += batch_size
-
-                    # Evaluate each feature using sample-level filtering
-                    for feat_idx in features_dict[target_layer]:
-                        decoder_vector = decoder_matrix[feat_idx].cpu()
-                        activation_mask = feature_masks[feat_idx].cpu()
-
-                        if filter_inactive_features:
-                            # Only evaluate samples where this feature is activated
-                            _evaluate_batch_feature_with_mask(
-                                y_dn_batch.cpu(),
-                                y_hat_batch.cpu(),
-                                decoder_vector,
-                                feature_aggregators[feat_idx],
-                                activation_mask,
-                                normalize_decoder=decoder_normalize,
-                            )
-                        else:
-                            # Evaluate all samples (traditional approach)
-                            _evaluate_batch_feature(
-                                y_dn_batch.cpu(),
-                                y_hat_batch.cpu(),
-                                decoder_vector,
-                                feature_aggregators[feat_idx],
-                                normalize_decoder=decoder_normalize,
-                            )
-
-                    total_samples += x_up_batch.shape[0]
-
-                    # Log progress every 10 batches
-                    if (batch_idx + 1) % 10 == 0:
-                        elapsed_time = time.time() - batch_start_time
-                        batches_per_sec = (batch_idx + 1) / elapsed_time
-                        samples_per_sec = total_samples / elapsed_time
                         logger.info(
-                            "L=%d, k=%d, j_policy=%s: Processed %d batches (%d samples) - "
-                            "%.2f batches/sec, %.1f samples/sec, %.1fs elapsed",
-                            layer_l,
-                            k,
-                            j_policy,
-                            batch_idx + 1,
-                            total_samples,
-                            batches_per_sec,
-                            samples_per_sec,
-                            elapsed_time,
+                            f"  Total feature activations: {total_activations:,}"
                         )
 
+                    else:
+                        # No filtering - all features are "activated" for all samples
+                        feature_masks_all = {
+                            feat_idx: np.ones(total_samples, dtype=bool)
+                            for feat_idx in features_dict[target_layer]
+                        }
+
+                    # Save to cache
+                    _save_eval_cache(
+                        x_up_all, y_dn_all, y_hat_all, feature_masks_all, cache_path
+                    )
+
+                else:
+                    logger.info("Using cached evaluation data")
+                    total_samples = y_dn_all.shape[0]
+
+                # Compute residual-level metrics if needed
+                res_metrics = {}
+                if score_residual is not None:
+                    logger.info("Computing residual-level metrics...")
+                    res_metrics = score_residual(y_dn_all, y_hat_all)
+
+                # Compute feature-level metrics all at once
                 logger.info(
-                    "Processed %d samples for L=%d, k=%d, j_policy=%s",
-                    total_samples,
-                    layer_l,
-                    k,
-                    j_policy,
+                    f"Computing metrics for {len(features_dict[target_layer])} features..."
+                )
+                metrics_start_time = time.time()
+
+                feature_results = compute_all_feature_metrics(
+                    y_dn_all,
+                    y_hat_all,
+                    decoder_matrix.cpu(),
+                    features_dict[target_layer],
+                    feature_masks_all,
+                    normalize_decoder=decoder_normalize,
                 )
 
-                # Log feature activation statistics if filtering was enabled
+                metrics_time = time.time() - metrics_start_time
+                logger.info(f"Feature metrics computed in {metrics_time:.2f}s")
+
+                # Store results with interpretation
+                for feat_idx, metrics in feature_results.items():
+                    # Add residual metrics and calibration interpretation
+                    calib_interpretation = interpret_calibration_metrics(metrics)
+
+                    results[(layer_l, k, j_policy, feat_idx)] = {
+                        **metrics,
+                        **res_metrics,
+                        "calib_interpretation": calib_interpretation,
+                    }
+
+                # Log feature activation summary
                 if filter_inactive_features:
-                    # Get SAE architecture for logging
-                    sae_arch = (
-                        getattr(target_sae.cfg, "architecture", "standard")
-                        if target_sae and hasattr(target_sae, "cfg")
-                        else "standard"
-                    )
-
-                    logger.info(
-                        "Feature activation stats for L=%d, k=%d, j_policy=%s (%s SAE): "
-                        "%d total samples processed",
-                        layer_l,
-                        k,
-                        j_policy,
-                        sae_arch,
-                        total_samples,
-                    )
-
-                    # Log detailed per-feature sample activation counts
-                    logger.info(
-                        "Per-feature sample activation counts for L=%d, k=%d, j_policy=%s:",
-                        layer_l,
-                        k,
-                        j_policy,
-                    )
-
-                    # Sort features by activation count (most active first)
-                    sorted_features = sorted(
-                        feature_activation_counts.items(),
-                        key=lambda x: x[1],
-                        reverse=True,
-                    )
-
-                    # Log summary statistics
-                    activation_counts = list(feature_activation_counts.values())
+                    activation_counts = [
+                        feature_masks_all[feat_idx].sum()
+                        for feat_idx in features_dict[target_layer]
+                    ]
                     never_activated = sum(
                         1 for count in activation_counts if count == 0
                     )
@@ -1312,123 +1354,10 @@ def run_experiment(
                     )
 
                     logger.info(
-                        "  Summary: %d features never activated, %d features activated in all samples, %d features partially activated",
-                        never_activated,
-                        always_activated,
-                        len(activation_counts) - never_activated - always_activated,
+                        f"Feature activation summary: {never_activated} never activated, "
+                        f"{always_activated} always activated, "
+                        f"{len(activation_counts) - never_activated - always_activated} partially activated"
                     )
-
-                    # Log most and least active features
-                    if len(sorted_features) > 0:
-                        logger.info("  Most active features:")
-                        for feat_idx, count in sorted_features[:10]:  # Top 10
-                            activation_rate_feat = (count / total_samples) * 100
-                            logger.info(
-                                f"    Feature {feat_idx}: {count}/{total_samples} samples ({activation_rate_feat:.1f}%)"
-                            )
-
-                        if len(sorted_features) > 10:
-                            logger.info(
-                                "  Least active features (excluding never-activated):"
-                            )
-                            active_features = [
-                                (f, c) for f, c in sorted_features if c > 0
-                            ]
-                            for feat_idx, count in active_features[
-                                -5:
-                            ]:  # Bottom 5 that are still active
-                                activation_rate_feat = (count / total_samples) * 100
-                                logger.info(
-                                    f"    Feature {feat_idx}: {count}/{total_samples} samples ({activation_rate_feat:.1f}%)"
-                                )
-
-                elif not filter_inactive_features:
-                    # When filtering is disabled, all features are "activated" in every sample
-                    logger.info(
-                        "Feature filtering disabled - all %d features evaluated in every sample (%d total samples)",
-                        len(features_dict[target_layer]),
-                        total_samples,
-                    )
-
-                # Compute residual-level metrics if needed
-                res_metrics = {}
-                if collect_residual:
-                    y_dn_all = torch.cat(residual_y_true_all, dim=0).numpy()
-                    y_hat_all = torch.cat(residual_y_pred_all, dim=0).numpy()
-                    res_metrics = score_residual(y_dn_all, y_hat_all)
-
-                # Finalize metrics for each feature
-                for feat_idx in features_dict[target_layer]:
-                    # Check if this feature has any data (was ever activated)
-                    if feature_aggregators[feat_idx].n_samples == 0:
-                        # Feature was never activated - create empty result with special marker
-                        results[(layer_l, k, j_policy, feat_idx)] = {
-                            "r2_lat": 0.0,
-                            "mse_lat": 0.0,
-                            "r_pearson": 0.0,
-                            "calibration": 0.0,
-                            "rms_ratio": 1.0,
-                            "mean_abs_ratio": 1.0,
-                            "mean_ratio": 1.0,
-                            "mad_ratio": 0.0,
-                            "rel_error_mean": 0.0,
-                            "log_mse_ratio": 0.0,
-                            "rms_true": 0.0,
-                            "rms_pred": 0.0,
-                            **res_metrics,
-                            "feature_never_activated": True,
-                            "activation_count": feature_activation_counts[feat_idx],
-                            "total_samples": total_samples,
-                            "activation_rate": 0.0,
-                            "calib_interpretation": {
-                                "rms_assessment": "no_data",
-                                "magnitude_assessment": "no_data",
-                                "bias_assessment": "no_data",
-                                "precision_assessment": "no_data",
-                                "consistency_assessment": "no_data",
-                            },
-                        }
-                        logger.debug(
-                            "Feature %d was never activated in any batch", feat_idx
-                        )
-                    else:
-                        # Get all metrics from the unified aggregator
-                        all_metrics = feature_aggregators[
-                            feat_idx
-                        ].compute_all_metrics()
-
-                        # Extract calibration metrics for interpretation
-                        calib_metrics = feature_aggregators[
-                            feat_idx
-                        ].compute_calibration_metrics()
-                        calib_interpretation = interpret_calibration_metrics(
-                            calib_metrics
-                        )
-
-                        results[(layer_l, k, j_policy, feat_idx)] = {
-                            **all_metrics,
-                            **res_metrics,
-                            "feature_never_activated": False,
-                            "activation_count": feature_activation_counts[feat_idx],
-                            "total_samples": total_samples,
-                            "activation_rate": feature_activation_counts[feat_idx]
-                            / total_samples
-                            if total_samples > 0
-                            else 0.0,
-                            "calib_interpretation": calib_interpretation,
-                        }
-
-                        # Log detailed calibration info for monitoring
-                        logger.debug(
-                            "Feature %d: RMS_ratio=%.3f (%s), MAR=%.3f (%s), Bias=%s, Precision=%s",
-                            feat_idx,
-                            calib_metrics.get("rms_ratio", 1.0),
-                            calib_interpretation.get("rms_assessment", "unknown"),
-                            calib_metrics.get("mean_abs_ratio", 1.0),
-                            calib_interpretation.get("magnitude_assessment", "unknown"),
-                            calib_interpretation.get("bias_assessment", "unknown"),
-                            calib_interpretation.get("precision_assessment", "unknown"),
-                        )
 
     return results
 
@@ -1799,7 +1728,6 @@ def main(cfg: DictConfig) -> dict:
         saes=saes,
         score_residual=score_residual_fn,
         decoder_normalize=cfg.eval.decoders.normalize,
-        val_batch_size=cfg.eval.val_batch_size,
         filter_inactive_features=filter_inactive_features,
     )
 
