@@ -16,15 +16,26 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from transformers import set_seed
 
-from src.activation_loader import ActivationDataset, ActivationLoader, get_train_val_test_datasets
+from src.activation_loader import (
+    ActivationDataset,
+    ActivationLoader,
+    get_train_val_test_datasets,
+)
 from src.sae_loader import load_sae_from_cfg
-from src.transport_operator import PCABaselineTransportOperator, IdentityBaselineTransportOperator, TransportOperator
+from src.transport_operator import (
+    PCABaselineTransportOperator,
+    IdentityBaselineTransportOperator,
+    TransportOperator,
+    load_transport_operator,
+)
 from src.matched_rank_analysis import run_matched_rank_analysis_from_datasets
 
 logger = logging.getLogger(__name__)
 
 
-def load_sae_decoders(cfg: DictConfig, activation_dtype: torch.dtype) -> dict[int, torch.Tensor]:
+def load_sae_decoders(
+    cfg: DictConfig, activation_dtype: torch.dtype
+) -> dict[int, torch.Tensor]:
     """Load SAE decoders for all required layers based on config."""
     sae_decoders = {}
 
@@ -65,6 +76,108 @@ def load_sae_decoders(cfg: DictConfig, activation_dtype: torch.dtype) -> dict[in
     return sae_decoders
 
 
+def load_full_saes(cfg: DictConfig) -> dict[int, Any]:
+    """Load full SAE models for all required layers based on config."""
+    saes = {}
+
+    # Get all unique layers that we need SAEs for (both source and target layers)
+    required_layers = set()
+    for layer_l in cfg.eval.Ls:
+        required_layers.add(layer_l)  # Source layer
+        for k in cfg.eval.ks:
+            required_layers.add(layer_l + k)  # Target layer L+k
+
+    logger.info("Loading full SAEs for layers: %s", sorted(required_layers))
+
+    for layer in required_layers:
+        # Create a copy of the SAE config and modify the layer
+        cfg.sae.layer = layer
+        sae_cfg = OmegaConf.to_container(cfg.sae, resolve=True)
+
+        # Create a temporary config with the modified SAE config
+        temp_cfg = OmegaConf.create({"sae": sae_cfg})
+
+        try:
+            sae, _, _ = load_sae_from_cfg(temp_cfg)
+            saes[layer] = sae
+            logger.info(
+                "Loaded full SAE for layer %d: d_sae=%s, d_model=%s",
+                layer,
+                getattr(sae.cfg, "d_sae", "unknown"),
+                getattr(sae.cfg, "d_in", "unknown"),
+            )
+        except Exception:
+            logger.exception("Failed to load SAE for layer %d", layer)
+            raise
+
+    return saes
+
+
+def get_sample_feature_activations(
+    y_dn_batch: torch.Tensor,
+    sae: Any,
+    available_features: list[int],
+) -> dict[int, torch.Tensor]:
+    """
+    Get sample-level feature activation masks for the current batch.
+
+    For JumpReLU SAEs, this properly handles learnable thresholds.
+
+    Args:
+        y_dn_batch: Batch of residual stream activations [batch_size, d_model]
+        sae: SAE model for encoding (supports both ReLU and JumpReLU architectures)
+        available_features: List of feature indices to check
+
+    Returns:
+        Dictionary mapping feature_idx -> boolean mask [batch_size] indicating
+        which samples in the batch have that feature activated
+    """
+    with torch.no_grad():
+        # Move SAE to the same device as the batch
+        sae_device = next(iter(sae.parameters())).device
+        if sae_device != y_dn_batch.device:
+            sae = sae.to(y_dn_batch.device)
+
+        # Check SAE architecture to handle different activation functions
+        sae_arch = (
+            getattr(sae.cfg, "architecture", "standard")
+            if hasattr(sae, "cfg")
+            else "standard"
+        )
+
+        # Get feature activations using the SAE's encode method
+        # This should handle JumpReLU, TopK, and other architectures automatically
+        try:
+            feature_activations = sae.encode(y_dn_batch)  # [batch_size, d_sae]
+        except Exception as e:
+            logger.exception("Failed to encode features using SAE")
+            raise RuntimeError("SAE encode failed") from e
+
+        # For JumpReLU and TopK SAEs, the encode method already applies the correct
+        # activation function with learnable thresholds or sparsity constraints.
+        # We create boolean masks indicating which samples have each feature activated.
+
+        feature_masks = {}
+        activation_threshold = (
+            1e-12  # Very small threshold for detecting any activation
+        )
+
+        for feat_idx in available_features:
+            feat_acts = feature_activations[:, feat_idx]  # [batch_size]
+
+            # Boolean mask: True where feature is activated for each sample
+            feature_masks[feat_idx] = feat_acts > activation_threshold
+
+        # Log architecture info and activation stats for debugging
+        total_activations = sum(mask.sum().item() for mask in feature_masks.values())
+        logger.debug(
+            f"SAE arch: {sae_arch}, processed {len(available_features)} features, "
+            f"total sample activations: {total_activations}"
+        )
+
+        return feature_masks
+
+
 def generate_feature_dict(cfg: DictConfig) -> dict[int, list[int]]:
     """Generate feature dict for each layer based on config."""
     # TODO: dummy implementation, make sure to re-write
@@ -72,15 +185,19 @@ def generate_feature_dict(cfg: DictConfig) -> dict[int, list[int]]:
 
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
-            feature_dict[layer_l + k] = [0, 1, 2]
+            feature_dict[layer_l + k] = list(range(15))
 
     return feature_dict
 
 
 def create_baseline_transport_operators(
-    cfg: DictConfig,
-    activation_loader: ActivationLoader
-) -> dict[tuple[int, int, str], TransportOperator | PCABaselineTransportOperator | IdentityBaselineTransportOperator]:
+    cfg: DictConfig, activation_loader: ActivationLoader
+) -> dict[
+    tuple[int, int, str],
+    TransportOperator
+    | PCABaselineTransportOperator
+    | IdentityBaselineTransportOperator,
+]:
     """Create baseline transport operators for evaluation."""
     baseline_operators = {}
 
@@ -98,43 +215,42 @@ def create_baseline_transport_operators(
 
                 # Create PCA baseline if enabled
                 if baseline_configs.get("enable_pca", False):
-                    n_components = baseline_configs.get(
-                        "pca_n_components", None)
+                    n_components = baseline_configs.get("pca_n_components", None)
                     pca_op = PCABaselineTransportOperator(
-                        L=layer_l,
-                        k=k,
-                        n_components=n_components
+                        L=layer_l, k=k, n_components=n_components
                     )
                     pca_op.fit(train_dataset)
-                    baseline_operators[(
-                        layer_l, k, f"{j_policy}_pca")] = pca_op
+                    baseline_operators[(layer_l, k, f"{j_policy}_pca")] = pca_op
 
                     logger.info(
                         "Created PCA baseline for L=%d, k=%d, j_policy=%s with %s components",
-                        layer_l, k, j_policy,
-                        n_components if n_components else "all"
+                        layer_l,
+                        k,
+                        j_policy,
+                        n_components if n_components else "all",
                     )
 
                 # Create Identity baseline if enabled
                 if baseline_configs.get("enable_identity", False):
-                    identity_op = IdentityBaselineTransportOperator(
-                        L=layer_l, k=k)
+                    identity_op = IdentityBaselineTransportOperator(L=layer_l, k=k)
                     # No actual fitting needed, but for consistency
                     identity_op.fit(train_dataset)
-                    baseline_operators[(
-                        layer_l, k, f"{j_policy}_identity")] = identity_op
+                    baseline_operators[(layer_l, k, f"{j_policy}_identity")] = (
+                        identity_op
+                    )
 
                     logger.info(
                         "Created Identity baseline for L=%d, k=%d, j_policy=%s",
-                        layer_l, k, j_policy
+                        layer_l,
+                        k,
+                        j_policy,
                     )
 
     return baseline_operators
 
 
 def load_trained_transport_operators(
-    cfg: DictConfig,
-    activation_loader: ActivationLoader
+    cfg: DictConfig, activation_loader: ActivationLoader
 ) -> dict[tuple[int, int, str], TransportOperator]:
     """
     Load trained transport operators from saved models.
@@ -163,36 +279,48 @@ def load_trained_transport_operators(
     # for layer_l in cfg.eval.Ls:
     #     for k in cfg.eval.ks:
     #         for j_policy in cfg.eval.j_policy:
-    #             train_dataset, _, _ = get_train_val_test_datasets(layer_l, k, activation_loader, j_policy)
-    #             transport_op = TransportOperator(L=layer_l, k=k, method="ridge")
+    #             train_dataset, _, _ = get_train_val_test_datasets(
+    #                 layer_l, k, activation_loader, j_policy
+    #             )
+    #             transport_op = TransportOperator(L=layer_l, k=k, method="ridge", )
     #             transport_op.fit(train_dataset)
     #             transport_operators[(layer_l, k, j_policy)] = transport_op
-    #             logger.info(f"Trained transport operator for L={layer_l}, k={k}, j_policy={j_policy}")
+    #             logger.info(
+    #                 f"Trained transport operator for L={layer_l}, k={k}, j_policy={j_policy}"
+    #             )
 
-    logger.info("Loading trained transport operators...")
+    # logger.info("Loading trained transport operators...")
+
+    # for layer_l in cfg.eval.Ls:
+    #     for k in cfg.eval.ks:
+    #         for j_policy in cfg.eval.j_policy:
+    #             # TODO: Replace with actual loading from saved .pkl files
+    #             # For now, create a dummy trained operator
+    #             transport_op = TransportOperator(L=layer_l, k=k, method="ridge")
+    #             # In a real implementation, the operator would already be fitted
+
+    #             transport_operators[(layer_l, k, j_policy)] = transport_op
+
+    #             logger.info(
+    #                 "Created placeholder transport operator for L=%d, k=%d, j_policy=%s",
+    #                 layer_l,
+    #                 k,
+    #                 j_policy,
+    #             )
 
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
             for j_policy in cfg.eval.j_policy:
-                # TODO: Replace with actual loading from saved .pkl files
-                # For now, create a dummy trained operator
-                transport_op = TransportOperator(
-                    L=layer_l, k=k, method="ridge")
-                # In a real implementation, the operator would already be fitted
-
-                transport_operators[(layer_l, k, j_policy)] = transport_op
-
-                logger.info(
-                    "Created placeholder transport operator for L=%d, k=%d, j_policy=%s",
-                    layer_l, k, j_policy
+                # Note, that currently loading does not support choosing the j_policy because it is not hashed
+                transport_operators[(layer_l, k, j_policy)] = load_transport_operator(
+                    layer_l, k, "./cache"
                 )
 
     return transport_operators
 
 
 def create_dummy_transport_operators(
-    cfg: DictConfig,
-    activation_loader: ActivationLoader
+    cfg: DictConfig, activation_loader: ActivationLoader
 ) -> dict[tuple[int, int, str], TransportOperator]:
     """
     Create dummy transport operators for testing/demonstration.
@@ -214,7 +342,7 @@ def create_dummy_transport_operators(
                     k=k,
                     method="linear",  # Simple linear regression as dummy
                     normalize=False,
-                    auto_tune=False
+                    auto_tune=False,
                 )
 
                 # TODO: In a real implementation, you would:
@@ -227,13 +355,17 @@ def create_dummy_transport_operators(
 
                 logger.info(
                     "Created dummy transport operator for L=%d, k=%d, j_policy=%s",
-                    L, k, j_policy
+                    L,
+                    k,
+                    j_policy,
                 )
 
     return transport_operators
 
 
-def score_latent_default(a_true: torch.Tensor, a_pred: torch.Tensor) -> tuple[float, float, float]:
+def score_latent_default(
+    a_true: torch.Tensor, a_pred: torch.Tensor
+) -> tuple[float, float, float]:
     """Default scoring function for latent activations."""
     # R-squared
     ss_res = torch.sum((a_true - a_pred) ** 2)
@@ -257,8 +389,7 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     y_pred_t = torch.from_numpy(y_pred).double()
 
     # Check for extremely large values that might cause overflow
-    max_val = max(torch.abs(y_true_t).max().item(),
-                  torch.abs(y_pred_t).max().item())
+    max_val = max(torch.abs(y_true_t).max().item(), torch.abs(y_pred_t).max().item())
     if max_val > 1e6:
         # Scale down values to prevent overflow
         scale_factor = 1e6 / max_val
@@ -277,14 +408,14 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     # Avoid division by zero and handle near-zero variance
     eps = 1e-12
     r2_per_dim = 1 - (ss_res / (ss_tot + eps))
-    r2_per_dim = torch.where(ss_tot < eps, torch.tensor(
-        0.0, dtype=torch.float64), r2_per_dim)
+    r2_per_dim = torch.where(
+        ss_tot < eps, torch.tensor(0.0, dtype=torch.float64), r2_per_dim
+    )
     r2_per_dim = torch.clamp(r2_per_dim, -1e6, 1.0)  # Clip extreme values
 
     # Only use finite values for mean
     finite_mask = torch.isfinite(r2_per_dim)
-    r2_mean = float(torch.mean(
-        r2_per_dim[finite_mask])) if finite_mask.any() else 0.0
+    r2_mean = float(torch.mean(r2_per_dim[finite_mask])) if finite_mask.any() else 0.0
 
     # MSE (mean across all elements)
     mse = float(torch.mean(diff**2))
@@ -295,10 +426,12 @@ def score_residual_default(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     y_pred_norms = torch.norm(y_pred_t, dim=1, keepdim=True)
 
     # Handle zero norms
-    y_true_norms = torch.where(y_true_norms < eps, torch.tensor(
-        eps, dtype=torch.float64), y_true_norms)
-    y_pred_norms = torch.where(y_pred_norms < eps, torch.tensor(
-        eps, dtype=torch.float64), y_pred_norms)
+    y_true_norms = torch.where(
+        y_true_norms < eps, torch.tensor(eps, dtype=torch.float64), y_true_norms
+    )
+    y_pred_norms = torch.where(
+        y_pred_norms < eps, torch.tensor(eps, dtype=torch.float64), y_pred_norms
+    )
 
     y_true_norm = y_true_t / y_true_norms
     y_pred_norm = y_pred_t / y_pred_norms
@@ -357,31 +490,32 @@ class ComprehensiveMetricAggregator:
             self.sum_true_sq += torch.sum(a_true_f**2).item()
             self.sum_pred_sq += torch.sum(a_pred_f**2).item()
             self.sum_true_pred += torch.sum(a_true_f * a_pred_f).item()
-            self.sum_squared_error += torch.sum(
-                (a_true_f - a_pred_f) ** 2).item()
+            self.sum_squared_error += torch.sum((a_true_f - a_pred_f) ** 2).item()
 
             # Calibration metrics
             self.sum_abs_true += torch.sum(torch.abs(a_true_f)).item()
             self.sum_abs_pred += torch.sum(torch.abs(a_pred_f)).item()
-            self.sum_abs_diff += torch.sum(
-                torch.abs(a_true_f - a_pred_f)).item()
+            self.sum_abs_diff += torch.sum(torch.abs(a_true_f - a_pred_f)).item()
 
             # Relative error for non-zero true values
             eps_rel = 1e-8
             nonzero_mask = torch.abs(a_true_f) > eps_rel
             if nonzero_mask.any():
-                rel_errors = torch.abs(a_true_f[nonzero_mask] - a_pred_f[nonzero_mask]) / torch.abs(
-                    a_true_f[nonzero_mask]
-                )
+                rel_errors = torch.abs(
+                    a_true_f[nonzero_mask] - a_pred_f[nonzero_mask]
+                ) / torch.abs(a_true_f[nonzero_mask])
                 self.sum_rel_error += torch.sum(rel_errors).item()
 
                 # Log ratio for geometric mean-based calibration
                 # Only for pairs where both values are significantly non-zero
                 both_nonzero = (torch.abs(a_true_f) > eps_rel) & (
-                    torch.abs(a_pred_f) > eps_rel)
+                    torch.abs(a_pred_f) > eps_rel
+                )
                 if both_nonzero.any():
                     log_ratios = torch.log(
-                        torch.abs(a_pred_f[both_nonzero]) / torch.abs(a_true_f[both_nonzero]))
+                        torch.abs(a_pred_f[both_nonzero])
+                        / torch.abs(a_true_f[both_nonzero])
+                    )
                     self.sum_log_ratio_sq += torch.sum(log_ratios**2).item()
                     self.n_nonzero_pairs += both_nonzero.sum().item()
 
@@ -472,26 +606,33 @@ class ComprehensiveMetricAggregator:
         # Mean absolute values and their ratio
         mean_abs_true = self.sum_abs_true / self.n_samples
         mean_abs_pred = self.sum_abs_pred / self.n_samples
-        mean_abs_ratio = mean_abs_pred / \
-            (mean_abs_true + eps) if mean_abs_true > eps else 1.0
+        mean_abs_ratio = (
+            mean_abs_pred / (mean_abs_true + eps) if mean_abs_true > eps else 1.0
+        )
 
         # Mean values and their ratio (to detect systematic bias)
         mean_true = self.sum_true / self.n_samples
         mean_pred = self.sum_pred / self.n_samples
-        mean_ratio = mean_pred / \
-            (mean_true + eps) if abs(mean_true) > eps else 1.0
+        mean_ratio = mean_pred / (mean_true + eps) if abs(mean_true) > eps else 1.0
 
         # Mean Absolute Deviation ratio (normalized MAD)
-        mad_ratio = (self.sum_abs_diff / self.n_samples) / \
-            (mean_abs_true + eps) if mean_abs_true > eps else 0.0
+        mad_ratio = (
+            (self.sum_abs_diff / self.n_samples) / (mean_abs_true + eps)
+            if mean_abs_true > eps
+            else 0.0
+        )
 
         # Mean relative error
-        rel_error_mean = self.sum_rel_error / \
-            max(1, self.n_samples - (self.n_samples - self.n_nonzero_pairs))
+        rel_error_mean = self.sum_rel_error / max(
+            1, self.n_samples - (self.n_samples - self.n_nonzero_pairs)
+        )
 
         # Log-scale calibration (geometric standard deviation of ratios)
-        log_mse_ratio = self.sum_log_ratio_sq / \
-            max(1, self.n_nonzero_pairs) if self.n_nonzero_pairs > 0 else 0.0
+        log_mse_ratio = (
+            self.sum_log_ratio_sq / max(1, self.n_nonzero_pairs)
+            if self.n_nonzero_pairs > 0
+            else 0.0
+        )
 
         return {
             # Original geometric mean
@@ -555,7 +696,9 @@ def interpret_calibration_metrics(calib_metrics: dict[str, float]) -> dict[str, 
         interpretation["bias_assessment"] = "moderate"
     else:
         interpretation["bias_assessment"] = "significant"
-        interpretation["bias_direction"] = "overestimation" if mean_ratio > 1.0 else "underestimation"
+        interpretation["bias_direction"] = (
+            "overestimation" if mean_ratio > 1.0 else "underestimation"
+        )
 
     # Relative error interpretation
     rel_error = calib_metrics.get("rel_error_mean", 0.0)
@@ -580,6 +723,47 @@ def interpret_calibration_metrics(calib_metrics: dict[str, float]) -> dict[str, 
         interpretation["consistency_assessment"] = "poor"
 
     return interpretation
+
+
+def _evaluate_batch_feature_with_mask(
+    y_dn_batch: torch.Tensor,
+    y_hat_batch: torch.Tensor,
+    decoder_vector: torch.Tensor,
+    metric_aggregator: ComprehensiveMetricAggregator,
+    activation_mask: torch.Tensor,
+    *,
+    normalize_decoder: bool = True,
+):
+    """
+    Evaluate a single feature on a batch, but only for samples where the feature is activated.
+
+    Args:
+        y_dn_batch: Batch of true residual stream activations [batch_size, d_model]
+        y_hat_batch: Batch of predicted residual stream activations [batch_size, d_model]
+        decoder_vector: Feature decoder vector [d_model]
+        metric_aggregator: Aggregator to update with metrics
+        activation_mask: Boolean mask [batch_size] indicating which samples to include
+        normalize_decoder: Whether to normalize the decoder vector
+    """
+    if not torch.any(activation_mask):
+        # No samples have this feature activated - skip
+        return
+
+    d_f = decoder_vector
+
+    if normalize_decoder:
+        d_f = d_f / (torch.norm(d_f) + 1e-8)
+
+    # Project residuals onto feature direction
+    a_true = torch.matmul(y_dn_batch, d_f)  # [batch_size]
+    a_pred = torch.matmul(y_hat_batch, d_f)  # [batch_size]
+
+    # Only include samples where the feature is activated
+    a_true_filtered = a_true[activation_mask]  # [num_activated_samples]
+    a_pred_filtered = a_pred[activation_mask]  # [num_activated_samples]
+
+    # Update aggregator with filtered samples
+    metric_aggregator.update(a_true_filtered, a_pred_filtered)
 
 
 def _evaluate_batch_feature(
@@ -620,8 +804,8 @@ def run_matched_rank_experiment(
     2) Rank-r transport: fit ridge + SVD truncation to rank r, predict Y_test from X_test
     3) Compare R²(r) curves and compute efficiency ratios
 
-    The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible 
-    rank-r Y-only reconstruction). The gap shows how much of compressible variance 
+    The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible
+    rank-r Y-only reconstruction). The gap shows how much of compressible variance
     is actually predictable from X.
     """
     logger.info("Running matched-rank curves analysis...")
@@ -632,8 +816,7 @@ def run_matched_rank_experiment(
     matched_rank_cfg = cfg.get("matched_rank", {})
     ranks = matched_rank_cfg.get("ranks", [8, 16, 32, 64, 128, 256])
     alpha_grid = matched_rank_cfg.get("alpha_grid", [0.1, 1.0, 10.0, 100.0])
-    orthogonal_test_ranks = matched_rank_cfg.get(
-        "orthogonal_test_ranks", [16, 32, 64])
+    orthogonal_test_ranks = matched_rank_cfg.get("orthogonal_test_ranks", [16, 32, 64])
     # Limit samples for computational efficiency
     max_samples = matched_rank_cfg.get("max_samples", None)
 
@@ -647,12 +830,15 @@ def run_matched_rank_experiment(
         for k in cfg.eval.ks:
             for j_policy in cfg.eval.j_policy:
                 logger.info(
-                    f"Matched-rank analysis for L={layer_l}, k={k}, j_policy={j_policy}")
+                    f"Matched-rank analysis for L={layer_l}, k={k}, j_policy={j_policy}"
+                )
 
                 try:
                     # Get train/val/test datasets
-                    train_dataset, val_dataset, test_dataset = get_train_val_test_datasets(
-                        layer_l, k, activation_loader, j_policy
+                    train_dataset, val_dataset, test_dataset = (
+                        get_train_val_test_datasets(
+                            layer_l, k, activation_loader, j_policy
+                        )
                     )
 
                     # Run matched-rank analysis
@@ -664,7 +850,7 @@ def run_matched_rank_experiment(
                         alpha_grid=alpha_grid,
                         orthogonal_test_ranks=orthogonal_test_ranks,
                         plot=matched_rank_cfg.get("generate_plots", True),
-                        max_samples=max_samples
+                        max_samples=max_samples,
                     )
 
                     # Store results
@@ -674,11 +860,12 @@ def run_matched_rank_experiment(
                     # Log summary
                     summary = results["summary_stats"]
                     logger.info(
-                        f"  Max PCA R²: {summary['max_pca_r2']:.4f} at rank {summary['best_rank_pca']}")
+                        f"  Max PCA R²: {summary['max_pca_r2']:.4f} at rank {summary['best_rank_pca']}"
+                    )
                     logger.info(
-                        f"  Max Transport R²: {summary['max_transport_r2']:.4f} at rank {summary['best_rank_transport']}")
-                    logger.info(
-                        f"  Mean efficiency: {summary['mean_efficiency']:.4f}")
+                        f"  Max Transport R²: {summary['max_transport_r2']:.4f} at rank {summary['best_rank_transport']}"
+                    )
+                    logger.info(f"  Mean efficiency: {summary['mean_efficiency']:.4f}")
 
                     # Log rank-by-rank comparison
                     logger.info("  Rank-by-rank comparison:")
@@ -690,15 +877,19 @@ def run_matched_rank_experiment(
 
                         if trans_r2 is not None:
                             alpha_str = f"{alpha}" if alpha is not None else "None"
-                            logger.info(f"    r={r:3d}: PCA={pca_r2:.3f}, Transport={trans_r2:.3f} "
-                                        f"(α={alpha_str}), Efficiency={efficiency:.3f}")
+                            logger.info(
+                                f"    r={r:3d}: PCA={pca_r2:.3f}, Transport={trans_r2:.3f} "
+                                f"(α={alpha_str}), Efficiency={efficiency:.3f}"
+                            )
                         else:
                             logger.info(
-                                f"    r={r:3d}: PCA={pca_r2:.3f}, Transport=FAILED")
+                                f"    r={r:3d}: PCA={pca_r2:.3f}, Transport=FAILED"
+                            )
 
                 except Exception as e:
                     logger.error(
-                        f"Matched-rank analysis failed for L={layer_l}, k={k}, j_policy={j_policy}: {e}")
+                        f"Matched-rank analysis failed for L={layer_l}, k={k}, j_policy={j_policy}: {e}"
+                    )
                     continue
 
     return matched_rank_results
@@ -715,9 +906,9 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
             "max_pca_r2_overall": 0.0,
             "max_transport_r2_overall": 0.0,
             "mean_efficiency_overall": 0.0,
-            "best_configs": {}
+            "best_configs": {},
         },
-        "rank_performance": {}
+        "rank_performance": {},
     }
 
     all_efficiencies = []
@@ -736,7 +927,7 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
             "max_transport_r2": results["summary_stats"]["max_transport_r2"],
             "mean_efficiency": results["summary_stats"]["mean_efficiency"],
             "best_rank_pca": results["summary_stats"]["best_rank_pca"],
-            "best_rank_transport": results["summary_stats"]["best_rank_transport"]
+            "best_rank_transport": results["summary_stats"]["best_rank_transport"],
         }
         summary["configurations"].append(config_summary)
 
@@ -749,30 +940,43 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
                 all_efficiencies.append(results["efficiency"][r])
 
         # Track best overall performance
-        if results["summary_stats"]["max_pca_r2"] > summary["aggregate_stats"]["max_pca_r2_overall"]:
-            summary["aggregate_stats"]["max_pca_r2_overall"] = results["summary_stats"]["max_pca_r2"]
+        if (
+            results["summary_stats"]["max_pca_r2"]
+            > summary["aggregate_stats"]["max_pca_r2_overall"]
+        ):
+            summary["aggregate_stats"]["max_pca_r2_overall"] = results["summary_stats"][
+                "max_pca_r2"
+            ]
             summary["aggregate_stats"]["best_configs"]["pca"] = key
 
-        if results["summary_stats"]["max_transport_r2"] > summary["aggregate_stats"]["max_transport_r2_overall"]:
-            summary["aggregate_stats"]["max_transport_r2_overall"] = results["summary_stats"]["max_transport_r2"]
+        if (
+            results["summary_stats"]["max_transport_r2"]
+            > summary["aggregate_stats"]["max_transport_r2_overall"]
+        ):
+            summary["aggregate_stats"]["max_transport_r2_overall"] = results[
+                "summary_stats"
+            ]["max_transport_r2"]
             summary["aggregate_stats"]["best_configs"]["transport"] = key
 
     # Compute aggregate statistics
     if all_efficiencies:
         summary["aggregate_stats"]["mean_efficiency_overall"] = float(
-            np.mean(all_efficiencies))
+            np.mean(all_efficiencies)
+        )
         summary["aggregate_stats"]["std_efficiency_overall"] = float(
-            np.std(all_efficiencies))
+            np.std(all_efficiencies)
+        )
         summary["aggregate_stats"]["median_efficiency_overall"] = float(
-            np.median(all_efficiencies))
+            np.median(all_efficiencies)
+        )
 
     if all_pca_r2:
-        summary["aggregate_stats"]["mean_pca_r2_overall"] = float(
-            np.mean(all_pca_r2))
+        summary["aggregate_stats"]["mean_pca_r2_overall"] = float(np.mean(all_pca_r2))
 
     if all_transport_r2:
         summary["aggregate_stats"]["mean_transport_r2_overall"] = float(
-            np.mean(all_transport_r2))
+            np.mean(all_transport_r2)
+        )
 
     # Performance by rank
     if matched_rank_results:
@@ -785,35 +989,50 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
             for results in matched_rank_results.values():
                 rank_pca_r2.append(results["pca_R2"][r])
                 if results["transport"][r]["R2_test"] is not None:
-                    rank_transport_r2.append(
-                        results["transport"][r]["R2_test"])
+                    rank_transport_r2.append(results["transport"][r]["R2_test"])
                 if not np.isnan(results["efficiency"][r]):
                     rank_efficiency.append(results["efficiency"][r])
 
             summary["rank_performance"][r] = {
                 "mean_pca_r2": float(np.mean(rank_pca_r2)) if rank_pca_r2 else 0.0,
-                "mean_transport_r2": float(np.mean(rank_transport_r2)) if rank_transport_r2 else 0.0,
-                "mean_efficiency": float(np.mean(rank_efficiency)) if rank_efficiency else 0.0,
-                "std_efficiency": float(np.std(rank_efficiency)) if rank_efficiency else 0.0
+                "mean_transport_r2": float(np.mean(rank_transport_r2))
+                if rank_transport_r2
+                else 0.0,
+                "mean_efficiency": float(np.mean(rank_efficiency))
+                if rank_efficiency
+                else 0.0,
+                "std_efficiency": float(np.std(rank_efficiency))
+                if rank_efficiency
+                else 0.0,
             }
 
     return summary
 
 
 def run_experiment(
-    transport_operators: dict[tuple[int, int, str], TransportOperator | PCABaselineTransportOperator | IdentityBaselineTransportOperator],
+    transport_operators: dict[
+        tuple[int, int, str],
+        TransportOperator
+        | PCABaselineTransportOperator
+        | IdentityBaselineTransportOperator,
+    ],
     chosen_layers: list[int],
     activation_loader: ActivationLoader,
     k_list: list[int],
     j_policy_list: list[str],
     features_dict: dict[int, list[int]],
     sae_decoders: dict[int, torch.Tensor],
+    saes: dict[int, Any],
     score_residual: Callable | None = None,
     *,
     decoder_normalize: bool = True,
     val_batch_size: int = 32,
-    device: str = "cuda" if torch.cuda.is_available(
-    ) else "mps" if torch.backends.mps.is_available() else "cpu",
+    filter_inactive_features: bool = True,
+    device: str = "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu",
 ) -> dict[tuple[int, int, str, int], dict[str, float]]:
     """Run evaluation of transport operators on SAE features."""
     # Input validation
@@ -827,8 +1046,7 @@ def run_experiment(
     for layer_l in chosen_layers:
         for k in k_list:
             for j_policy in j_policy_list:
-                logger.info("Evaluating L=%d, k=%d, j_policy=%s",
-                            layer_l, k, j_policy)
+                logger.info("Evaluating L=%d, k=%d, j_policy=%s", layer_l, k, j_policy)
 
                 # Check if transport operator exists
                 if (layer_l, k, j_policy) not in transport_operators:
@@ -844,8 +1062,7 @@ def run_experiment(
 
                 # Handle PCA baseline differently - it's for variance analysis, not prediction
                 if isinstance(transport_op, PCABaselineTransportOperator):
-                    logger.info(
-                        "Processing PCA baseline for variance analysis...")
+                    logger.info("Processing PCA baseline for variance analysis...")
 
                     # Get PCA metrics and add them to results for this layer configuration
                     try:
@@ -860,16 +1077,26 @@ def run_experiment(
                             **pca_metrics,
                             # Add interpretation
                             "variance_analysis": {
-                                "high_dimensional": pca_metrics["n_components_95pct"] > pca_metrics["original_n_features"] * 0.8,
-                                "low_rank": pca_metrics["n_components_95pct"] < pca_metrics["original_n_features"] * 0.2,
-                                "effective_dimensionality": pca_metrics["n_components_95pct"],
-                                "dimensionality_reduction_ratio": pca_metrics["n_components_95pct"] / pca_metrics["original_n_features"]
-                            }
+                                "high_dimensional": pca_metrics["n_components_95pct"]
+                                > pca_metrics["original_n_features"] * 0.8,
+                                "low_rank": pca_metrics["n_components_95pct"]
+                                < pca_metrics["original_n_features"] * 0.2,
+                                "effective_dimensionality": pca_metrics[
+                                    "n_components_95pct"
+                                ],
+                                "dimensionality_reduction_ratio": pca_metrics[
+                                    "n_components_95pct"
+                                ]
+                                / pca_metrics["original_n_features"],
+                            },
                         }
 
                         logger.info(
                             "PCA analysis complete for L=%d, k=%d: %d components explain 95%% variance (original: %d features)",
-                            layer_l, k, pca_metrics["n_components_95pct"], pca_metrics["original_n_features"]
+                            layer_l,
+                            k,
+                            pca_metrics["n_components_95pct"],
+                            pca_metrics["original_n_features"],
                         )
 
                     except Exception as e:
@@ -884,8 +1111,7 @@ def run_experiment(
                     activation_loader,
                     j_policy,
                 )
-                logger.info("Evaluating on %d test samples",
-                            len(dataset.idx_list))
+                logger.info("Evaluating on %d test samples", len(dataset.idx_list))
 
                 dataloader = torch.utils.data.DataLoader(
                     dataset,
@@ -898,26 +1124,46 @@ def run_experiment(
                 target_layer = layer_l + k
                 if target_layer not in sae_decoders:
                     logger.warning(
-                        "SAE decoder not found for target layer %d", target_layer)
+                        "SAE decoder not found for target layer %d", target_layer
+                    )
                     continue
 
                 if target_layer not in features_dict:
                     logger.warning(
-                        "Feature list not found for target layer %d", target_layer)
+                        "Feature list not found for target layer %d", target_layer
+                    )
+                    continue
+
+                if filter_inactive_features and target_layer not in saes:
+                    logger.warning(
+                        "Full SAE not found for target layer %d (needed for feature filtering)",
+                        target_layer,
+                    )
                     continue
 
                 decoder_matrix = sae_decoders[target_layer].to(device)
+                target_sae = (
+                    saes.get(target_layer) if filter_inactive_features else None
+                )
 
                 # Initialize aggregators for each feature
                 feature_aggregators = {}
                 for feat_idx in features_dict[target_layer]:
-                    feature_aggregators[feat_idx] = ComprehensiveMetricAggregator(
-                    )
+                    feature_aggregators[feat_idx] = ComprehensiveMetricAggregator()
 
                 # For residual metrics (if needed)
                 residual_y_true_all = []
                 residual_y_pred_all = []
                 collect_residual = score_residual is not None
+
+                # Track statistics for feature activation filtering
+                total_features_evaluated = 0
+                total_batches_processed = 0
+
+                # Track how many times each feature is activated
+                feature_activation_counts = {
+                    feat_idx: 0 for feat_idx in features_dict[target_layer]
+                }
 
                 # Process batches one by one
                 total_samples = 0
@@ -931,23 +1177,76 @@ def run_experiment(
                         # Use transport operator to predict
                         x_np = x_up_batch.cpu().numpy()
                         y_hat_np = transport_op.predict(x_np)
-                        y_hat_batch = torch.from_numpy(y_hat_np).to(device)
+                        y_hat_batch = (
+                            torch.from_numpy(y_hat_np).to(y_dn_batch.dtype).to(device)
+                        )
 
                     # Collect for residual metrics if needed (small memory overhead)
                     if collect_residual:
                         residual_y_true_all.append(y_dn_batch.cpu())
                         residual_y_pred_all.append(y_hat_batch.cpu())
 
-                    # Evaluate each feature on this batch
+                    # Determine which features to evaluate for this batch and get sample-level masks
+                    if filter_inactive_features and target_sae is not None:
+                        # Get sample-level feature activation masks
+                        feature_masks = get_sample_feature_activations(
+                            y_dn_batch,
+                            target_sae,
+                            features_dict[target_layer],
+                        )
+
+                        # Count total sample activations across all features
+                        batch_sample_activations = sum(
+                            mask.sum().item() for mask in feature_masks.values()
+                        )
+                        total_features_evaluated += batch_sample_activations
+                        total_batches_processed += 1
+
+                        # Update per-feature sample activation counts
+                        for feat_idx, mask in feature_masks.items():
+                            feature_activation_counts[feat_idx] += mask.sum().item()
+
+                        if batch_sample_activations == 0:
+                            logger.debug(
+                                "Batch %d: No features activated in any sample.",
+                                batch_idx,
+                            )
+                    else:
+                        # Evaluate all features - count all samples for each feature
+                        feature_masks = {}
+                        batch_size = y_dn_batch.shape[0]
+                        total_batches_processed += 1
+                        for feat_idx in features_dict[target_layer]:
+                            # All samples are "activated" when filtering is disabled
+                            feature_masks[feat_idx] = torch.ones(
+                                batch_size, dtype=torch.bool, device=y_dn_batch.device
+                            )
+                            feature_activation_counts[feat_idx] += batch_size
+
+                    # Evaluate each feature using sample-level filtering
                     for feat_idx in features_dict[target_layer]:
                         decoder_vector = decoder_matrix[feat_idx].cpu()
-                        _evaluate_batch_feature(
-                            y_dn_batch.cpu(),
-                            y_hat_batch.cpu(),
-                            decoder_vector,
-                            feature_aggregators[feat_idx],
-                            normalize_decoder=decoder_normalize,
-                        )
+                        activation_mask = feature_masks[feat_idx].cpu()
+
+                        if filter_inactive_features:
+                            # Only evaluate samples where this feature is activated
+                            _evaluate_batch_feature_with_mask(
+                                y_dn_batch.cpu(),
+                                y_hat_batch.cpu(),
+                                decoder_vector,
+                                feature_aggregators[feat_idx],
+                                activation_mask,
+                                normalize_decoder=decoder_normalize,
+                            )
+                        else:
+                            # Evaluate all samples (traditional approach)
+                            _evaluate_batch_feature(
+                                y_dn_batch.cpu(),
+                                y_hat_batch.cpu(),
+                                decoder_vector,
+                                feature_aggregators[feat_idx],
+                                normalize_decoder=decoder_normalize,
+                            )
 
                     total_samples += x_up_batch.shape[0]
 
@@ -977,6 +1276,95 @@ def run_experiment(
                     j_policy,
                 )
 
+                # Log feature activation statistics if filtering was enabled
+                if filter_inactive_features and total_batches_processed > 0:
+                    # Convert to sample-level statistics
+                    avg_sample_activations_per_batch = (
+                        total_features_evaluated / total_batches_processed
+                    )
+
+                    # Get SAE architecture for logging
+                    sae_arch = (
+                        getattr(target_sae.cfg, "architecture", "standard")
+                        if target_sae and hasattr(target_sae, "cfg")
+                        else "standard"
+                    )
+
+                    logger.info(
+                        "Feature activation stats for L=%d, k=%d, j_policy=%s (%s SAE): "
+                        "%.1f avg sample activations/batch, %d total sample activations, %d total samples",
+                        layer_l,
+                        k,
+                        j_policy,
+                        sae_arch,
+                        avg_sample_activations_per_batch,
+                        total_features_evaluated,
+                        total_samples,
+                    )
+
+                    # Log detailed per-feature sample activation counts
+                    logger.info(
+                        "Per-feature sample activation counts for L=%d, k=%d, j_policy=%s:",
+                        layer_l,
+                        k,
+                        j_policy,
+                    )
+
+                    # Sort features by activation count (most active first)
+                    sorted_features = sorted(
+                        feature_activation_counts.items(),
+                        key=lambda x: x[1],
+                        reverse=True,
+                    )
+
+                    # Log summary statistics
+                    activation_counts = list(feature_activation_counts.values())
+                    never_activated = sum(
+                        1 for count in activation_counts if count == 0
+                    )
+                    always_activated = sum(
+                        1 for count in activation_counts if count == total_samples
+                    )
+
+                    logger.info(
+                        "  Summary: %d features never activated, %d features activated in all samples, %d features partially activated",
+                        never_activated,
+                        always_activated,
+                        len(activation_counts) - never_activated - always_activated,
+                    )
+
+                    # Log most and least active features
+                    if len(sorted_features) > 0:
+                        logger.info("  Most active features:")
+                        for feat_idx, count in sorted_features[:10]:  # Top 10
+                            activation_rate_feat = (count / total_samples) * 100
+                            logger.info(
+                                f"    Feature {feat_idx}: {count}/{total_samples} samples ({activation_rate_feat:.1f}%)"
+                            )
+
+                        if len(sorted_features) > 10:
+                            logger.info(
+                                "  Least active features (excluding never-activated):"
+                            )
+                            active_features = [
+                                (f, c) for f, c in sorted_features if c > 0
+                            ]
+                            for feat_idx, count in active_features[
+                                -5:
+                            ]:  # Bottom 5 that are still active
+                                activation_rate_feat = (count / total_samples) * 100
+                                logger.info(
+                                    f"    Feature {feat_idx}: {count}/{total_samples} samples ({activation_rate_feat:.1f}%)"
+                                )
+
+                elif not filter_inactive_features:
+                    # When filtering is disabled, all features are "activated" in every sample
+                    logger.info(
+                        "Feature filtering disabled - all %d features evaluated in every sample (%d total samples)",
+                        len(features_dict[target_layer]),
+                        total_samples,
+                    )
+
                 # Compute residual-level metrics if needed
                 res_metrics = {}
                 if collect_residual:
@@ -986,35 +1374,76 @@ def run_experiment(
 
                 # Finalize metrics for each feature
                 for feat_idx in features_dict[target_layer]:
-                    # Get all metrics from the unified aggregator
-                    all_metrics = feature_aggregators[feat_idx].compute_all_metrics(
-                    )
+                    # Check if this feature has any data (was ever activated)
+                    if feature_aggregators[feat_idx].n_samples == 0:
+                        # Feature was never activated - create empty result with special marker
+                        results[(layer_l, k, j_policy, feat_idx)] = {
+                            "r2_lat": 0.0,
+                            "mse_lat": 0.0,
+                            "r_pearson": 0.0,
+                            "calibration": 0.0,
+                            "rms_ratio": 1.0,
+                            "mean_abs_ratio": 1.0,
+                            "mean_ratio": 1.0,
+                            "mad_ratio": 0.0,
+                            "rel_error_mean": 0.0,
+                            "log_mse_ratio": 0.0,
+                            "rms_true": 0.0,
+                            "rms_pred": 0.0,
+                            **res_metrics,
+                            "feature_never_activated": True,
+                            "activation_count": feature_activation_counts[feat_idx],
+                            "total_batches": total_batches_processed,
+                            "activation_rate": 0.0,
+                            "calib_interpretation": {
+                                "rms_assessment": "no_data",
+                                "magnitude_assessment": "no_data",
+                                "bias_assessment": "no_data",
+                                "precision_assessment": "no_data",
+                                "consistency_assessment": "no_data",
+                            },
+                        }
+                        logger.debug(
+                            "Feature %d was never activated in any batch", feat_idx
+                        )
+                    else:
+                        # Get all metrics from the unified aggregator
+                        all_metrics = feature_aggregators[
+                            feat_idx
+                        ].compute_all_metrics()
 
-                    # Extract calibration metrics for interpretation
-                    calib_metrics = feature_aggregators[feat_idx].compute_calibration_metrics(
-                    )
-                    calib_interpretation = interpret_calibration_metrics(
-                        calib_metrics)
+                        # Extract calibration metrics for interpretation
+                        calib_metrics = feature_aggregators[
+                            feat_idx
+                        ].compute_calibration_metrics()
+                        calib_interpretation = interpret_calibration_metrics(
+                            calib_metrics
+                        )
 
-                    results[(layer_l, k, j_policy, feat_idx)] = {
-                        **all_metrics,
-                        **res_metrics,
-                        "calib_interpretation": calib_interpretation,
-                    }
+                        results[(layer_l, k, j_policy, feat_idx)] = {
+                            **all_metrics,
+                            **res_metrics,
+                            "feature_never_activated": False,
+                            "activation_count": feature_activation_counts[feat_idx],
+                            "total_batches": total_batches_processed,
+                            "activation_rate": feature_activation_counts[feat_idx]
+                            / total_batches_processed
+                            if total_batches_processed > 0
+                            else 0.0,
+                            "calib_interpretation": calib_interpretation,
+                        }
 
-                    # Log detailed calibration info for monitoring
-                    logger.debug(
-                        "Feature %d: RMS_ratio=%.3f (%s), MAR=%.3f (%s), Bias=%s, Precision=%s",
-                        feat_idx,
-                        calib_metrics.get("rms_ratio", 1.0),
-                        calib_interpretation.get("rms_assessment", "unknown"),
-                        calib_metrics.get("mean_abs_ratio", 1.0),
-                        calib_interpretation.get(
-                            "magnitude_assessment", "unknown"),
-                        calib_interpretation.get("bias_assessment", "unknown"),
-                        calib_interpretation.get(
-                            "precision_assessment", "unknown"),
-                    )
+                        # Log detailed calibration info for monitoring
+                        logger.debug(
+                            "Feature %d: RMS_ratio=%.3f (%s), MAR=%.3f (%s), Bias=%s, Precision=%s",
+                            feat_idx,
+                            calib_metrics.get("rms_ratio", 1.0),
+                            calib_interpretation.get("rms_assessment", "unknown"),
+                            calib_metrics.get("mean_abs_ratio", 1.0),
+                            calib_interpretation.get("magnitude_assessment", "unknown"),
+                            calib_interpretation.get("bias_assessment", "unknown"),
+                            calib_interpretation.get("precision_assessment", "unknown"),
+                        )
 
     return results
 
@@ -1028,7 +1457,14 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
         "log_mse_ratios": [],
         "assessments": {"excellent": 0, "good": 0, "fair": 0, "poor": 0},
         "bias_directions": {"overestimation": 0, "underestimation": 0, "minimal": 0},
-        "pca_analysis": []  # Store PCA variance analysis results
+        "pca_analysis": [],  # Store PCA variance analysis results
+        "activation_summary": {
+            "total_features": 0,
+            "never_activated_features": 0,
+            "activated_features": 0,
+            "activation_rates": [],  # List of activation rates for all features
+            "activation_counts": [],  # List of activation counts for all features
+        },
     }
 
     for key, metrics in results.items():
@@ -1036,30 +1472,55 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
 
         # Handle PCA analysis results separately
         if feat_idx == -1 and metrics.get("analysis_type") == "pca_variance_analysis":
-            calibration_summary["pca_analysis"].append({
-                "layer_l": layer_l,
-                "k": k,
-                "j_policy": j_policy,
-                "target_layer": metrics.get("target_layer"),
-                "original_n_features": metrics.get("original_n_features"),
-                "n_components_50pct": metrics.get("n_components_50pct"),
-                "n_components_80pct": metrics.get("n_components_80pct"),
-                "n_components_95pct": metrics.get("n_components_95pct"),
-                "total_variance_explained": metrics.get("total_variance_explained"),
-                "effective_dimensionality": metrics.get("variance_analysis", {}).get("effective_dimensionality"),
-                "dimensionality_reduction_ratio": metrics.get("variance_analysis", {}).get("dimensionality_reduction_ratio")
-            })
+            calibration_summary["pca_analysis"].append(
+                {
+                    "layer_l": layer_l,
+                    "k": k,
+                    "j_policy": j_policy,
+                    "target_layer": metrics.get("target_layer"),
+                    "original_n_features": metrics.get("original_n_features"),
+                    "n_components_50pct": metrics.get("n_components_50pct"),
+                    "n_components_80pct": metrics.get("n_components_80pct"),
+                    "n_components_95pct": metrics.get("n_components_95pct"),
+                    "total_variance_explained": metrics.get("total_variance_explained"),
+                    "effective_dimensionality": metrics.get(
+                        "variance_analysis", {}
+                    ).get("effective_dimensionality"),
+                    "dimensionality_reduction_ratio": metrics.get(
+                        "variance_analysis", {}
+                    ).get("dimensionality_reduction_ratio"),
+                }
+            )
             continue
 
-        # Regular feature metrics
+        # Track feature activation statistics
+        calibration_summary["activation_summary"]["total_features"] += 1
+
+        # Collect activation statistics for all features
+        activation_count = metrics.get("activation_count", 0)
+        activation_rate = metrics.get("activation_rate", 0.0)
+        calibration_summary["activation_summary"]["activation_counts"].append(
+            activation_count
+        )
+        calibration_summary["activation_summary"]["activation_rates"].append(
+            activation_rate
+        )
+
+        if metrics.get("feature_never_activated", False):
+            calibration_summary["activation_summary"]["never_activated_features"] += 1
+            # Skip metrics collection for never-activated features
+            continue
+        else:
+            calibration_summary["activation_summary"]["activated_features"] += 1
+
+        # Regular feature metrics (only for activated features)
         # Collect numerical metrics
         calibration_summary["rms_ratios"].append(metrics.get("rms_ratio", 1.0))
         calibration_summary["mean_abs_ratios"].append(
-            metrics.get("mean_abs_ratio", 1.0))
-        calibration_summary["rel_errors"].append(
-            metrics.get("rel_error_mean", 0.0))
-        calibration_summary["log_mse_ratios"].append(
-            metrics.get("log_mse_ratio", 0.0))
+            metrics.get("mean_abs_ratio", 1.0)
+        )
+        calibration_summary["rel_errors"].append(metrics.get("rel_error_mean", 0.0))
+        calibration_summary["log_mse_ratios"].append(metrics.get("log_mse_ratio", 0.0))
 
         # Count qualitative assessments
         interpretation = metrics.get("calib_interpretation", {})
@@ -1079,25 +1540,74 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
 
     if calibration_summary["rms_ratios"]:
         calibration_summary["rms_ratio_mean"] = float(
-            np.mean(calibration_summary["rms_ratios"]))
+            np.mean(calibration_summary["rms_ratios"])
+        )
         calibration_summary["rms_ratio_std"] = float(
-            np.std(calibration_summary["rms_ratios"]))
+            np.std(calibration_summary["rms_ratios"])
+        )
         calibration_summary["mean_abs_ratio_mean"] = float(
-            np.mean(calibration_summary["mean_abs_ratios"]))
+            np.mean(calibration_summary["mean_abs_ratios"])
+        )
         calibration_summary["mean_abs_ratio_std"] = float(
-            np.std(calibration_summary["mean_abs_ratios"]))
+            np.std(calibration_summary["mean_abs_ratios"])
+        )
         calibration_summary["rel_error_mean"] = float(
-            np.mean(calibration_summary["rel_errors"]))
+            np.mean(calibration_summary["rel_errors"])
+        )
         calibration_summary["rel_error_std"] = float(
-            np.std(calibration_summary["rel_errors"]))
+            np.std(calibration_summary["rel_errors"])
+        )
 
         # Overall calibration quality score (0-1, higher is better)
         total_features = len(calibration_summary["rms_ratios"])
-        excellent_ratio = calibration_summary["assessments"]["excellent"] / total_features
-        good_ratio = calibration_summary["assessments"]["good"] / \
-            total_features
-        calibration_summary["overall_quality_score"] = excellent_ratio + \
-            0.7 * good_ratio
+        excellent_ratio = (
+            calibration_summary["assessments"]["excellent"] / total_features
+        )
+        good_ratio = calibration_summary["assessments"]["good"] / total_features
+        calibration_summary["overall_quality_score"] = (
+            excellent_ratio + 0.7 * good_ratio
+        )
+
+    # Compute activation summary statistics
+    activation_rates = calibration_summary["activation_summary"]["activation_rates"]
+
+    if activation_rates:
+        import numpy as np
+
+        calibration_summary["activation_summary"]["mean_activation_rate"] = float(
+            np.mean(activation_rates)
+        )
+        calibration_summary["activation_summary"]["std_activation_rate"] = float(
+            np.std(activation_rates)
+        )
+        calibration_summary["activation_summary"]["median_activation_rate"] = float(
+            np.median(activation_rates)
+        )
+        calibration_summary["activation_summary"]["min_activation_rate"] = float(
+            np.min(activation_rates)
+        )
+        calibration_summary["activation_summary"]["max_activation_rate"] = float(
+            np.max(activation_rates)
+        )
+
+        # Categorize features by activation frequency
+        always_active = sum(1 for rate in activation_rates if rate >= 0.99)
+        often_active = sum(1 for rate in activation_rates if 0.5 <= rate < 0.99)
+        sometimes_active = sum(1 for rate in activation_rates if 0.01 < rate < 0.5)
+        rarely_active = sum(1 for rate in activation_rates if 0 < rate <= 0.01)
+
+        calibration_summary["activation_summary"]["always_active_features"] = (
+            always_active
+        )
+        calibration_summary["activation_summary"]["often_active_features"] = (
+            often_active
+        )
+        calibration_summary["activation_summary"]["sometimes_active_features"] = (
+            sometimes_active
+        )
+        calibration_summary["activation_summary"]["rarely_active_features"] = (
+            rarely_active
+        )
 
     return calibration_summary
 
@@ -1117,8 +1627,7 @@ def main(cfg: DictConfig) -> dict:
         project=cfg.logger.project,
         entity=cfg.logger.entity,
         name=cfg.experiment_name,
-        config=cast("dict[str, Any] | None",
-                    OmegaConf.to_container(cfg, resolve=True)),
+        config=cast("dict[str, Any] | None", OmegaConf.to_container(cfg, resolve=True)),
         mode=cfg.logger.wandb_mode,
     )
 
@@ -1132,6 +1641,8 @@ def main(cfg: DictConfig) -> dict:
 
     if cfg.activation_dtype == "float16":
         activation_dtype = torch.float16
+    elif cfg.activation_dtype == "float32":
+        activation_dtype = torch.float32
     else:
         msg = f"Unsupported activation dtype: {cfg.activation_dtype}"
         raise NotImplementedError(msg)
@@ -1142,11 +1653,25 @@ def main(cfg: DictConfig) -> dict:
     logger.info("Loading SAE decoders...")
     sae_decoders = load_sae_decoders(cfg, activation_dtype=activation_dtype)
 
+    # Load full SAEs for feature activation filtering (if enabled)
+    filter_inactive_features = cfg.eval.get("filter_inactive_features", True)
+
+    if filter_inactive_features:
+        logger.info("Loading full SAEs for feature activation filtering...")
+        saes = load_full_saes(cfg)
+        logger.info(
+            "Feature activation filtering enabled",
+        )
+
+    else:
+        saes = {}
+        logger.info(
+            "Feature activation filtering disabled - will evaluate all features"
+        )
+
     # Load activation loader
     logger.info("Loading activation data...")
-    activation_loader = ActivationLoader(
-        files_to_download=[cfg.activation_dir]
-    )
+    activation_loader = ActivationLoader(files_to_download=[cfg.activation_dir])
 
     # Generate feature lists
     logger.info("Generating feature lists...")
@@ -1155,20 +1680,21 @@ def main(cfg: DictConfig) -> dict:
     # Check if matched-rank analysis is requested
     if cfg.get("run_matched_rank", False):
         logger.info("Running matched-rank analysis...")
-        matched_rank_results = run_matched_rank_experiment(
-            cfg, activation_loader)
-        matched_rank_summary = summarize_matched_rank_results(
-            matched_rank_results)
+        matched_rank_results = run_matched_rank_experiment(cfg, activation_loader)
+        matched_rank_summary = summarize_matched_rank_results(matched_rank_results)
 
         # Log matched-rank summary
         logger.info("=== MATCHED-RANK ANALYSIS SUMMARY ===")
         aggregate_stats = matched_rank_summary.get("aggregate_stats", {})
         logger.info(
-            f"Best overall PCA R²: {aggregate_stats.get('max_pca_r2_overall', 0):.4f}")
+            f"Best overall PCA R²: {aggregate_stats.get('max_pca_r2_overall', 0):.4f}"
+        )
         logger.info(
-            f"Best overall Transport R²: {aggregate_stats.get('max_transport_r2_overall', 0):.4f}")
+            f"Best overall Transport R²: {aggregate_stats.get('max_transport_r2_overall', 0):.4f}"
+        )
         logger.info(
-            f"Mean efficiency across all configs: {aggregate_stats.get('mean_efficiency_overall', 0):.4f} ± {aggregate_stats.get('std_efficiency_overall', 0):.4f}")
+            f"Mean efficiency across all configs: {aggregate_stats.get('mean_efficiency_overall', 0):.4f} ± {aggregate_stats.get('std_efficiency_overall', 0):.4f}"
+        )
 
         # Log per-rank performance
         rank_performance = matched_rank_summary.get("rank_performance", {})
@@ -1176,21 +1702,21 @@ def main(cfg: DictConfig) -> dict:
             logger.info("Performance by rank:")
             for rank in sorted(rank_performance.keys()):
                 perf = rank_performance[rank]
-                logger.info(f"  Rank {rank}: PCA R²={perf['mean_pca_r2']:.3f}, "
-                            f"Transport R²={perf['mean_transport_r2']:.3f}, "
-                            f"Efficiency={perf['mean_efficiency']:.3f}±{perf['std_efficiency']:.3f}")
+                logger.info(
+                    f"  Rank {rank}: PCA R²={perf['mean_pca_r2']:.3f}, "
+                    f"Transport R²={perf['mean_transport_r2']:.3f}, "
+                    f"Efficiency={perf['mean_efficiency']:.3f}±{perf['std_efficiency']:.3f}"
+                )
 
         # Save matched-rank results
         output_dir = Path(cfg.get("output_dir", "outputs"))
         output_dir.mkdir(parents=True, exist_ok=True)
-        matched_rank_file = output_dir / \
-            f"{cfg.experiment_name}_matched_rank_results.json"
+        matched_rank_file = (
+            output_dir / f"{cfg.experiment_name}_matched_rank_results.json"
+        )
 
         # Convert to JSON-serializable format
-        json_matched_rank = {
-            "summary": matched_rank_summary,
-            "detailed_results": {}
-        }
+        json_matched_rank = {"summary": matched_rank_summary, "detailed_results": {}}
         for key, results in matched_rank_results.items():
             layer_l, k, j_policy = key
             key_str = f"L{layer_l}_k{k}_{j_policy}"
@@ -1202,13 +1728,23 @@ def main(cfg: DictConfig) -> dict:
         logger.info(f"Matched-rank results saved to: {matched_rank_file}")
 
         # Log to wandb
-        wandb.log({
-            "matched_rank/max_pca_r2": aggregate_stats.get('max_pca_r2_overall', 0),
-            "matched_rank/max_transport_r2": aggregate_stats.get('max_transport_r2_overall', 0),
-            "matched_rank/mean_efficiency": aggregate_stats.get('mean_efficiency_overall', 0),
-            "matched_rank/std_efficiency": aggregate_stats.get('std_efficiency_overall', 0),
-            "matched_rank/num_configurations": len(matched_rank_summary.get("configurations", [])),
-        })
+        wandb.log(
+            {
+                "matched_rank/max_pca_r2": aggregate_stats.get("max_pca_r2_overall", 0),
+                "matched_rank/max_transport_r2": aggregate_stats.get(
+                    "max_transport_r2_overall", 0
+                ),
+                "matched_rank/mean_efficiency": aggregate_stats.get(
+                    "mean_efficiency_overall", 0
+                ),
+                "matched_rank/std_efficiency": aggregate_stats.get(
+                    "std_efficiency_overall", 0
+                ),
+                "matched_rank/num_configurations": len(
+                    matched_rank_summary.get("configurations", [])
+                ),
+            }
+        )
 
         logger.info("=== END MATCHED-RANK ANALYSIS ===")
 
@@ -1224,24 +1760,29 @@ def main(cfg: DictConfig) -> dict:
     # baselines, pretrained, or dummy
     eval_mode = cfg.get("eval_mode", "baselines")
 
-    if eval_mode == "baselines" or cfg.get("baselines", {}).get("enable_pca", False) or cfg.get("baselines", {}).get("enable_identity", False):
+    if (
+        eval_mode == "baselines"
+        or cfg.get("baselines", {}).get("enable_pca", False)
+        or cfg.get("baselines", {}).get("enable_identity", False)
+    ):
         logger.info("Creating baseline transport operators...")
         transport_operators = create_baseline_transport_operators(
-            cfg, activation_loader)
+            cfg, activation_loader
+        )
 
     elif eval_mode == "pretrained":
         logger.info("Loading trained transport operators...")
-        transport_operators = load_trained_transport_operators(
-            cfg, activation_loader)
+        transport_operators = load_trained_transport_operators(cfg, activation_loader)
 
     else:
         # Default mode: create dummy transport operators for testing
         logger.info("Creating dummy transport operators...")
-        transport_operators = create_dummy_transport_operators(
-            cfg, activation_loader)
+        transport_operators = create_dummy_transport_operators(cfg, activation_loader)
 
     # Set up scoring functions
-    score_residual_fn = score_residual_default if cfg.eval.scoring.include_residual_metrics else None
+    score_residual_fn = (
+        score_residual_default if cfg.eval.scoring.include_residual_metrics else None
+    )
 
     # Run evaluation
     logger.info("Running evaluation...")
@@ -1254,13 +1795,14 @@ def main(cfg: DictConfig) -> dict:
         j_policy_list=cfg.eval.j_policy,
         features_dict=feature_dict,
         sae_decoders=sae_decoders,
+        saes=saes,
         score_residual=score_residual_fn,
         decoder_normalize=cfg.eval.decoders.normalize,
         val_batch_size=cfg.eval.val_batch_size,
+        filter_inactive_features=filter_inactive_features,
     )
 
-    logger.info(
-        "Evaluation completed. Generated %d result entries.", len(results))
+    logger.info("Evaluation completed. Generated %d result entries.", len(results))
 
     # Analyze calibration performance across all features
     calibration_summary = summarize_calibration_across_features(results)
@@ -1282,9 +1824,42 @@ def main(cfg: DictConfig) -> dict:
                 pca_result["original_n_features"],
                 pca_result["effective_dimensionality"],
                 pca_result["dimensionality_reduction_ratio"] * 100,
-                pca_result["total_variance_explained"]
+                pca_result["total_variance_explained"],
             )
         logger.info("=== END PCA ANALYSIS ===")
+
+    # Report feature activation statistics if available
+    activation_summary = calibration_summary.get("activation_summary", {})
+    if activation_summary.get("total_features", 0) > 0:
+        logger.info("=== FEATURE ACTIVATION ANALYSIS ===")
+        total_features = activation_summary["total_features"]
+        activated_features = activation_summary["activated_features"]
+        never_activated = activation_summary["never_activated_features"]
+
+        activation_rate = (
+            (activated_features / total_features) * 100 if total_features > 0 else 0
+        )
+
+        logger.info("Total features evaluated: %d", total_features)
+        logger.info(
+            "Features with activation data: %d (%.1f%%)",
+            activated_features,
+            activation_rate,
+        )
+        logger.info(
+            "Features never activated: %d (%.1f%%)",
+            never_activated,
+            (never_activated / total_features) * 100 if total_features > 0 else 0,
+        )
+
+        if filter_inactive_features:
+            logger.info(
+                "Feature filtering was enabled",
+            )
+        else:
+            logger.info("Feature filtering was disabled")
+
+        logger.info("=== END FEATURE ACTIVATION ANALYSIS ===")
 
     # Report calibration metrics only if we have prediction-based results
     if calibration_summary["rms_ratios"]:
@@ -1327,7 +1902,8 @@ def main(cfg: DictConfig) -> dict:
         )
     else:
         logger.info(
-            "No prediction-based calibration metrics available (PCA analysis only)")
+            "No prediction-based calibration metrics available (PCA analysis only)"
+        )
 
     # Save results to JSON
 
@@ -1363,13 +1939,19 @@ def main(cfg: DictConfig) -> dict:
     wandb.log(
         {
             "num_results": len(results),
-            "calibration_quality_score": calibration_summary.get("overall_quality_score", 0.0),
+            "calibration_quality_score": calibration_summary.get(
+                "overall_quality_score", 0.0
+            ),
             "rms_ratio_mean": calibration_summary.get("rms_ratio_mean", 1.0),
             "rms_ratio_std": calibration_summary.get("rms_ratio_std", 0.0),
             "mean_abs_ratio_mean": calibration_summary.get("mean_abs_ratio_mean", 1.0),
             "rel_error_mean": calibration_summary.get("rel_error_mean", 0.0),
-            "excellent_calibrations": calibration_summary.get("assessments", {}).get("excellent", 0),
-            "poor_calibrations": calibration_summary.get("assessments", {}).get("poor", 0),
+            "excellent_calibrations": calibration_summary.get("assessments", {}).get(
+                "excellent", 0
+            ),
+            "poor_calibrations": calibration_summary.get("assessments", {}).get(
+                "poor", 0
+            ),
         }
     )
     wandb.finish()

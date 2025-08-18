@@ -14,9 +14,8 @@ from omegaconf import DictConfig, OmegaConf
 from transformers import (
     set_seed,
 )
-from src.activation_loader import ActivationDataset
 
-from src.transport_operator import TransportOperator
+from src.transport_operator import load_transport_operator
 from src.causal_eval.hooks import (
     create_j_hook_family,
     create_zero_hook_family,
@@ -24,27 +23,6 @@ from src.causal_eval.hooks import (
 from src.causal_eval.perplexity_evaluator import PerplexityEvaluator, PerplexityResult
 
 logger = logging.getLogger(__name__)
-
-
-def load_transport_operator(
-    L: int,
-    k: int,
-    operators_dir: str,
-) -> TransportOperator:
-    """Load the transport operator from the cache or create a new one."""
-    # Warning: This is a temporary and arguably a little bit dodgy, duck tape solution
-    operator = TransportOperator(
-        L,
-        k,
-        regularization=10.0,
-        max_iter=500,
-    )
-    dummy_ds = ActivationDataset(None, [], "", 0, 0)
-    file_name = operator._get_model_cache_filename(dummy_ds)
-    is_loaded = operator._load_model_cache(Path(operators_dir) / file_name)
-    if not is_loaded:
-        raise FileNotFoundError(f"Transport operator model not found: {file_name}")
-    return operator
 
 
 def print_evaluation_results(results: Dict[str, PerplexityResult]) -> None:

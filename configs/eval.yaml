@@ -25,10 +25,10 @@ matched_rank:
 # Evaluation parameters
 eval:
   # List of layers to evaluate
-  Ls: [10, 11, 12]
+  Ls: [8]
   
   # List of k values (layer offsets)
-  ks: [3, 5, 8]
+  ks: [1]
   
   # List of j_policy values
   j_policy: ["j==i"]
@@ -43,20 +43,22 @@ eval:
     include_residual_metrics: true
   
   val_batch_size: 128
+  filter_inactive_features: true
 
-run_matched_rank: true
-matched_rank_only: true
+run_matched_rank: false
+matched_rank_only: false
 
 # Baseline transport operators configuration
 baselines:
   # Enable PCA baseline transport operator
-  enable_pca: true
+  enable_pca: false
   # Number of PCA components (null = all components)
   pca_n_components: null
   
   # Enable Identity baseline transport operator  
   enable_identity: false
 
-activation_dir: "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
+activation_dir: "activations-gemma2-2b-slimpajama-500k_zstd4/activations_part_0000.zarr.zip"
 
 activation_dtype: float16
+
