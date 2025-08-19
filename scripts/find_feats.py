@@ -121,7 +121,7 @@ def load_gemma_scope_sae(
         def extract_l0(filename):
             try:
                 return int(filename.split("/")[-2].replace("average_l0_", ""))
-            except:
+            except Exception:
                 return float("inf")
 
         best_file = min(layer_files, key=lambda f: abs(extract_l0(f) - l0_target))
@@ -331,7 +331,7 @@ def resid_hook_name(layer_idx: int, stream: str):
 def collect_feature_stats(
     model: HookedTransformer,
     sae: SAE,
-    token_stream: torch.Tensor,  # [T]
+    eval_sequences: list,  # list of torch.Tensor sequences
     hook_name: str,
     max_ctx: int,
     stride: int,
@@ -372,57 +372,60 @@ def collect_feature_stats(
 
     hook_handle = model.add_hook(hook_name, cache_resid_hook)
 
-    total_tokens = token_stream.shape[0]
+    total_tokens = sum(seq.numel() for seq in eval_sequences)
     processed = 0
 
-    for chunk in tqdm(
-        chunk_tokens(token_stream, max_ctx, stride), desc="Processing chunks"
+    # Process each sequence individually
+    for seq_idx, sequence in enumerate(
+        tqdm(eval_sequences, desc="Processing sequences")
     ):
-        chunk = chunk.to(device)
-        out = model(chunk)
-        resid = model.hook_dict[hook_name].ctx["resid"]  # [1, L, d_model]
-        z = sae.encode(resid)  # [1, L, d_feat]
+        # Process sequence in chunks if it's longer than max_ctx
+        for chunk in chunk_tokens(sequence, max_ctx, stride):
+            chunk = chunk.to(device)
+            model(chunk)
+            resid = model.hook_dict[hook_name].ctx["resid"]  # [1, L, d_model]
+            z = sae.encode(resid)  # [1, L, d_feat]
 
-        # Basic stats
-        z_abs = z.abs()
-        fired = (z > 0).sum(dim=(0, 1))  # [d_feat]
-        act_count += fired.cpu().numpy()
-        act_sum_abs += z_abs.sum(dim=(0, 1)).cpu().numpy()
+            # Basic stats
+            z_abs = z.abs()
+            fired = (z > 0).sum(dim=(0, 1))  # [d_feat]
+            act_count += fired.cpu().numpy()
+            act_sum_abs += z_abs.sum(dim=(0, 1)).cpu().numpy()
 
-        # Token coherence proxy: record tokens corresponding to top activations
-        # For efficiency, sample a subset of positions
-        L = chunk.shape[1]
-        if L > 0:
-            pos_idx = torch.randint(
-                0, L, (min(sample_positions_per_chunk, L),), device=device
-            )
-            z_samp = z[0, pos_idx]  # [S, d_feat]
-            tok_samp = chunk[0, pos_idx]  # [S]
-            # For each feature, take topk positions in this sample and record tokens
-            # We'll do this by taking per-feature topk over S positions.
-            S = z_samp.shape[0]
-            if S > 0:
-                k = min(topk_per_feat, S)
-                top_vals, top_pos = torch.topk(
-                    z_samp.transpose(0, 1), k=k, dim=1
-                )  # [d_feat, k]
-                toks = tok_samp[top_pos]  # [d_feat, k]
-                # Count token frequencies per feature (sparse)
-                toks_cpu = toks.cpu().numpy()
-                for f in range(d_feat):
-                    for t in toks_cpu[f]:
-                        token_counter[f][int(t)] += 1
+            # Token coherence proxy: record tokens corresponding to top activations
+            # For efficiency, sample a subset of positions
+            L = chunk.shape[1]
+            if L > 0:
+                pos_idx = torch.randint(
+                    0, L, (min(sample_positions_per_chunk, L),), device=device
+                )
+                z_samp = z[0, pos_idx]  # [S, d_feat]
+                tok_samp = chunk[0, pos_idx]  # [S]
+                # For each feature, take topk positions in this sample and record tokens
+                # We'll do this by taking per-feature topk over S positions.
+                S = z_samp.shape[0]
+                if S > 0:
+                    k = min(topk_per_feat, S)
+                    top_vals, top_pos = torch.topk(
+                        z_samp.transpose(0, 1), k=k, dim=1
+                    )  # [d_feat, k]
+                    toks = tok_samp[top_pos]  # [d_feat, k]
+                    # Count token frequencies per feature (sparse)
+                    toks_cpu = toks.cpu().numpy()
+                    for f in range(d_feat):
+                        for t in toks_cpu[f]:
+                            token_counter[f][int(t)] += 1
 
-            # Redundancy proxy: E[z_f * z_g] across sampled positions
-            z_samp2 = z_samp  # [S, d_feat]
-            z_samp2 = z_samp2 / (z_samp2.std(dim=0, keepdim=True) + 1e-6)
-            eg_zfzg += (
-                z_samp2[:, feat_sample_idx].transpose(0, 1)  # [S, sample_feat]
-                @ z_samp2
-            ) / z_samp2.shape[0]  # [sample_feat, d_feat]
-            cnt_positions += 1
+                # Redundancy proxy: E[z_f * z_g] across sampled positions
+                z_samp2 = z_samp  # [S, d_feat]
+                z_samp2 = z_samp2 / (z_samp2.std(dim=0, keepdim=True) + 1e-6)
+                eg_zfzg += (
+                    z_samp2[:, feat_sample_idx].transpose(0, 1)  # [S, sample_feat]
+                    @ z_samp2
+                ) / z_samp2.shape[0]  # [sample_feat, d_feat]
+                cnt_positions += 1
 
-        processed += chunk.shape[1]
+            processed += chunk.shape[1]
 
     print(f"[info] Processed {processed} tokens out of {total_tokens} total.")
     # Remove hook
@@ -620,26 +623,41 @@ def main():
     vocab_size = model.cfg.d_vocab
     print(f"[info] d_model={d_model}, vocab={vocab_size}")
     # Prepare evaluation tokens
-    print("[info] Preparing evaluation text...")
+    print("[info] Preparing evaluation sequences...")
     dataset = load_dataset(
         "DKYoon/SlimPajama-6B", split="train", streaming=True, cache_dir="./cache"
     )
-    num_samples = 75_000
+    num_samples = 75
+    # num_samples = 75_000
     dataset_iterator = iter(dataset)
-    text_parts = []
+    eval_sequences = []
+    total_tokens = 0
+
     try:
-        for i in tqdm(range(num_samples)):
+        for i in tqdm(range(num_samples), desc="Loading sequences"):
             sample = next(dataset_iterator)
-            text_parts.append(sample["text"])
+            tokens = model.to_tokens(
+                sample["text"], prepend_bos=True, truncate=True
+            ).squeeze(0)
+            # Limit individual sequence length
+            max_seq_len = min(args.ctx_window, 256)
+            if tokens.numel() > max_seq_len:
+                tokens = tokens[:max_seq_len]
+
+            if tokens.numel() >= 10:  # Only keep sequences with reasonable length
+                eval_sequences.append(tokens)
+                total_tokens += tokens.numel()
+
+                # Stop if we've reached our token limit
+                if total_tokens >= args.max_tokens:
+                    break
+
     except StopIteration:
         print(f"[warning] Dataset ended early after {i} samples")
 
-    text = "\n".join(text_parts)
-
-    toks_all = model.to_tokens(text, prepend_bos=True, truncate=False).squeeze(0)
-    if toks_all.numel() > args.max_tokens:
-        toks_all = toks_all[: args.max_tokens]
-    print(f"[info] Eval tokens: {toks_all.numel()}")
+    print(
+        f"[info] Loaded {len(eval_sequences)} sequences with {total_tokens} total tokens"
+    )
 
     with torch.no_grad():
         for layer_idx in tqdm(range(model.cfg.n_layers)):
@@ -702,7 +720,7 @@ def main():
             stats = collect_feature_stats(
                 model=model,
                 sae=sae,
-                token_stream=toks_all,
+                eval_sequences=eval_sequences,
                 hook_name=hook_name,
                 max_ctx=args.ctx_window,
                 stride=args.stride,
@@ -732,9 +750,9 @@ def main():
             except RuntimeError as e:
                 if "out of memory" in str(e):
                     print(
-                        f"[warning] GPU out of memory during logit focus computation. Try using --device cpu or reducing --sae-width"
+                        "[warning] GPU out of memory during logit focus computation. Try using --device cpu or reducing --sae-width"
                     )
-                    print(f"[info] Falling back to CPU for logit focus computation...")
+                    print("[info] Falling back to CPU for logit focus computation...")
                     # Move to CPU for this computation
                     # Create a CPU copy
                     sae_cpu = SAE(sd, d_model=d_model, d_feat=d_feat)
@@ -754,7 +772,6 @@ def main():
             # low entropy -> high score
             coh_token = normalize_array(token_entropy, invert=True)
             focus_vocab = normalize_array(z_peak, invert=False)
-            effect_placeholder = np.zeros_like(focus_vocab)  # will fill for candidates
 
             # Penalize redundancy & extreme sparsity/deadness
             red_pen = normalize_array(redundancy, invert=False)
@@ -834,7 +851,8 @@ def main():
                     "sae_path": args.sae_path,
                     "hook_layer": layer_idx,
                     "hook_stream": "resid_post",
-                    "eval_tokens": int(toks_all.numel()),
+                    "eval_tokens": int(total_tokens),
+                    "eval_sequences": len(eval_sequences),
                     "candidate_features": candidate_features.tolist(),
                     "top_percent": pct,
                     "candidate_percent": float(args.candidate_percent),
