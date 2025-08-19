@@ -416,10 +416,6 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 if sample_count % (10 * batch_size) == 0:
                     print(f"  Loaded {sample_count:,} samples...")
 
-                # Progress update every 10 batches
-                if sample_count >= 50_000:
-                    break
-
             if len(X_list) == 0:
                 raise ValueError("No valid samples found in the dataset")
 
@@ -683,9 +679,6 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 # Less frequent progress updates
                 if sample_count % (batch_size * 10) == 0:
                     print(f"  Loaded {sample_count:,} evaluation samples...")
-
-                if sample_count >= 50_000:
-                    break
 
             if len(X_list) == 0:
                 raise ValueError("No valid evaluation samples found")
@@ -1012,6 +1005,7 @@ def load_transport_operator(
 ) -> TransportOperator:
     """Load the transport operator from the cache or create a new one."""
     # Warning: This is a temporary and arguably a little bit dodgy, duck tape solution
+    # TODO: this is really not the nicest way of doing it. Consider reimplementing
     operator = TransportOperator(
         L,
         k,
