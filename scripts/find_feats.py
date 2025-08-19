@@ -627,8 +627,8 @@ def main():
     dataset = load_dataset(
         "DKYoon/SlimPajama-6B", split="train", streaming=True, cache_dir="./cache"
     )
-    num_samples = 75
-    # num_samples = 75_000
+    # num_samples = 75
+    num_samples = 75_000
     dataset_iterator = iter(dataset)
     eval_sequences = []
     total_tokens = 0
