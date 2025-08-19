@@ -55,6 +55,11 @@ def load_feature_ids_from_json(json_file_path: str) -> list[int]:
         with open(json_file_path, "r") as f:
             data = json.load(f)
 
+        if "high_quality_feature_ids" in data:
+            data = data["high_quality_feature_ids"]
+        else:
+            raise ValueError("JSON file must contain 'high_quality_feature_ids' key")
+
         if not isinstance(data, list):
             raise ValueError("JSON file must contain a list of feature IDs")
 
@@ -62,7 +67,9 @@ def load_feature_ids_from_json(json_file_path: str) -> list[int]:
         feature_ids = []
         for item in data:
             if not isinstance(item, int):
-                raise ValueError(f"All feature IDs must be integers, found: {type(item)}")
+                raise ValueError(
+                    f"All feature IDs must be integers, found: {type(item)}"
+                )
             feature_ids.append(item)
 
         return feature_ids
@@ -360,7 +367,11 @@ def load_explanations_dict(
 
 def print_explanation_summary(explanation: dict, logger: logging.Logger) -> None:
     """Print a summary of an explanation."""
-    logger.info("Feature %s: %s", explanation["index"], explanation.get("description", "No description"))
+    logger.info(
+        "Feature %s: %s",
+        explanation["index"],
+        explanation.get("description", "No description"),
+    )
     logger.info("Model: %s", explanation.get("modelId", "Unknown"))
     logger.info("Layer: %s", explanation.get("layer", "Unknown"))
     logger.info("Author: %s", explanation.get("authorId", "Unknown"))
@@ -406,10 +417,13 @@ def main(cfg: DictConfig) -> None:
         output_file = cfg.get("output_file")
         if output_file:
             output_path = Path(output_file)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             # If specific feature IDs were provided, preserve their order
             if feature_ids:
                 ordered_explanations = [
-                    explanations_dict[feature_id] for feature_id in feature_ids if feature_id in explanations_dict
+                    explanations_dict[feature_id]
+                    for feature_id in feature_ids
+                    if feature_id in explanations_dict
                 ]
 
                 explanations = {}
