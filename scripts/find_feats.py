@@ -4,7 +4,6 @@
 import argparse
 import json
 import math
-import os
 from collections import defaultdict
 
 import numpy as np
@@ -12,7 +11,6 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 from huggingface_hub import hf_hub_download
-from safetensors.torch import load_file
 
 from transformer_lens import HookedTransformer
 from datasets import load_dataset
@@ -56,7 +54,7 @@ def chunk_tokens(tokens: torch.Tensor, max_ctx: int, stride: int):
 
 def safe_softmax_entropy(x: torch.Tensor, dim: int = -1) -> torch.Tensor:
     p = x.float().log_softmax(dim=dim).exp()
-    logp = (x.float().log_softmax(dim=dim))
+    logp = x.float().log_softmax(dim=dim)
     ent = -(p * logp).sum(dim=dim)
     return ent
 
@@ -65,7 +63,10 @@ def safe_softmax_entropy(x: torch.Tensor, dim: int = -1) -> torch.Tensor:
 # SAE Loader (no SAELens required)
 # ---------------------------
 
-def load_gemma_scope_sae(layer: int, width: str = "16k", stream: str = "resid_pre", l0_target: int = 100):
+
+def load_gemma_scope_sae(
+    layer: int, width: str = "16k", stream: str = "resid_pre", l0_target: int = 100
+):
     """
     Load a Gemma Scope SAE from HuggingFace.
 
@@ -83,17 +84,17 @@ def load_gemma_scope_sae(layer: int, width: str = "16k", stream: str = "resid_pr
         "resid_pre": "google/gemma-scope-2b-pt-res",
         "resid_post": "google/gemma-scope-2b-pt-res",
         "mlp_pre_act": "google/gemma-scope-2b-pt-mlp",
-        "mlp_post_act": "google/gemma-scope-2b-pt-mlp"
+        "mlp_post_act": "google/gemma-scope-2b-pt-mlp",
     }
 
     if stream not in stream_to_repo:
         raise ValueError(
-            f"Unsupported stream: {stream}. Choose from: {list(stream_to_repo.keys())}")
+            f"Unsupported stream: {stream}. Choose from: {list(stream_to_repo.keys())}"
+        )
 
     repo_id = stream_to_repo[stream]
 
-    print(
-        f"[info] Loading SAE from {repo_id} for layer {layer}, width {width}")
+    print(f"[info] Loading SAE from {repo_id} for layer {layer}, width {width}")
 
     try:
         from huggingface_hub import list_repo_files
@@ -101,40 +102,41 @@ def load_gemma_scope_sae(layer: int, width: str = "16k", stream: str = "resid_pr
 
         # List available files for this layer and width
         all_files = list_repo_files(repo_id)
-        layer_files = [f for f in all_files if f.startswith(
-            f"layer_{layer}/width_{width}/")]
+        layer_files = [
+            f
+            for f in all_files
+            if f.startswith(f"layer_{layer}/width_{width}/") and f.endswith(".npz")
+        ]
 
         if not layer_files:
             raise ValueError(
-                f"No SAE files found for layer {layer}, width {width} in {repo_id}")
+                f"No SAE files found for layer {layer}, width {width} in {repo_id}"
+            )
 
         print(
-            f"[info] Available L0 values: {[f.split('/')[-2].replace('average_l0_', '') for f in layer_files]}")
+            f"[info] Available L0 values: {[f.split('/')[-2].replace('average_l0_', '') for f in layer_files]}"
+        )
 
         # Find the file with L0 closest to target
         def extract_l0(filename):
             try:
-                return int(filename.split('/')[-2].replace('average_l0_', ''))
+                return int(filename.split("/")[-2].replace("average_l0_", ""))
             except:
-                return float('inf')
+                return float("inf")
 
-        best_file = min(layer_files, key=lambda f: abs(
-            extract_l0(f) - l0_target))
+        best_file = min(layer_files, key=lambda f: abs(extract_l0(f) - l0_target))
         actual_l0 = extract_l0(best_file)
 
-        print(
-            f"[info] Selected SAE with L0={actual_l0} (target was {l0_target})")
+        print(f"[info] Selected SAE with L0={actual_l0} (target was {l0_target})")
         print(f"[info] Downloading: {best_file}")
 
         # Download the file
         sae_path = hf_hub_download(
-            repo_id=repo_id,
-            filename=best_file,
-            local_files_only=False
+            repo_id=repo_id, filename=best_file, local_files_only=False
         )
 
         # Load the weights from npz
-        data = np.load(sae_path)
+        data = np.load(sae_path, allow_pickle=True)
         state_dict = {}
 
         for key in data.keys():
@@ -145,7 +147,8 @@ def load_gemma_scope_sae(layer: int, width: str = "16k", stream: str = "resid_pr
     except Exception as e:
         print(f"[error] Failed to load SAE: {e}")
         print(
-            f"[info] Available layers: 0-25, widths: 16k/65k, streams: {list(stream_to_repo.keys())}")
+            f"[info] Available layers: 0-25, widths: 16k/65k, streams: {list(stream_to_repo.keys())}"
+        )
         raise
 
 
@@ -178,14 +181,14 @@ class SAE:
 
         if W_enc is None or W_dec is None:
             raise ValueError(
-                "Could not find W_enc/W_dec in SAE checkpoint. Keys found: " + str(list(state_dict.keys())))
+                "Could not find W_enc/W_dec in SAE checkpoint. Keys found: "
+                + str(list(state_dict.keys()))
+            )
 
         self.W_enc = W_enc.float()
         self.W_dec = W_dec.float()
-        self.b_enc = (
-            b_enc.float() if b_enc is not None else torch.zeros(d_feat))
-        self.b_dec = (
-            b_dec.float() if b_dec is not None else torch.zeros(d_model))
+        self.b_enc = b_enc.float() if b_enc is not None else torch.zeros(d_feat)
+        self.b_dec = b_dec.float() if b_dec is not None else torch.zeros(d_model)
 
         # Sanity checks / transpose if needed
         # Expect shapes: W_enc: [d_model, d_feat]  or [d_feat, d_model]
@@ -195,10 +198,12 @@ class SAE:
         if self.W_dec.shape == (d_model, d_feat):  # [model, feat] -> transpose
             self.W_dec = self.W_dec.T
 
-        assert self.W_enc.shape == (
-            d_model, d_feat), f"W_enc wrong shape {self.W_enc.shape} expected {(d_model, d_feat)}"
-        assert self.W_dec.shape == (
-            d_feat, d_model), f"W_dec wrong shape {self.W_dec.shape} expected {(d_feat, d_model)}"
+        assert self.W_enc.shape == (d_model, d_feat), (
+            f"W_enc wrong shape {self.W_enc.shape} expected {(d_model, d_feat)}"
+        )
+        assert self.W_dec.shape == (d_feat, d_model), (
+            f"W_dec wrong shape {self.W_dec.shape} expected {(d_feat, d_model)}"
+        )
         assert self.b_enc.shape[0] == d_feat, f"b_enc wrong shape {self.b_enc.shape}"
         assert self.b_dec.shape[0] == d_model, f"b_dec wrong shape {self.b_dec.shape}"
 
@@ -224,7 +229,7 @@ class SAE:
         out: [..., d_model]
         """
         wf = self.W_dec[f_idx]  # [d_model]
-        zf = z[..., f_idx]      # [...]
+        zf = z[..., f_idx]  # [...]
         return zf.unsqueeze(-1) * wf
 
     def to(self, device):
@@ -241,8 +246,11 @@ class SAE:
 # Metrics
 # ---------------------------
 
+
 @torch.no_grad()
-def compute_logit_focus(W_dec: torch.Tensor, W_U: torch.Tensor, topk: int = 20, batch_size: int = 1024):
+def compute_logit_focus(
+    W_dec: torch.Tensor, W_U: torch.Tensor, topk: int = 20, batch_size: int = 1024
+):
     """
     For each feature f, compute vocab-space vector v_f = W_U^T @ W_dec[f]
     Return:
@@ -295,6 +303,7 @@ def normalize_array(x: np.ndarray, invert: bool = False, eps=1e-8):
 # Hook helpers
 # ---------------------------
 
+
 def resid_hook_name(layer_idx: int, stream: str):
     """
     stream in {"resid_pre", "resid_post", "mlp_pre_act", "mlp_post_act"}
@@ -309,12 +318,14 @@ def resid_hook_name(layer_idx: int, stream: str):
         return f"blocks.{layer_idx}.mlp.hook_post"
     else:
         raise ValueError(
-            f"Unsupported stream: {stream}. Choose from: resid_pre, resid_post, mlp_pre_act, mlp_post_act")
+            f"Unsupported stream: {stream}. Choose from: resid_pre, resid_post, mlp_pre_act, mlp_post_act"
+        )
 
 
 # ---------------------------
 # Evaluation pass to collect stats
 # ---------------------------
+
 
 @torch.no_grad()
 def collect_feature_stats(
@@ -334,15 +345,17 @@ def collect_feature_stats(
     d_feat = sae.W_dec.shape[0]
     act_count = np.zeros(d_feat, dtype=np.int64)
     act_sum_abs = np.zeros(d_feat, dtype=np.float64)
-    token_counter = defaultdict(int)  # only for top-activation token entropy
+    token_counter = defaultdict(lambda: defaultdict(int))
     topk_per_feat = 32
 
     # For redundancy: collect a small random sketch of z to estimate correlations
     # We'll downsample features for the correlation baseline to save memory.
     rnd = np.random.default_rng(0)
     sample_feat = min(512, d_feat)
-    feat_sample_idx = torch.tensor(sorted(rnd.choice(
-        d_feat, size=sample_feat, replace=False).tolist()), dtype=torch.long)
+    feat_sample_idx = torch.tensor(
+        sorted(rnd.choice(d_feat, size=sample_feat, replace=False).tolist()),
+        dtype=torch.long,
+    )
 
     # Sum of (z - mean) cross-products requires two passes; we do a simpler proxy:
     # collect mean and std per feature, and pairwise corr with sampled subset.
@@ -362,7 +375,9 @@ def collect_feature_stats(
     total_tokens = token_stream.shape[0]
     processed = 0
 
-    for chunk in tqdm(chunk_tokens(token_stream, max_ctx, stride), desc="Processing chunks"):
+    for chunk in tqdm(
+        chunk_tokens(token_stream, max_ctx, stride), desc="Processing chunks"
+    ):
         chunk = chunk.to(device)
         out = model(chunk)
         resid = model.hook_dict[hook_name].ctx["resid"]  # [1, L, d_model]
@@ -379,7 +394,8 @@ def collect_feature_stats(
         L = chunk.shape[1]
         if L > 0:
             pos_idx = torch.randint(
-                0, L, (min(sample_positions_per_chunk, L),), device=device)
+                0, L, (min(sample_positions_per_chunk, L),), device=device
+            )
             z_samp = z[0, pos_idx]  # [S, d_feat]
             tok_samp = chunk[0, pos_idx]  # [S]
             # For each feature, take topk positions in this sample and record tokens
@@ -388,19 +404,22 @@ def collect_feature_stats(
             if S > 0:
                 k = min(topk_per_feat, S)
                 top_vals, top_pos = torch.topk(
-                    z_samp.transpose(0, 1), k=k, dim=1)  # [d_feat, k]
+                    z_samp.transpose(0, 1), k=k, dim=1
+                )  # [d_feat, k]
                 toks = tok_samp[top_pos]  # [d_feat, k]
                 # Count token frequencies per feature (sparse)
                 toks_cpu = toks.cpu().numpy()
                 for f in range(d_feat):
                     for t in toks_cpu[f]:
-                        token_counter[(f, int(t))] += 1
+                        token_counter[f][int(t)] += 1
 
             # Redundancy proxy: E[z_f * z_g] across sampled positions
             z_samp2 = z_samp  # [S, d_feat]
             z_samp2 = z_samp2 / (z_samp2.std(dim=0, keepdim=True) + 1e-6)
-            eg_zfzg += (z_samp2[:, feat_sample_idx]  # [S, sample_feat]
-                        .transpose(0, 1) @ z_samp2) / z_samp2.shape[0]  # [sample_feat, d_feat]
+            eg_zfzg += (
+                z_samp2[:, feat_sample_idx].transpose(0, 1)  # [S, sample_feat]
+                @ z_samp2
+            ) / z_samp2.shape[0]  # [sample_feat, d_feat]
             cnt_positions += 1
 
         processed += chunk.shape[1]
@@ -417,7 +436,7 @@ def collect_feature_stats(
     token_entropy = np.zeros(d_feat, dtype=np.float64)
     for f in tqdm(range(d_feat), desc="Token entropy"):
         # gather counts for this feature
-        counts = [c for (ff, tok), c in token_counter.items() if ff == f]
+        counts = list(token_counter[f].values())
         if not counts:
             # very high (bad/unknown)
             token_entropy[f] = math.log(vocab_size + 1)
@@ -427,9 +446,11 @@ def collect_feature_stats(
             ent = -(p * np.log(p + 1e-12)).sum()
             token_entropy[f] = ent
 
-    print(f"[info] Activation rate: {activation_rate.mean():.4f}, "
-          f"mean abs activation: {mean_abs_activation.mean():.4f}, "
-          f"token entropy: {token_entropy.mean():.4f}")
+    print(
+        f"[info] Activation rate: {activation_rate.mean():.4f}, "
+        f"mean abs activation: {mean_abs_activation.mean():.4f}, "
+        f"token entropy: {token_entropy.mean():.4f}"
+    )
     # Redundancy: for each feature, max correlation with sampled features
     # Convert eg_zfzg to correlations (already standardized along positions).
     if cnt_positions > 0:
@@ -449,6 +470,7 @@ def collect_feature_stats(
 # ---------------------------
 # Causal ablation score
 # ---------------------------
+
 
 @torch.no_grad()
 def causal_effect_scores(
@@ -478,9 +500,10 @@ def causal_effect_scores(
     def make_ablate_hook(f_idx):
         def hook_fn(resid, hook):
             # resid: [B, L, d_model]
-            z = sae.encode(resid)         # [B, L, d_feat]
+            z = sae.encode(resid)  # [B, L, d_feat]
             contrib = sae.feature_contribution(z, f_idx)  # [B, L, d_model]
-            return resid - contrib        # subtract this feature's decoded effect
+            return resid - contrib  # subtract this feature's decoded effect
+
         return hook_fn
 
     for f in tqdm(candidate_features.tolist(), desc="Causal ablation"):
@@ -504,14 +527,27 @@ def causal_effect_scores(
 # Main
 # ---------------------------
 
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model-name", type=str, required=True,
-                    help="TransformerLens model name, e.g., 'pythia-2.8b', 'gemma-2-2b', etc.")
-    ap.add_argument("--sae-path", type=str, default="",
-                    help="Path to SAE checkpoint .pt/.bin with W_enc/W_dec etc. If empty, will load from Gemma Scope.")
-    ap.add_argument("--sae-l0", type=int, default=100,
-                    help="Target L0 sparsity for Gemma Scope SAE (will pick closest available). Only used if --sae-path is empty.")
+    ap.add_argument(
+        "--model-name",
+        type=str,
+        required=True,
+        help="TransformerLens model name, e.g., 'pythia-2.8b', 'gemma-2-2b', etc.",
+    )
+    ap.add_argument(
+        "--sae-path",
+        type=str,
+        default="",
+        help="Path to SAE checkpoint .pt/.bin with W_enc/W_dec etc. If empty, will load from Gemma Scope.",
+    )
+    ap.add_argument(
+        "--sae-l0",
+        type=int,
+        default=100,
+        help="Target L0 sparsity for Gemma Scope SAE (will pick closest available). Only used if --sae-path is empty.",
+    )
     # ap.add_argument("--hook-layer", type=int, required=True,
     #                 help="Layer index where the SAE was trained (e.g., 10).")
     # ap.add_argument("--hook-stream", type=str, default="resid_post",
@@ -520,24 +556,50 @@ def main():
     #                 help="Text file for evaluation. If omitted, uses small built-in prompts.")
     # ap.add_argument("--extra-prompts", type=str, nargs="*", default=[],
     #                 help="Optional extra short prompts to append to eval text.")
-    ap.add_argument("--max-tokens", type=int, default=120_000,
-                    help="Upper bound of tokens to process for stats.")
-    ap.add_argument("--ctx-window", type=int, default=1024,
-                    help="Context window used for chunking during eval.")
-    ap.add_argument("--stride", type=int, default=256,
-                    help="Stride between chunks to avoid overcounting.")
-    ap.add_argument("--top-percent", type=float, default=5.0,
-                    help="Select top X%% by composite score.")
-    ap.add_argument("--candidate-percent", type=float, default=15.0,
-                    help="Percent of features to send to causal testing.")
-    ap.add_argument("--causal-probe-prompts", type=str, nargs="*", default=[
-        "The capital of France is",
-        "In Python, a list comprehension",
-        "The derivative of x^2 is",
-        "Translate to Spanish: good morning",
-    ])
-    ap.add_argument("--device", type=str, default="auto",
-                    help="'auto', 'cuda', 'cpu', or 'mps'")
+    ap.add_argument(
+        "--max-tokens",
+        type=int,
+        default=120_000,
+        help="Upper bound of tokens to process for stats.",
+    )
+    ap.add_argument(
+        "--ctx-window",
+        type=int,
+        default=1024,
+        help="Context window used for chunking during eval.",
+    )
+    ap.add_argument(
+        "--stride",
+        type=int,
+        default=256,
+        help="Stride between chunks to avoid overcounting.",
+    )
+    ap.add_argument(
+        "--top-percent",
+        type=float,
+        default=5.0,
+        help="Select top X%% by composite score.",
+    )
+    ap.add_argument(
+        "--candidate-percent",
+        type=float,
+        default=15.0,
+        help="Percent of features to send to causal testing.",
+    )
+    ap.add_argument(
+        "--causal-probe-prompts",
+        type=str,
+        nargs="*",
+        default=[
+            "The capital of France is",
+            "In Python, a list comprehension",
+            "The derivative of x^2 is",
+            "Translate to Spanish: good morning",
+        ],
+    )
+    ap.add_argument(
+        "--device", type=str, default="auto", help="'auto', 'cuda', 'cpu', or 'mps'"
+    )
     args = ap.parse_args()
 
     device = auto_device(args.device)
@@ -548,10 +610,10 @@ def main():
     # For Gemma-2-2B, we can use the HuggingFace model name directly
     if args.model_name in ["gemma-2-2b", "google/gemma-2-2b"]:
         model = HookedTransformer.from_pretrained(
-            "google/gemma-2-2b", device=str(device))
+            "google/gemma-2-2b", device=str(device)
+        )
     else:
-        model = HookedTransformer.from_pretrained(
-            args.model_name, device=str(device))
+        model = HookedTransformer.from_pretrained(args.model_name, device=str(device))
     model.eval()
 
     d_model = model.cfg.d_model
@@ -559,21 +621,22 @@ def main():
     print(f"[info] d_model={d_model}, vocab={vocab_size}")
     # Prepare evaluation tokens
     print("[info] Preparing evaluation text...")
-    dataset = load_dataset('DKYoon/SlimPajama-6B', split='train',
-                           streaming=True, cache_dir="./cache")
+    dataset = load_dataset(
+        "DKYoon/SlimPajama-6B", split="train", streaming=True, cache_dir="./cache"
+    )
     num_samples = 75_000
     dataset_iterator = iter(dataset)
     text_parts = []
     try:
         for i in tqdm(range(num_samples)):
             sample = next(dataset_iterator)
-            text_parts.append(sample['text'])
+            text_parts.append(sample["text"])
     except StopIteration:
         print(f"[warning] Dataset ended early after {i} samples")
 
     text = "\n".join(text_parts)
 
-    toks_all = model.to_tokens(text, prepend_bos=True).squeeze(0)
+    toks_all = model.to_tokens(text, prepend_bos=True, truncate=False).squeeze(0)
     if toks_all.numel() > args.max_tokens:
         toks_all = toks_all[: args.max_tokens]
     print(f"[info] Eval tokens: {toks_all.numel()}")
@@ -582,14 +645,18 @@ def main():
         for layer_idx in tqdm(range(model.cfg.n_layers)):
             # print(resid_hook_name(layer_idx, 'resid_post'))
 
-            hook_name = resid_hook_name(layer_idx, 'resid_post')
+            hook_name = resid_hook_name(layer_idx, "resid_post")
             if hook_name not in model.hook_dict:
                 print(
                     f"Model {args.model_name} does not have a hook for layer {layer_idx} and stream resid_post. "
-                    "Check the model configuration or use a different hook stream.")
+                    "Check the model configuration or use a different hook stream."
+                )
                 # print available hooks
-                available_hooks = [k for k in model.hook_dict.keys(
-                ) if k.startswith(f"blocks.{layer_idx}.")]
+                available_hooks = [
+                    k
+                    for k in model.hook_dict.keys()
+                    if k.startswith(f"blocks.{layer_idx}.")
+                ]
                 print(hook_name in available_hooks)
                 # print(
                 #     f"[info] Available hooks for layer {layer_idx}: {available_hooks}")
@@ -605,24 +672,24 @@ def main():
             # else:
             #     # Load from Gemma Scope
             sd = load_gemma_scope_sae(
-                layer=layer_idx,
-                width='16k',
-                stream='resid_post',
-                l0_target=args.sae_l0
+                layer=layer_idx, width="16k", stream="resid_post", l0_target=args.sae_l0
             )
 
             # guess d_feat from known dims
             d_feat = None
             for v in sd.values():
                 if isinstance(v, torch.Tensor):
-                    if v.dim() == 2 and (v.shape[0] == d_model or v.shape[1] == d_model):
+                    if v.dim() == 2 and (
+                        v.shape[0] == d_model or v.shape[1] == d_model
+                    ):
                         other = v.shape[0] if v.shape[1] == d_model else v.shape[1]
                         if other >= 1024:  # heuristic
                             d_feat = other
                             break
             if d_feat is None:
                 raise ValueError(
-                    "Could not infer SAE feature dimension from checkpoint.")
+                    "Could not infer SAE feature dimension from checkpoint."
+                )
             print(f"[info] SAE feature width (inferred): {d_feat}")
 
             sae = SAE(sd, d_model=d_model, d_feat=d_feat)
@@ -658,21 +725,23 @@ def main():
 
             try:
                 z_peak, ent_vocab = compute_logit_focus(
-                    sae.W_dec, W_U, topk=20, batch_size=batch_size)
+                    sae.W_dec, W_U, topk=20, batch_size=batch_size
+                )
                 z_peak = z_peak.cpu().numpy()
                 ent_vocab = ent_vocab.cpu().numpy()
             except RuntimeError as e:
                 if "out of memory" in str(e):
                     print(
-                        f"[warning] GPU out of memory during logit focus computation. Try using --device cpu or reducing --sae-width")
-                    print(
-                        f"[info] Falling back to CPU for logit focus computation...")
+                        f"[warning] GPU out of memory during logit focus computation. Try using --device cpu or reducing --sae-width"
+                    )
+                    print(f"[info] Falling back to CPU for logit focus computation...")
                     # Move to CPU for this computation
                     # Create a CPU copy
                     sae_cpu = SAE(sd, d_model=d_model, d_feat=d_feat)
                     W_U_cpu = model.W_U.detach().cpu()
                     z_peak, ent_vocab = compute_logit_focus(
-                        sae_cpu.W_dec, W_U_cpu, topk=20, batch_size=1024)
+                        sae_cpu.W_dec, W_U_cpu, topk=20, batch_size=1024
+                    )
                     z_peak = z_peak.numpy()
                     ent_vocab = ent_vocab.numpy()
                 else:
@@ -685,8 +754,7 @@ def main():
             # low entropy -> high score
             coh_token = normalize_array(token_entropy, invert=True)
             focus_vocab = normalize_array(z_peak, invert=False)
-            effect_placeholder = np.zeros_like(
-                focus_vocab)  # will fill for candidates
+            effect_placeholder = np.zeros_like(focus_vocab)  # will fill for candidates
 
             # Penalize redundancy & extreme sparsity/deadness
             red_pen = normalize_array(redundancy, invert=False)
@@ -695,17 +763,15 @@ def main():
 
             # Initial score without causal
             score_pre = (
-                0.40 * coh_token +
-                0.35 * focus_vocab -
-                0.15 * red_pen -
-                0.10 * dead_pen
+                0.40 * coh_token + 0.35 * focus_vocab - 0.15 * red_pen - 0.10 * dead_pen
             )
 
             # Choose candidates for causal testing
             K = max(32, int(len(score_pre) * (args.candidate_percent / 100.0)))
             candidate_features = np.argpartition(-score_pre, K)[:K]
-            candidate_features = candidate_features[np.argsort(
-                -score_pre[candidate_features])]
+            candidate_features = candidate_features[
+                np.argsort(-score_pre[candidate_features])
+            ]
 
             # Make probe token batches
             probe_batches = []
@@ -735,11 +801,11 @@ def main():
 
             # Final score
             score = (
-                0.35 * coh_token +
-                0.25 * focus_vocab +
-                0.30 * causal_norm -
-                0.07 * red_pen -
-                0.03 * dead_pen
+                0.35 * coh_token
+                + 0.25 * focus_vocab
+                + 0.30 * causal_norm
+                - 0.07 * red_pen
+                - 0.03 * dead_pen
             )
 
             # Select top percent
@@ -767,12 +833,12 @@ def main():
                     "model_name": args.model_name,
                     "sae_path": args.sae_path,
                     "hook_layer": layer_idx,
-                    "hook_stream": 'resid_post',
+                    "hook_stream": "resid_post",
                     "eval_tokens": int(toks_all.numel()),
                     "candidate_features": candidate_features.tolist(),
                     "top_percent": pct,
                     "candidate_percent": float(args.candidate_percent),
-                }
+                },
             }
 
             with open(f"feature_scores_{layer_idx}.json", "w", encoding="utf-8") as f:
