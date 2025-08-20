@@ -58,20 +58,21 @@ def main(cfg: DictConfig):
                 L=L,
                 k=k,
                 # Ridge is more stable than ElasticNet
-                method=cfg.get('method', 'ridge'),
+                method=cfg.get("method", "ridge"),
                 # Higher regularization for stability
-                normalize=cfg.get('normalize', False),
-                regularization=cfg.get('regularization', 10.0),
+                normalize=cfg.get("normalize", False),
+                regularization=cfg.get("regularization", 10.0),
                 # Less L1, more L2 for ElasticNet
-                l1_ratio=cfg.get('l1_ratio', 0.1),
+                l1_ratio=cfg.get("l1_ratio", 0.1),
                 # normalize=True,  # Enable normalization to prevent overflow
-                auto_tune=cfg.get('auto_tune', True),
+                auto_tune=cfg.get("auto_tune", True),
                 # Reduce CV folds for faster training
-                cv_folds=cfg.get('cv_folds', 5),
+                cv_folds=cfg.get("cv_folds", 5),
                 random_state=cfg.seed,
                 # Increase iterations for convergence
-                max_iter=cfg.get('max_iter', 500),
-                tol=cfg.get('tol', 1e-3)  # Relax tolerance slightly
+                max_iter=cfg.get("max_iter", 500),
+                tol=cfg.get("tol", 1e-3),  # Relax tolerance slightly
+                n_proc_cv=cfg.get("n_proc_cv", 2),  # Use 2 processes for CV
             )
 
             try:

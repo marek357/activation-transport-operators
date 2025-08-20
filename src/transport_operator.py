@@ -38,6 +38,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         tol: float = 1e-3,
         cache_dir: Optional[str] = None,
         use_cache: bool = True,
+        n_proc_cv: int = -1,
     ):
         """
         Initialize the transport operator.
@@ -57,6 +58,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             tol: Tolerance for convergence
             cache_dir: Directory to store cached X, y matrices. If None, uses 'cache' in current directory
             use_cache: Whether to use caching for X, y matrices
+            n_proc_cv: Number of processes to use for cross-validation. Defaults to -1 (all available cores).
         """
         self.L = L
         self.k = k
@@ -72,6 +74,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.cache_dir = cache_dir or "cache"
         self.use_cache = use_cache
+        self.n_proc_cv = n_proc_cv
 
         self.model = None
         self.scaler_X = None
@@ -478,7 +481,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                     param_grid,
                     cv=self.cv_folds,
                     scoring=self.scoring,
-                    n_jobs=-1,
+                    n_jobs=self.n_proc_cv,
                     verbose=100,
                     # random_state=self.random_state
                 )
@@ -1024,7 +1027,7 @@ def load_transport_operator(
         regularization=10.0,
         max_iter=500,
     )
-    dummy_ds = ActivationDataset(None, [], "", 0, 0)
+    dummy_ds = EfficientActivationDataset(None, [], "", 0, 0, f"train_L{L}_k{k}")
     file_name = operator._get_model_cache_filename(dummy_ds)
     is_loaded = operator._load_model_cache(Path(operators_dir) / file_name)
     if not is_loaded:

@@ -1208,7 +1208,7 @@ def run_experiment(
                     dataloader = torch.utils.data.DataLoader(
                         dataset,
                         batch_size=256,  # Larger batch size for efficient loading
-                        num_workers=8,
+                        num_workers=0,
                     )
 
                     x_up_list = []
@@ -1600,8 +1600,7 @@ def main(cfg: DictConfig) -> dict:
 
     # Load activation loader
     logger.info("Loading activation data...")
-    activation_loader = ActivationLoader(files_to_download=[cfg.activation_dir])
-    # activation_loader = ActivationLoader("activations-gemma2-2b-slimpajama-500k_zstd4")
+    activation_loader = ActivationLoader(cfg.activation_dir)
 
     # Generate feature lists
     logger.info("Generating feature lists...")
