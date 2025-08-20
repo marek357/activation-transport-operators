@@ -187,6 +187,13 @@ class PerplexityEvaluator:
         avg_loss = total_loss / total_tokens
         log_perplexity = avg_loss
 
+        logger.info(
+            f"Evaluation complete for {modification_name}: "
+            f"log_perplexity={log_perplexity:.4f}, "
+            f"total_tokens={total_tokens}, "
+            f"num_sequences={sample_count}"
+        )
+
         return PerplexityResult(
             log_perplexity=log_perplexity,
             loss=avg_loss,
