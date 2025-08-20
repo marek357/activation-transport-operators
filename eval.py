@@ -531,7 +531,7 @@ def generate_feature_dict(cfg: DictConfig) -> dict[int, list[int]]:
                 feature_data = json.load(f)
 
             feature_dict[layer_id] = feature_data["high_quality_feature_ids"][
-                min(
+                : min(
                     cfg.eval.max_features, len(feature_data["high_quality_feature_ids"])
                 )
             ]
@@ -1888,7 +1888,7 @@ def main(cfg: DictConfig) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Save to JSON file
-    output_file = output_dir / f"{cfg.experiment_name}_results.json"
+    output_file = output_dir / cfg.output_file_name
     with output_file.open("w") as f:
         json.dump(json_results, f, indent=2)
 
