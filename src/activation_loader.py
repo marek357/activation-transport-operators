@@ -266,7 +266,10 @@ class EfficientActivationDataset(IterableDataset):
         self.pre_loaded_activations = {}
         self.pre_loaded_attention_masks = {}
 
-        self._pre_load_layer_activations()
+        if self.activation_loader is not None:
+            self._pre_load_layer_activations()
+        else:
+            logger.warning("Activation loader is not available. Entering dummy mode.")
 
     def _pre_load_layer_activations(self) -> None:
         self.pre_loaded_activations[self.L], self.pre_loaded_attention_masks[self.L] = (

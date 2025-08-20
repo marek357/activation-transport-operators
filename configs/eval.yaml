@@ -58,7 +58,7 @@ baselines:
   # Enable Identity baseline transport operator  
   enable_identity: false
 
-activation_dir: "activations-gemma2-2b-slimpajama-500k_zstd4/activations_part_0000.zarr.zip"
+activation_dir: "./activations-gemma2-2b-slimpajama-250k"
 
-activation_dtype: float16
+activation_dtype: float32
 
