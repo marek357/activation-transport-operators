@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, Optional, Dict, List
-from src.activation_loader import ActivationDataset
+from src.activation_loader import ActivationDataset, EfficientActivationDataset
 from torch.utils.data import DataLoader
 import time
 import os
@@ -129,7 +129,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
                 f"Unknown method: {self.method}. Choose from 'linear', 'ridge', 'lasso', 'elasticnet'"
             )
 
-    def _get_cache_filename(self, dataset: ActivationDataset) -> str:
+    def _get_cache_filename(
+        self, dataset: ActivationDataset | EfficientActivationDataset
+    ) -> str:
         """Generate a unique cache filename based on dataset characteristics."""
         # Create a hash based on dataset properties that would affect the X, y matrices
         dataset_info = {
@@ -144,7 +146,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
         return f"transport_data_{dataset_hash}.pkl"
 
-    def _get_model_cache_filename(self, dataset: ActivationDataset) -> str:
+    def _get_model_cache_filename(
+        self, dataset: ActivationDataset | EfficientActivationDataset
+    ) -> str:
         """Generate a unique model cache filename based on dataset and model parameters."""
         # Create a hash based on both dataset and model parameters
         dataset_info = {
@@ -287,7 +291,9 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             print(f"  Warning: Failed to load cache: {e}")
             return None, None
 
-    def clear_cache(self, dataset: Optional[ActivationDataset] = None) -> None:
+    def clear_cache(
+        self, dataset: Optional[ActivationDataset | EfficientActivationDataset] = None
+    ) -> None:
         """
         Clear cached data files.
 
@@ -349,12 +355,14 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         except Exception as e:
             print(f"Error clearing cache: {e}")
 
-    def fit(self, dataset: ActivationDataset) -> "TransportOperator":
+    def fit(
+        self, dataset: ActivationDataset | EfficientActivationDataset
+    ) -> "TransportOperator":
         """
         Fit the transport operator on upstream-downstream vector pairs.
 
         Args:
-            dataset: ActivationDataset containing upstream-downstream vector pairs.
+            dataset: ActivationDataset | EfficientActivationDataset containing upstream-downstream vector pairs.
 
         Returns:
             self: Fitted transport operator
@@ -390,8 +398,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             skipped_samples = 0
             batch_size = 128
 
-            # use dataloader with 10 workers and batches
-            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
+            # use dataloader with 0 workers and batches
+            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
             for i, (x_up, y_down) in enumerate(dataloader):
                 # Convert PyTorch tensors to numpy and ensure they're 1D vectors
@@ -626,10 +634,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
     def evaluate_dataset(self, dataset) -> Dict[str, float]:
         """
-        Evaluate the model on an ActivationDataset.
+        Evaluate the model on an ActivationDataset | EfficientActivationDataset.
 
         Args:
-            dataset: ActivationDataset to evaluate on
+            dataset: ActivationDataset | EfficientActivationDataset to evaluate on
 
         Returns:
             Dictionary with evaluation metrics
@@ -657,7 +665,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             skipped_samples = 0
             batch_size = 128
 
-            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
+            dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=0)
             for i, (x_up, y_down) in enumerate(dataloader):
                 x_np = x_up.detach().cpu().numpy()
                 y_np = y_down.detach().cpu().numpy()
@@ -834,12 +842,14 @@ class PCABaselineTransportOperator(TransportOperator):
         super().__init__(L, k, method="PCA", **kwargs)
         self.n_components = n_components
 
-    def fit(self, dataset: ActivationDataset) -> "PCABaselineTransportOperator":
+    def fit(
+        self, dataset: ActivationDataset | EfficientActivationDataset
+    ) -> "PCABaselineTransportOperator":
         """
         Fit the PCA baseline transport operator on downstream vectors.
 
         Args:
-            dataset: ActivationDataset containing upstream-downstream vector pairs.
+            dataset: ActivationDataset | EfficientActivationDataset containing upstream-downstream vector pairs.
 
         Returns:
             self: Fitted PCA baseline on the downstream vectors only.
@@ -866,7 +876,7 @@ class PCABaselineTransportOperator(TransportOperator):
         skipped_samples = 0
         batch_size = 128
 
-        dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=8)
+        dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
         for i, (x_up, y_down) in enumerate(dataloader):
             y_np = y_down.detach().cpu().numpy()
@@ -967,12 +977,14 @@ class IdentityBaselineTransportOperator(TransportOperator):
         super().__init__(L, k, method="identity", **kwargs)
         self.is_fitted_ = True  # Identity operator does not require fitting
 
-    def fit(self, dataset: ActivationDataset) -> "IdentityBaselineTransportOperator":
+    def fit(
+        self, dataset: ActivationDataset | EfficientActivationDataset
+    ) -> "IdentityBaselineTransportOperator":
         """
         Fit the identity transport operator on downstream vectors.
 
         Args:
-            dataset: ActivationDataset containing upstream-downstream vector pairs.
+            dataset: ActivationDataset | EfficientActivationDataset containing upstream-downstream vector pairs.
 
         Returns:
             self: Fitted identity transport operator (no actual fitting needed).

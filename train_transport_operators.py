@@ -41,9 +41,10 @@ def main(cfg: DictConfig):
 
     transport_operators = {}
     loader = ActivationLoader(
-        files_to_download=[
-            "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
-        ]
+        activation_dir_path="activations-gemma2-2b-slimpajama-250k",
+        # files_to_download=[
+        #     "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"
+        # ]
     )
     for L in cfg.experiment.L:
         for k in cfg.experiment.k:

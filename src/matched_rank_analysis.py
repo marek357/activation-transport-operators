@@ -60,7 +60,7 @@ import numpy as np
 import torch
 from sklearn.decomposition import PCA
 
-from src.activation_loader import ActivationDataset
+from src.activation_loader import ActivationDataset, EfficientActivationDataset
 from src.transport_operator import TransportOperator
 
 logger = logging.getLogger(__name__)
@@ -90,12 +90,14 @@ class RankConstrainedTransportOperator(TransportOperator):
         self._truncated_transport_matrix = None
         self._truncated_bias = None
 
-    def fit(self, dataset: ActivationDataset) -> "RankConstrainedTransportOperator":
+    def fit(
+        self, dataset: ActivationDataset | EfficientActivationDataset
+    ) -> "RankConstrainedTransportOperator":
         """
         Fit the transport operator and apply rank constraint via SVD truncation.
 
         Args:
-            dataset: ActivationDataset containing upstream-downstream vector pairs
+            dataset: ActivationDataset | EfficientActivationDataset containing upstream-downstream vector pairs
 
         Returns:
             self: Fitted rank-constrained transport operator
@@ -656,45 +658,48 @@ def compare_pca_vs_transport(
 
 
 def run_matched_rank_analysis_from_datasets(
-    train_dataset: ActivationDataset,
-    val_dataset: ActivationDataset,
-    test_dataset: ActivationDataset,
+    train_dataset: ActivationDataset | EfficientActivationDataset,
+    val_dataset: ActivationDataset | EfficientActivationDataset,
+    test_dataset: ActivationDataset | EfficientActivationDataset,
     ranks: list[int] | None = None,
     alpha_grid: list[float] | None = None,
     orthogonal_test_ranks: list[int] | None = None,
     plot: bool = True,
-    max_samples: int | None = None
+    max_samples: int | None = None,
 ) -> dict[str, Any]:
     """
-    Run matched-rank analysis using ActivationDataset objects.
+    Run matched-rank analysis using ActivationDataset | EfficientActivationDataset objects.
 
     Args:
-        train_dataset, val_dataset, test_dataset: ActivationDataset objects
+        train_dataset, val_dataset, test_dataset: ActivationDataset | EfficientActivationDataset objects
         ranks: List of ranks to evaluate
         alpha_grid: Ridge regularization strengths to try
-        orthogonal_test_ranks: Ranks for orthogonal complement analysis  
+        orthogonal_test_ranks: Ranks for orthogonal complement analysis
         plot: Whether to generate plots
         max_samples: Maximum number of samples to use (for computational efficiency)
 
     Returns:
         Dictionary with all results and metrics
     """
-    def dataset_to_arrays(dataset: ActivationDataset, max_samples: int | None = None):
-        """Convert ActivationDataset to numpy arrays."""
+
+    def dataset_to_arrays(
+        dataset: ActivationDataset | EfficientActivationDataset,
+        max_samples: int | None = None,
+    ):
+        """Convert ActivationDataset | EfficientActivationDataset to numpy arrays."""
         logger.info(
-            f"Converting ActivationDataset to arrays (max_samples={max_samples})...")
+            f"Converting ActivationDataset | EfficientActivationDataset to arrays (max_samples={max_samples})..."
+        )
 
         x_list = []
         y_list = []
 
-        # Since ActivationDataset is an IterableDataset, we need to iterate through it
+        # Since ActivationDataset | EfficientActivationDataset is an IterableDataset, we need to iterate through it
         samples_collected = 0
 
         for x, y in dataset:
-            x_list.append(x.numpy() if hasattr(
-                x, 'numpy') else x.cpu().numpy())
-            y_list.append(y.numpy() if hasattr(
-                y, 'numpy') else y.cpu().numpy())
+            x_list.append(x.numpy() if hasattr(x, "numpy") else x.cpu().numpy())
+            y_list.append(y.numpy() if hasattr(y, "numpy") else y.cpu().numpy())
             samples_collected += 1
 
             # Stop if we've collected enough samples
