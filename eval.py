@@ -13,6 +13,7 @@ from typing import Any, cast, Callable
 import hydra
 import numpy as np
 import torch
+from tqdm import tqdm
 import wandb
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
@@ -151,7 +152,7 @@ def compute_all_feature_metrics(
 
     total_samples = y_dn_all.shape[0]
 
-    for feat_idx in feature_list:
+    for feat_idx in tqdm(feature_list, desc="Computing metrics for features"):
         # Get decoder vector
         d_f = decoder_matrix[feat_idx].double()
 
@@ -509,9 +510,35 @@ def generate_feature_dict(cfg: DictConfig) -> dict[int, list[int]]:
     # TODO: dummy implementation, make sure to re-write
     feature_dict = {}
 
+    # Load feature lists from JSON files in the feature_ids_dir
+    feature_ids_dir = Path(cfg.feature_ids_dir)
+    logger.info(f"Loading feature lists from: {feature_ids_dir}")
+
+    # Get all unique layers that we need features for
+    required_layers = set()
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
-            feature_dict[layer_l + k] = list(range(15))
+            required_layers.add(layer_l + k)  # Target layer L+k
+
+    for layer_id in required_layers:
+        feature_file = feature_ids_dir / f"feature_scores_{layer_id}.json"
+
+        if not feature_file.exists():
+            raise FileNotFoundError(f"Feature file not found: {feature_file}")
+
+        try:
+            with open(feature_file, "r") as f:
+                feature_data = json.load(f)
+
+            feature_dict[layer_id] = feature_data["high_quality_feature_ids"]
+
+            logger.info(
+                f"Loaded {len(feature_dict[layer_id])} features for layer {layer_id}"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to load features from {feature_file}: {e}")
+            feature_dict[layer_id] = []
 
     return feature_dict
 
