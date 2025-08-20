@@ -530,7 +530,11 @@ def generate_feature_dict(cfg: DictConfig) -> dict[int, list[int]]:
             with open(feature_file, "r") as f:
                 feature_data = json.load(f)
 
-            feature_dict[layer_id] = feature_data["high_quality_feature_ids"]
+            feature_dict[layer_id] = feature_data["high_quality_feature_ids"][
+                min(
+                    cfg.eval.max_features, len(feature_data["high_quality_feature_ids"])
+                )
+            ]
 
             logger.info(
                 f"Loaded {len(feature_dict[layer_id])} features for layer {layer_id}"
