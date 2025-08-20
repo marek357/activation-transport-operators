@@ -59,6 +59,7 @@ baselines:
   enable_identity: false
 
 activation_dir: "./activations-gemma2-2b-slimpajama-250k"
+feature_ids_dir: "./feature_ids"
 
 activation_dtype: float32
 
