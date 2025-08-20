@@ -225,6 +225,9 @@ class ActivationCollector:
         # Process activations
         batch_activations = {}
         for layer_idx, layer_hidden_states in enumerate(hidden_states):
+            if layer_idx == 0:
+                # Input layer, no need to store embeddings
+                continue
             # Convert to storage dtype and move to CPU to save GPU memory
             layer_activations = layer_hidden_states.to(self.storage_dtype).cpu()
 
@@ -232,7 +235,7 @@ class ActivationCollector:
             masked_activation = layer_activations * attention_mask.cpu().unsqueeze(
                 -1
             ).to(layer_activations.dtype)
-            batch_activations[f"layer_{layer_idx}"] = masked_activation
+            batch_activations[f"layer_{layer_idx - 1}"] = masked_activation
 
         # Add input metadata
         batch_activations["input_ids"] = input_ids.cpu()
