@@ -44,7 +44,7 @@ eval:
   
   val_batch_size: 128
   filter_inactive_features: true
-  n_features: 100
+  max_features: 819
 
 run_matched_rank: false
 matched_rank_only: false
@@ -61,6 +61,7 @@ baselines:
 
 activation_dir: "./activations-gemma2-2b-slimpajama-250k"
 feature_ids_dir: "./feature_ids"
+output_file_name: "eval_transport_operators_results_${eval.Ls}_${eval.ks}.json"
 
 activation_dtype: float32
 
