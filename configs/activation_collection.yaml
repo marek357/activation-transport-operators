@@ -2,8 +2,8 @@ defaults:
   - _self_
   - logger: wandb_disabled
   - model: gemma_2_2b
-  - activation_collection: the_stack_json
-  - datasets: the-stack
+  - activation_collection: slimpajama
+  - datasets: slimpajama
 
 # Global
 seed: 42
