@@ -44,6 +44,7 @@ eval:
   
   val_batch_size: 128
   filter_inactive_features: true
+  n_features: 100
 
 run_matched_rank: false
 matched_rank_only: false
