@@ -1,18 +1,18 @@
 # Global settings
 seed: 42
-experiment_name: activation_collection_slimpajama
+experiment_name: activation_collection_slimpajama_float32
 
 # Optimized settings for large scale collection
-batch_size: 16 # Larger batch size for efficiency
+batch_size: 8 # Larger batch size for efficiency
 max_length: 256 # Shorter sequences for faster processing
-num_tokens: 500_000
-save_every_n_batches: 10 # Save more frequently to reduce memory usage and speed up individual saves
+num_tokens: 250_000
+save_every_n_batches: 20 # Save more frequently to reduce memory usage and speed up individual saves
 
 # Memory management
 enable_memory_logging: true
 enable_garbage_collection: true
 
 # Storage configuration
-output_dir: "activations_slimpajama" # Directory to save activation files
+output_dir: "activations_slimpajama_float32" # Directory to save activation files
 cache_dir: "./cache" # Directory to cache tokenized datasets
-storage_dtype: "float16" # Data type for storing activations (saves memory)
+storage_dtype: "float32" # Data type for storing activations (saves memory)
