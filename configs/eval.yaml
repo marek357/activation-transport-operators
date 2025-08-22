@@ -46,8 +46,8 @@ eval:
   filter_inactive_features: true
   max_features: 819
 
-run_matched_rank: false
-matched_rank_only: false
+run_matched_rank: true
+matched_rank_only: true
 
 # Baseline transport operators configuration
 baselines:
