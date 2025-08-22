@@ -77,12 +77,12 @@ def r2_ceiling_from_cca(X, Y, rs, *, center=True, ridge=0.0, eps=1e-12):
 
     _, rho, _ = np.linalg.svd(C, full_matrices=False)  # rho sorted desc
 
-    ceilings = []
+    ceilings = {}
     for r in rs:
         # Clip r to available modes
         k = min(r, len(rho))
         R2_ceiling_r = float(np.sum(rho[:k] ** 2) / dx)
-        ceilings.append(R2_ceiling_r)
+        ceilings[r] = R2_ceiling_r
 
     return ceilings
 

@@ -6,8 +6,8 @@ This module implements the core matched-rank analysis that compares:
 2) Rank-r transport: fit TransportOperator + SVD truncation to rank r, predict Y_test from X_test
 3) Compare R²(r) curves and compute efficiency ratios
 
-The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible 
-rank-r Y-only reconstruction). The gap shows how much of compressible variance 
+The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible
+rank-r Y-only reconstruction). The gap shows how much of compressible variance
 This module provides tools to analyze the relationship between the variance explained by a rank-r principal component analysis (PCA) reconstruction of target data (the "PCA ceiling") and the variance explained by a rank-r transport operator mapping from source to target data. The key mathematical relationship is:
 
     R²_T(r) ≤ R²_PCA(r)
@@ -49,6 +49,7 @@ transport_results = fit_transport_rank_r(
 for r in ranks:
     print(f"Rank {r}: R²_T(r) = {transport_results[r]['r2']:.3f}, R²_PCA(r) = {pca_results[r]['r2']:.3f}, Efficiency = {transport_results[r]['r2']/pca_results[r]['r2']:.2%}")
 """
+
 from __future__ import annotations
 
 import logging
@@ -59,9 +60,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from sklearn.decomposition import PCA
+from tqdm import tqdm
 
 from src.activation_loader import ActivationDataset, EfficientActivationDataset
-from src.transport_operator import TransportOperator
+from src.transport_operator import TransportOperator, load_transport_operator
+from src.transport_efficiency import _inv_sqrt_psd, r2_ceiling_from_cca
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +83,7 @@ class RankConstrainedTransportOperator(TransportOperator):
 
         Args:
             L: Layer number
-            k: Offset for target layer  
+            k: Offset for target layer
             rank: Rank constraint for transport matrix
             **kwargs: Additional parameters for TransportOperator
         """
@@ -115,7 +118,8 @@ class RankConstrainedTransportOperator(TransportOperator):
         T = self._full_transport_matrix.T  # Shape: [d_out, d_in]
 
         logger.debug(
-            f"Applying rank-{self.rank} constraint via SVD to transport matrix {T.shape}")
+            f"Applying rank-{self.rank} constraint via SVD to transport matrix {T.shape}"
+        )
 
         # Perform SVD
         U, S, Vt = np.linalg.svd(T, full_matrices=False)
@@ -135,12 +139,56 @@ class RankConstrainedTransportOperator(TransportOperator):
 
         # Update the internal model's coefficients to use truncated version
         # We need to be careful here since the model might be different types
-        if hasattr(self.model, 'coef_'):
+        if hasattr(self.model, "coef_"):
             self.model.coef_ = T_r  # Shape: [d_out, d_in]
 
         logger.debug(f"Rank constraint applied: effective rank = {r_eff}")
 
         return self
+
+    @classmethod
+    def from_pretrained(cls, transport_operator, rank):
+        instance = cls(
+            L=transport_operator.L,
+            k=transport_operator.k,
+            rank=rank,  # full rank
+        )
+        instance._full_transport_matrix = transport_operator.get_transport_matrix()
+        instance.is_fitted_ = True
+        full_bias = transport_operator.get_bias()  # Shape: [d_out]
+
+        # Apply SVD truncation to enforce rank constraint
+        # Transport matrix is stored as coef_.T, so we need to transpose
+        T = instance._full_transport_matrix.T  # Shape: [d_out, d_in]
+
+        logger.debug(
+            f"Applying rank-{instance.rank} constraint via SVD to transport matrix {T.shape}"
+        )
+
+        # Perform SVD
+        U, S, Vt = np.linalg.svd(T, full_matrices=False)
+
+        # Truncate to specified rank
+        r_eff = min(instance.rank, S.shape[0])
+        S_trunc = np.zeros_like(S)
+        S_trunc[:r_eff] = S[:r_eff]
+
+        # Reconstruct rank-constrained transport matrix
+        T_r = (U * S_trunc) @ Vt  # Shape: [d_out, d_in]
+
+        # Store truncated matrices
+        # Store as [d_in, d_out] to match get_transport_matrix
+        instance._truncated_transport_matrix = T_r.T
+        instance._truncated_bias = full_bias.copy()
+
+        # Update the internal model's coefficients to use truncated version
+        # We need to be careful here since the model might be different types
+        if hasattr(instance.model, "coef_"):
+            instance.model.coef_ = T_r  # Shape: [d_out, d_in]
+
+        logger.debug(f"Rank constraint applied: effective rank = {r_eff}")
+
+        return instance
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -160,7 +208,10 @@ class RankConstrainedTransportOperator(TransportOperator):
             raise ValueError("X must be a 2D array")
 
         # Use the truncated transport matrix directly
-        if self._truncated_transport_matrix is not None and self._truncated_bias is not None:
+        if (
+            self._truncated_transport_matrix is not None
+            and self._truncated_bias is not None
+        ):
             # Apply: Y = X @ T_r.T + b
             # where T_r is shape [d_out, d_in] and T_r.T is [d_in, d_out]
             T_r = self._truncated_transport_matrix.T  # [d_out, d_in]
@@ -183,7 +234,12 @@ class RankConstrainedTransportOperator(TransportOperator):
 
     def get_effective_rank(self) -> int:
         """Get the effective rank after truncation."""
-        return min(self.rank, self._full_transport_matrix.shape[0] if self._full_transport_matrix is not None else self.rank)
+        return min(
+            self.rank,
+            self._full_transport_matrix.shape[0]
+            if self._full_transport_matrix is not None
+            else self.rank,
+        )
 
 
 def variance_weighted_r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -247,7 +303,7 @@ def variance_weighted_r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
     # More robust variance calculation
     y_centered = y_true - mu
-    sst = np.sum(y_centered ** 2, axis=0)
+    sst = np.sum(y_centered**2, axis=0)
 
     # Handle near-zero variance dimensions
     eps = 1e-12
@@ -279,7 +335,53 @@ def variance_weighted_r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(weighted_r2)
 
 
-def pca_ceiling(y_train: np.ndarray, y_test: np.ndarray, ranks: list[int]) -> dict[int, dict[str, float]]:
+# def whitened_r2(y_gt, y_pred, y_mean, cov_yy_inv_sqrt):
+#     # Center the ground truth and predicted values
+#     y_gt_centered = y_gt - y_mean
+#     y_pred_centered = y_pred - y_mean
+
+#     # Whiten the centered values
+#     y_gt_whitened = y_gt_centered @ cov_yy_inv_sqrt
+#     y_pred_whitened = y_pred_centered @ cov_yy_inv_sqrt
+
+#     # Compute R² score on the whitened values
+#     return (
+#         1
+#         - np.linalg.norm(y_gt_whitened - y_pred_whitened, ord="fro") ** 2
+#         / np.linalg.norm(y_gt_whitened, ord="fro") ** 2
+#     )
+
+
+def inv_sqrt_psd(S, ridge=1e-6, eps=1e-12):
+    S = 0.5 * (S + S.T)
+    w, V = np.linalg.eigh(S + ridge * np.eye(S.shape[0]))
+    w = np.clip(w, eps, None)
+    return (V * (w**-0.5)) @ V.T
+
+
+def calibrate_intercept_whitened(Y_tr, Yhat_tr, muY_tr, W):
+    # Compute the u that minimizes ||(Y_tr - (Yhat_tr + 1 c^T)) W||_F^2
+    Ew_tr = (Y_tr - Yhat_tr) @ W
+    u = Ew_tr.mean(axis=0, keepdims=True)  # [1,d]
+    c = u @ np.linalg.inv(W)  # [1,d]  (W is SPD so inv exists)
+    return c
+
+
+def apply_intercept(Yhat, c):
+    return Yhat + c  # broadcasts over rows
+
+
+def whitened_r2(Y, Yhat, muY, W):
+    Yw = (Y - muY) @ W
+    Yhatw = (Yhat - muY) @ W
+    sse = np.linalg.norm(Yw - Yhatw, "fro") ** 2
+    sst = np.linalg.norm(Yw, "fro") ** 2
+    return 0.0 if sst < 1e-12 else 1.0 - sse / sst
+
+
+def pca_ceiling(
+    y_train: np.ndarray, y_test: np.ndarray, ranks: list[int]
+) -> dict[int, dict[str, float]]:
     """
     Compute PCA ceiling: fit PCA on Y_train, reconstruct Y_test for each rank.
 
@@ -318,11 +420,12 @@ def pca_ceiling(y_train: np.ndarray, y_test: np.ndarray, ranks: list[int]) -> di
         results[r] = {
             "R2": r2_score,
             "explained_variance_ratio": float(explained_var_ratio),
-            "effective_rank": r_eff
+            "effective_rank": r_eff,
         }
 
         logger.debug(
-            f"PCA ceiling rank {r}: R2={r2_score:.4f}, explained_var={explained_var_ratio:.4f}")
+            f"PCA ceiling rank {r}: R2={r2_score:.4f}, explained_var={explained_var_ratio:.4f}"
+        )
 
     return results
 
@@ -330,12 +433,11 @@ def pca_ceiling(y_train: np.ndarray, y_test: np.ndarray, ranks: list[int]) -> di
 def fit_transport_rank_r(
     x_train: np.ndarray,
     y_train: np.ndarray,
-    x_val: np.ndarray,
-    y_val: np.ndarray,
     x_test: np.ndarray,
     y_test: np.ndarray,
+    L: int,
+    k: int,
     ranks: list[int],
-    alpha_grid: list[float]
 ) -> dict[int, dict[str, float]]:
     """
     Fit rank-r transport operators using TransportOperator + SVD truncation.
@@ -356,68 +458,91 @@ def fit_transport_rank_r(
     Returns:
         Dictionary mapping rank -> {"R2_val": float, "R2_test": float, "alpha": float, "effective_rank": int}
     """
-    x_train = np.asarray(x_train)
-    y_train = np.asarray(y_train)
-    x_val = np.asarray(x_val)
-    y_val = np.asarray(y_val)
     x_test = np.asarray(x_test)
     y_test = np.asarray(y_test)
 
     # Create temporary datasets for TransportOperator
-    train_dataset = _create_numpy_dataset(x_train, y_train)
-    val_dataset = _create_numpy_dataset(x_val, y_val)
     test_dataset = _create_numpy_dataset(x_test, y_test)
+    base_transport_op = load_transport_operator(L, k, "./cache")
 
     results = {}
+    y_mean = np.mean(y_train, axis=0, keepdims=True)
+    Sigma_yy = (y_train.T @ y_train) / y_train.shape[0]
+    cov_yy_inv_sqrt = _inv_sqrt_psd(Sigma_yy)
 
-    for r in ranks:
-        best_result = {"R2_val": -1e9, "R2_test": None,
-                       "alpha": None, "effective_rank": 0}
+    for r in tqdm(ranks):
+        best_result = {
+            "R2_val": -1e9,
+            "R2_test": None,
+            "alpha": None,
+            "effective_rank": 0,
+        }
 
-        for alpha in alpha_grid:
-            try:
-                # Create rank-constrained transport operator
-                transport_op = RankConstrainedTransportOperator(
-                    L=0,  # Dummy values since we're using it standalone
-                    k=1,
-                    rank=int(r),
-                    method="ridge",
-                    regularization=float(alpha),
-                    auto_tune=False,  # We're manually tuning
-                    use_cache=False,  # Disable caching for this analysis
-                    normalize=False   # Keep consistent with original implementation
-                )
+        try:
+            # Create rank-constrained transport operator
+            # transport_op = RankConstrainedTransportOperator(
+            #     L=0,  # Dummy values since we're using it standalone
+            #     k=1,
+            #     rank=int(r),
+            #     method="ridge",
+            #     regularization=float(alpha),
+            #     auto_tune=False,  # We're manually tuning
+            #     use_cache=False,  # Disable caching for this analysis
+            #     normalize=False,  # Keep consistent with original implementation
+            # )
 
-                # Fit the transport operator
-                transport_op.fit(train_dataset)
+            # Fit the transport operator
+            # transport_op.fit(train_dataset)
+            # base_transport_op = transport_op
+            transport_op = RankConstrainedTransportOperator.from_pretrained(
+                base_transport_op, rank=r
+            )
 
-                # Validate on validation set
-                y_val_hat = transport_op.predict(x_val)
-                r2_val = variance_weighted_r2(y_val, y_val_hat)
+            # Validate on validation set
+            y_test_hat = transport_op.predict(x_test)
+            muY_tr = y_train.mean(axis=0, keepdims=True)
+            Syy_tr = np.cov((y_train - muY_tr).T, bias=True)
+            W = inv_sqrt_psd(Syy_tr)
 
-                if r2_val > best_result["R2_val"]:
-                    # Evaluate on test set
-                    y_test_hat = transport_op.predict(x_test)
-                    r2_test = variance_weighted_r2(y_test, y_test_hat)
+            y_train_hat = transport_op.predict(x_train)
+            # Calibrate intercept in the whitened metric on TRAIN ONLY
+            c = calibrate_intercept_whitened(y_train, y_train_hat, muY_tr, W)
 
-                    best_result = {
-                        "R2_val": float(r2_val),
-                        "R2_test": float(r2_test),
-                        "alpha": float(alpha),
-                        "effective_rank": transport_op.get_effective_rank()
-                    }
+            # Adjust predictions everywhere
+            # Yhat_tr_adj = apply_intercept(y_train_hat, c)
+            Yhat_te_adj = apply_intercept(y_test_hat, c)
 
-            except Exception as e:
-                logger.warning(
-                    f"Failed to fit transport rank {r} with alpha {alpha}: {e}")
-                continue
+            # Evaluate whitened R^2 (aligned with the CCA ceiling)
+            # r2w_train = whitened_r2(y_train, Yhat_tr_adj, muY_tr, W)
+            r2_val = whitened_r2(y_test, Yhat_te_adj, muY_tr, W)
+
+            # r2_val = whitened_r2(y_test, y_test_hat, y_mean, cov_yy_inv_sqrt)
+
+            if r2_val > best_result["R2_val"]:
+                # Evaluate on test set
+                y_test_hat = transport_op.predict(x_test)
+                r2_test = whitened_r2(y_test, y_test_hat, y_mean, cov_yy_inv_sqrt)
+
+                best_result = {
+                    "R2_val": float(r2_val),
+                    "R2_test": float(r2_test),
+                    "effective_rank": transport_op.get_effective_rank(),
+                    # WARNING: Remove in the future
+                    # TODO: This is probably a very dummy decision we made at 4 am when debugging this code...
+                    "alpha": 1500.0,
+                }
+
+        except Exception as e:
+            logger.exception(f"Failed to fit transport rank {r}: {e}", stack_info=True)
+            raise Exception from e
 
         results[int(r)] = best_result
 
         # Safe logging with None checks
-        r2_test = best_result['R2_test']
-        alpha = best_result['alpha']
-        effective_rank = best_result['effective_rank']
+        r2_test = best_result["R2_test"]
+        effective_rank = best_result["effective_rank"]
+
+        alpha = best_result["alpha"]
 
         r2_str = f"{r2_test:.4f}" if r2_test is not None else "None"
         alpha_str = f"{alpha}" if alpha is not None else "None"
@@ -466,7 +591,7 @@ def orthogonal_complement_r2(
     y_train: np.ndarray,
     y_test: np.ndarray,
     y_pred_dict: dict[int, np.ndarray],
-    ranks_for_pca: list[int]
+    ranks_for_pca: list[int],
 ) -> dict[int, dict[int, float]]:
     """
     Compute R^2 in orthogonal complement of top-r0 PCA components.
@@ -524,7 +649,7 @@ def compare_pca_vs_transport(
     ranks: list[int] | None = None,
     alpha_grid: list[float] | None = None,
     orthogonal_test_ranks: list[int] | None = None,
-    plot: bool = True
+    plot: bool = True,
 ) -> dict[str, Any]:
     """
     Main function to compare PCA ceiling vs rank-r transport operators.
@@ -551,8 +676,10 @@ def compare_pca_vs_transport(
     ranks = list(sorted(set(int(r) for r in ranks)))
 
     logger.info(f"Starting matched-rank analysis for ranks: {ranks}")
-    logger.info(f"Data shapes: X_train={x_train.shape}, Y_train={y_train.shape}, "
-                f"X_test={x_test.shape}, Y_test={y_test.shape}")
+    logger.info(
+        f"Data shapes: X_train={x_train.shape}, Y_train={y_train.shape}, "
+        f"X_test={x_test.shape}, Y_test={y_test.shape}"
+    )
 
     # 1) PCA ceiling
     logger.info("Computing PCA ceiling...")
@@ -561,7 +688,8 @@ def compare_pca_vs_transport(
     # 2) Transport rank-r
     logger.info("Computing rank-r transport operators...")
     trans_dict = fit_transport_rank_r(
-        x_train, y_train, x_val, y_val, x_test, y_test, ranks, alpha_grid)
+        x_train, y_train, x_val, y_val, x_test, y_test, ranks, alpha_grid
+    )
 
     # 3) Efficiency (Transport R2 / PCA R2)
     efficiency = {}
@@ -571,7 +699,7 @@ def compare_pca_vs_transport(
         if pca_r2 > 1e-8 and trans_r2 is not None:
             efficiency[int(r)] = float(trans_r2 / pca_r2)
         else:
-            efficiency[int(r)] = float('nan')
+            efficiency[int(r)] = float("nan")
 
     # 4) Optional orthogonal complement analysis
     ortho_results = {}
@@ -584,12 +712,14 @@ def compare_pca_vs_transport(
             if alpha is not None:
                 # Create and fit transport operator with the best alpha
                 transport_op = RankConstrainedTransportOperator(
-                    L=0, k=1, rank=int(r),
+                    L=0,
+                    k=1,
+                    rank=int(r),
                     method="ridge",
                     regularization=float(alpha),
                     auto_tune=False,
                     use_cache=False,
-                    normalize=False
+                    normalize=False,
                 )
 
                 train_dataset = _create_numpy_dataset(x_train, y_train)
@@ -597,7 +727,8 @@ def compare_pca_vs_transport(
                 preds[int(r)] = transport_op.predict(x_test)
 
         ortho_results = orthogonal_complement_r2(
-            y_train, y_test, preds, orthogonal_test_ranks)
+            y_train, y_test, preds, orthogonal_test_ranks
+        )
 
     # 5) Generate plots if requested
     if plot:
@@ -607,27 +738,33 @@ def compare_pca_vs_transport(
             # Main comparison plot
             plt.subplot(1, 2, 1)
             pca_r2_values = [pca_dict[r]["R2"] for r in ranks]
-            trans_r2_values = [trans_dict[r]["R2_test"] if trans_dict[r]
-                               ["R2_test"] is not None else 0 for r in ranks]
+            trans_r2_values = [
+                trans_dict[r]["R2_test"] if trans_dict[r]["R2_test"] is not None else 0
+                for r in ranks
+            ]
 
-            plt.plot(ranks, pca_r2_values, marker='o',
-                     label='PCA ceiling', linewidth=2)
-            plt.plot(ranks, trans_r2_values, marker='s',
-                     label='Transport (rank-r)', linewidth=2)
+            plt.plot(ranks, pca_r2_values, marker="o", label="PCA ceiling", linewidth=2)
+            plt.plot(
+                ranks,
+                trans_r2_values,
+                marker="s",
+                label="Transport (rank-r)",
+                linewidth=2,
+            )
             plt.xlabel("Rank r")
             plt.ylabel("Variance-weighted $R^2$ (test)")
             plt.title("PCA vs Transport ($X \\to Y$)")
             plt.legend()
-            plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.5)
+            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
 
             # Efficiency plot
             plt.subplot(1, 2, 2)
             eff_values = [efficiency[r] for r in ranks]
-            plt.plot(ranks, eff_values, marker='o', linewidth=2)
+            plt.plot(ranks, eff_values, marker="o", linewidth=2)
             plt.xlabel("Rank r")
             plt.ylabel("Efficiency = $R^2_T(r) / R^2_{PCA}(r)$")
             plt.title("Transport Efficiency vs Rank")
-            plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.5)
+            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
             plt.ylim(0, 1.1)
 
             plt.tight_layout()
@@ -640,24 +777,155 @@ def compare_pca_vs_transport(
     results = {
         "ranks": ranks,
         "pca_R2": {int(r): float(pca_dict[int(r)]["R2"]) for r in ranks},
-        "pca_explained_variance": {int(r): float(pca_dict[int(r)]["explained_variance_ratio"]) for r in ranks},
+        "pca_explained_variance": {
+            int(r): float(pca_dict[int(r)]["explained_variance_ratio"]) for r in ranks
+        },
         "transport": trans_dict,  # contains R2_val, R2_test, alpha per rank
         "efficiency": {int(r): float(efficiency[int(r)]) for r in ranks},
         "orthogonal_complement_R2": ortho_results,
         "summary_stats": {
             "max_pca_r2": max(pca_dict[r]["R2"] for r in ranks),
-            "max_transport_r2": max(trans_dict[r]["R2_test"] for r in ranks if trans_dict[r]["R2_test"] is not None),
+            "max_transport_r2": max(
+                trans_dict[r]["R2_test"]
+                for r in ranks
+                if trans_dict[r]["R2_test"] is not None
+            ),
             "mean_efficiency": np.nanmean([efficiency[r] for r in ranks]),
             "best_rank_pca": max(ranks, key=lambda r: pca_dict[r]["R2"]),
-            "best_rank_transport": max(ranks, key=lambda r: trans_dict[r]["R2_test"] if trans_dict[r]["R2_test"] is not None else -1)
-        }
+            "best_rank_transport": max(
+                ranks,
+                key=lambda r: trans_dict[r]["R2_test"]
+                if trans_dict[r]["R2_test"] is not None
+                else -1,
+            ),
+        },
     }
 
     logger.info("Matched-rank analysis completed successfully")
     return results
 
 
-def run_matched_rank_analysis_from_datasets(
+def compare_cca_vs_transport(
+    L: int,
+    k: int,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_test: np.ndarray,
+    y_test: np.ndarray,
+    ranks: list[int],
+) -> dict[str, Any]:
+    """
+    Main function to compare CCA ceiling vs rank-r transport operators.
+    Returns:
+        Dictionary with all results and metrics
+    """
+
+    # ranks = list(range(1, 2300, 50))
+    # ranks.append(2304)  # the full rank is 2304
+
+    ranks = list(sorted(set(int(r) for r in ranks)))
+
+    logger.info(f"Starting matched-rank analysis for ranks: {ranks}")
+    logger.info(f"Data shapes: X_test={x_test.shape}, Y_test={y_test.shape}, ")
+    logger.info(f"Data shapes: X_train={x_train.shape}, Y_train={y_train.shape}, ")
+
+    # 1) CCA ceiling
+    logger.info("Computing CCA ceiling...")
+    cca_dict = r2_ceiling_from_cca(x_train, y_train, ranks)
+
+    # 2) Transport rank-r
+    logger.info("Computing rank-r transport operators...")
+    trans_dict = fit_transport_rank_r(x_train, y_train, x_test, y_test, L, k, ranks)
+
+    # 3) Efficiency (Transport R2 / PCA R2)
+    efficiency = {}
+    for r in ranks:
+        cca_r2 = cca_dict[int(r)]
+        trans_r2 = trans_dict[r]["R2_test"]
+        if cca_r2 > 1e-8 and trans_r2 is not None:
+            efficiency[int(r)] = float(trans_r2 / cca_r2)
+        else:
+            efficiency[int(r)] = float("nan")
+
+    print(efficiency)
+
+    # 4) Optional orthogonal complement analysis
+    ortho_results = {}
+    # 5) Generate plots if requested
+    try:
+        plt.figure(figsize=(12, 5))
+
+        # Main comparison plot
+        plt.subplot(1, 2, 1)
+        pca_r2_values = [cca_dict[r] for r in ranks]
+        trans_r2_values = [
+            trans_dict[r]["R2_test"] if trans_dict[r]["R2_test"] is not None else 0
+            for r in ranks
+        ]
+
+        plt.plot(ranks, pca_r2_values, marker="o", label="PCA ceiling", linewidth=2)
+        plt.plot(
+            ranks,
+            trans_r2_values,
+            marker="s",
+            label="Transport (rank-r)",
+            linewidth=2,
+        )
+        plt.xlabel("Rank r")
+        plt.ylabel("Variance-weighted $R^2$ (test)")
+        plt.title("PCA vs Transport ($X \\to Y$)")
+        plt.legend()
+        plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
+
+        # Efficiency plot
+        plt.subplot(1, 2, 2)
+        eff_values = [efficiency[r] for r in ranks]
+        plt.plot(ranks, eff_values, marker="o", linewidth=2)
+        plt.xlabel("Rank r")
+        plt.ylabel("Efficiency = $R^2_T(r) / R^2_{PCA}(r)$")
+        plt.title("Transport Efficiency vs Rank")
+        plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
+        plt.ylim(0, 1.1)
+
+        plt.tight_layout()
+        plt.show()
+
+    except Exception as e:
+        logger.warning(f"Failed to generate plots: {e}")
+
+    # Compile results
+    results = {
+        "ranks": ranks,
+        "pca_R2": {int(r): float(cca_dict[int(r)]["R2"]) for r in ranks},
+        "pca_explained_variance": {
+            int(r): float(cca_dict[int(r)]["explained_variance_ratio"]) for r in ranks
+        },
+        "transport": trans_dict,  # contains R2_val, R2_test, alpha per rank
+        "efficiency": {int(r): float(efficiency[int(r)]) for r in ranks},
+        "orthogonal_complement_R2": ortho_results,
+        "summary_stats": {
+            "max_pca_r2": max(cca_dict[r]["R2"] for r in ranks),
+            "max_transport_r2": max(
+                trans_dict[r]["R2_test"]
+                for r in ranks
+                if trans_dict[r]["R2_test"] is not None
+            ),
+            "mean_efficiency": np.nanmean([efficiency[r] for r in ranks]),
+            "best_rank_pca": max(ranks, key=lambda r: cca_dict[r]["R2"]),
+            "best_rank_transport": max(
+                ranks,
+                key=lambda r: trans_dict[r]["R2_test"]
+                if trans_dict[r]["R2_test"] is not None
+                else -1,
+            ),
+        },
+    }
+
+    logger.info("Matched-rank analysis completed successfully")
+    return results
+
+
+def run_matched_PCA_rank_analysis_from_datasets(
     train_dataset: ActivationDataset | EfficientActivationDataset,
     val_dataset: ActivationDataset | EfficientActivationDataset,
     test_dataset: ActivationDataset | EfficientActivationDataset,
@@ -727,9 +995,82 @@ def run_matched_rank_analysis_from_datasets(
 
     # Run the main analysis
     return compare_pca_vs_transport(
-        x_train, y_train, x_val, y_val, x_test, y_test,
+        x_train,
+        y_train,
+        x_val,
+        y_val,
+        x_test,
+        y_test,
         ranks=ranks,
         alpha_grid=alpha_grid,
         orthogonal_test_ranks=orthogonal_test_ranks,
-        plot=plot
+        plot=plot,
     )
+
+
+def run_matched_rank_analysis_from_datasets(
+    L: int,
+    k: int,
+    train_dataset: ActivationDataset | EfficientActivationDataset,
+    test_dataset: ActivationDataset | EfficientActivationDataset,
+    ranks: list[int],
+    max_samples: int | None = None,
+) -> dict[str, Any]:
+    """
+    Run matched-rank analysis using ActivationDataset | EfficientActivationDataset objects.
+
+    Args:
+        train_dataset, val_dataset, test_dataset: ActivationDataset | EfficientActivationDataset objects
+        ranks: List of ranks to evaluate
+        alpha_grid: Ridge regularization strengths to try
+        orthogonal_test_ranks: Ranks for orthogonal complement analysis
+        plot: Whether to generate plots
+        max_samples: Maximum number of samples to use (for computational efficiency)
+
+    Returns:
+        Dictionary with all results and metrics
+    """
+
+    def dataset_to_arrays(
+        dataset: ActivationDataset | EfficientActivationDataset,
+        max_samples: int | None = None,
+    ):
+        """Convert ActivationDataset | EfficientActivationDataset to numpy arrays."""
+        logger.info(
+            f"Converting ActivationDataset | EfficientActivationDataset to arrays (max_samples={max_samples})..."
+        )
+
+        x_list = []
+        y_list = []
+
+        # Since ActivationDataset | EfficientActivationDataset is an IterableDataset, we need to iterate through it
+        samples_collected = 0
+
+        for x, y in dataset:
+            x_list.append(x.numpy() if hasattr(x, "numpy") else x.cpu().numpy())
+            y_list.append(y.numpy() if hasattr(y, "numpy") else y.cpu().numpy())
+            samples_collected += 1
+
+            # Stop if we've collected enough samples
+            if max_samples is not None and samples_collected >= max_samples:
+                break
+
+        logger.info(f"Collected {samples_collected} samples from dataset")
+
+        if len(x_list) == 0:
+            raise ValueError("No samples collected from dataset")
+
+        return np.array(x_list), np.array(y_list)
+
+    logger.info("Converting datasets to numpy arrays...")
+
+    # Convert datasets to numpy arrays
+    x_test, y_test = dataset_to_arrays(test_dataset, max_samples)
+    x_train, y_train = dataset_to_arrays(train_dataset, max_samples)
+
+    logger.info(f"Dataset conversion complete. Final shapes:")
+    logger.info(f"  Train: X={x_train.shape}, Y={y_train.shape}")
+    logger.info(f"  Test: X={x_test.shape}, Y={y_test.shape}")
+
+    # Run the main analysis
+    return compare_cca_vs_transport(L, k, x_train, y_train, x_test, y_test, ranks)

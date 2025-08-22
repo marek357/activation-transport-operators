@@ -891,7 +891,9 @@ def run_matched_rank_experiment(
 
     # Get configuration for matched-rank analysis
     matched_rank_cfg = cfg.get("matched_rank", {})
-    ranks = matched_rank_cfg.get("ranks", [8, 16, 32, 64, 128, 256])
+    # ranks = matched_rank_cfg.get("ranks", [8, 16, 32, 64, 128, 256])
+    ranks = list(range(1, 2300, 500))
+    ranks.append(2304)  # the full rank is 2304
     alpha_grid = matched_rank_cfg.get("alpha_grid", [0.1, 1.0, 10.0, 100.0])
     orthogonal_test_ranks = matched_rank_cfg.get("orthogonal_test_ranks", [16, 32, 64])
     # Limit samples for computational efficiency
@@ -921,13 +923,11 @@ def run_matched_rank_experiment(
                     # Run matched-rank analysis
                     results = run_matched_rank_analysis_from_datasets(
                         train_dataset=train_dataset,
-                        val_dataset=val_dataset,
                         test_dataset=test_dataset,
                         ranks=ranks,
-                        alpha_grid=alpha_grid,
-                        orthogonal_test_ranks=orthogonal_test_ranks,
-                        plot=matched_rank_cfg.get("generate_plots", True),
                         max_samples=max_samples,
+                        L=layer_l,
+                        k=k,
                     )
 
                     # Store results
@@ -964,10 +964,11 @@ def run_matched_rank_experiment(
                             )
 
                 except Exception as e:
-                    logger.error(
-                        f"Matched-rank analysis failed for L={layer_l}, k={k}, j_policy={j_policy}: {e}"
+                    logger.exception(
+                        f"Matched-rank analysis failed for L={layer_l}, k={k}, j_policy={j_policy}: {e}",
+                        stack_info=True,
                     )
-                    continue
+                    raise Exception from e
 
     return matched_rank_results
 
