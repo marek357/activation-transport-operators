@@ -1,5 +1,6 @@
 """Perplexity evaluation script for transport operator interventions on language models."""
 
+import json
 import logging
 import random
 from pathlib import Path
@@ -10,6 +11,7 @@ import numpy as np
 import torch
 import wandb
 from dotenv import load_dotenv
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from transformers import (
     set_seed,
@@ -23,6 +25,74 @@ from src.causal_eval.hooks import (
 from src.causal_eval.perplexity_evaluator import PerplexityEvaluator, PerplexityResult
 
 logger = logging.getLogger(__name__)
+
+
+def perplexity_result_to_dict(result: PerplexityResult) -> Dict:
+    """Convert PerplexityResult to a JSON-serializable dictionary."""
+    result_dict = {
+        "log_perplexity": float(result.log_perplexity),
+        "loss": float(result.loss),
+        "total_tokens": int(result.total_tokens),
+        "num_sequences": int(result.num_sequences),
+        "model_name": result.model_name,
+        "modification": result.modification,
+    }
+
+    # Add per-sequence log perplexities if available
+    if result.per_sequence_log_ppls is not None:
+        result_dict["per_sequence_log_ppls"] = [
+            float(x) for x in result.per_sequence_log_ppls
+        ]
+
+    return result_dict
+
+
+def save_results_to_json(
+    results: Dict[str, PerplexityResult],
+    cfg: DictConfig,
+    L: int,
+    k: int,
+    js: list,
+) -> None:
+    """Save evaluation results to a JSON file."""
+    # Create causal_results directory if it doesn't exist
+    results_dir = Path("causal_results")
+    results_dir.mkdir(exist_ok=True)
+
+    # Create filename with L, k, and config name
+    filename = f"perplexity_eval_L{L}_k{k}_{len(js[0])}.json"
+    filepath = results_dir / filename
+
+    # Convert results to JSON-serializable format
+    json_results = {}
+    for name, result in results.items():
+        json_results[name] = perplexity_result_to_dict(result)
+
+    # Add metadata
+    json_data = {
+        "metadata": {
+            "L": L,
+            "k": k,
+            "js": OmegaConf.to_container(js, resolve=True),
+            "experiment_name": cfg.get("experiment_name", "unknown"),
+            "model_name": cfg.model.get("name", "unknown"),
+        },
+        "results": json_results,
+    }
+
+    # Save to JSON file
+    with open(filepath, "w") as f:
+        json.dump(json_data, f, indent=2)
+
+    # Log summary of per-sequence data
+    total_per_seq_values = sum(
+        len(result_data.get("per_sequence_log_ppls", []))
+        for result_data in json_results.values()
+    )
+    logger.info(f"Results saved to {filepath}")
+    logger.info(
+        f"Total per-sequence log perplexity values saved: {total_per_seq_values}"
+    )
 
 
 def print_evaluation_results(results: Dict[str, PerplexityResult]) -> None:
@@ -99,6 +169,8 @@ def main(cfg: DictConfig):
     k = cfg.causal_eval.get("k", 1)
     js = cfg.causal_eval.get("js", [[1], [50, 100]])
 
+    logger.info(f"Configuration: L={L}, k={k}, js={js}")
+
     transport_operator = load_transport_operator(
         L=L,
         k=k,
@@ -147,10 +219,17 @@ def main(cfg: DictConfig):
         if not filtered_results:
             raise ValueError(f"No results found with prefix '{prefix}'")
 
-        avg_log_perplexity = sum(r.log_perplexity for r in filtered_results) / len(
-            filtered_results
-        )
+        # Combine all per-sequence log perplexities
+        all_per_sequence_log_ppls = []
+        for result in filtered_results:
+            if result.per_sequence_log_ppls is not None:
+                all_per_sequence_log_ppls.append(result.per_sequence_log_ppls)
+
+        arr = np.array(all_per_sequence_log_ppls)
+        all_per_sequence_log_ppls = arr.mean(axis=0).tolist()
+
         avg_loss = sum(r.loss for r in filtered_results) / len(filtered_results)
+        avg_log_perplexity = avg_loss
         total_tokens = sum(r.total_tokens for r in filtered_results)
         total_sequences = sum(r.num_sequences for r in filtered_results)
 
@@ -161,6 +240,9 @@ def main(cfg: DictConfig):
             num_sequences=total_sequences,
             model_name=filtered_results[0].model_name,
             modification=f"avg_{prefix}",
+            per_sequence_log_ppls=all_per_sequence_log_ppls
+            if all_per_sequence_log_ppls
+            else None,
         )
 
     # Create averaged results
@@ -184,7 +266,12 @@ def main(cfg: DictConfig):
     # Print and log results
     print_evaluation_results(results)
 
-    logger.info("Evaluation completed!")
+    # Save results to JSON file
+    save_results_to_json(results, cfg, L, k, js)
+
+    logger.info(
+        "Evaluation completed! Per-sequence log perplexities have been collected and saved for statistical analysis."
+    )
 
 
 if __name__ == "__main__":
