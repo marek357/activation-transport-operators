@@ -1,43 +1,48 @@
 """
-Matched-rank curves analysis: Compare PCA ceiling vs rank-r transport operators.
+Matched-rank curves analysis: Compare CCA ceiling vs rank-r transport operators.
 
 This module implements the core matched-rank analysis that compares:
-1) PCA ceiling: learn PCs on Y_train, reconstruct Y_test with rank-r approximation
+1) CCA ceiling: use CCA to find the optimal rank-r relationship between X and Y
 2) Rank-r transport: fit TransportOperator + SVD truncation to rank r, predict Y_test from X_test
 3) Compare R²(r) curves and compute efficiency ratios
 
-The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible
-rank-r Y-only reconstruction). The gap shows how much of compressible variance
-This module provides tools to analyze the relationship between the variance explained by a rank-r principal component analysis (PCA) reconstruction of target data (the "PCA ceiling") and the variance explained by a rank-r transport operator mapping from source to target data. The key mathematical relationship is:
+The key insight is that R²_T(r) ≤ R²_CCA(r) is expected (CCA gives the theoretical upper bound
+for any rank-r linear relationship between X and Y). The gap shows how much of the achievable
+variance is captured by the transport operator.
 
-    R²_T(r) ≤ R²_PCA(r)
+This module provides tools to analyze the relationship between the variance explained by a rank-r
+canonical correlation analysis (CCA) reconstruction of target data (the "CCA ceiling") and the
+variance explained by a rank-r transport operator mapping from source to target data. The key
+mathematical relationship is:
+
+    R²_T(r) ≤ R²_CCA(r)
 
 where:
-    - R²_PCA(r): The variance explained (R²) by reconstructing Y_test using the top r principal components learned from Y_train.
+    - R²_CCA(r): The variance explained (R²) by the best possible rank-r linear relationship between X and Y.
     - R²_T(r): The variance explained (R²) by predicting Y_test from X_test using a transport operator (linear regression) constrained to rank r (via SVD truncation).
 
 **Key Concepts:**
-- *PCA ceiling*: The best possible rank-r approximation of Y_test, using only information from Y_train.
+- *CCA ceiling*: The best possible rank-r linear relationship between X and Y, computed using canonical correlation analysis.
 - *Rank-r transport operator*: A linear mapping from X to Y, fit on training data, and truncated to rank r.
-- *Matched-rank analysis*: For each rank r, compare R²_T(r) to R²_PCA(r). The gap between the two curves quantifies how much of the compressible variance in Y is actually predictable from X.
-- *Efficiency ratio*: The ratio R²_T(r) / R²_PCA(r) for each r, indicating the fraction of the best possible (compressible) variance that is predictable from X.
+- *Matched-rank analysis*: For each rank r, compare R²_T(r) to R²_CCA(r). The gap between the two curves quantifies how much of the achievable variance in the X→Y relationship is captured by the transport operator.
+- *Efficiency ratio*: The ratio R²_T(r) / R²_CCA(r) for each r, indicating the fraction of the best possible (achievable) variance that is captured by the transport operator.
 
 **Expected Usage Pattern:**
-1. Fit PCA on Y_train, and compute R²_PCA(r) for a range of ranks r by reconstructing Y_test.
+1. Compute R²_CCA(r) for a range of ranks r using canonical correlation analysis between X_train and Y_train.
 2. Fit a transport operator (e.g., linear regression) from X_train to Y_train, truncate to rank r, and compute R²_T(r) by predicting Y_test from X_test.
-3. For each r, compare R²_T(r) and R²_PCA(r). The efficiency ratio R²_T(r) / R²_PCA(r) summarizes how much of the compressible variance in Y is predictable from X.
+3. For each r, compare R²_T(r) and R²_CCA(r). The efficiency ratio R²_T(r) / R²_CCA(r) summarizes how much of the achievable variance in the X→Y relationship is captured by the transport operator.
 
 **Example:**
 
 ```python
-from src.matched_rank_analysis import pca_ceiling, fit_transport_rank_r
+from src.matched_rank_analysis import cca_ceiling, fit_transport_rank_r
 
 # Assume x_train, y_train, x_test, y_test are numpy arrays
 ranks = [1, 2, 5, 10, 20]
 
-# Compute PCA ceiling
-pca_results = pca_ceiling(y_train, y_test, ranks)
-# pca_results[r]['r2'] gives R²_PCA(r)
+# Compute CCA ceiling
+cca_results = cca_ceiling(x_train, y_train, ranks)
+# cca_results[r] gives R²_CCA(r)
 
 # Compute transport operator R² for each rank
 transport_results = fit_transport_rank_r(
@@ -45,21 +50,19 @@ transport_results = fit_transport_rank_r(
 )
 # transport_results[r]['r2'] gives R²_T(r)
 
-# Compare R²_T(r) and R²_PCA(r)
+# Compare R²_T(r) and R²_CCA(r)
 for r in ranks:
-    print(f"Rank {r}: R²_T(r) = {transport_results[r]['r2']:.3f}, R²_PCA(r) = {pca_results[r]['r2']:.3f}, Efficiency = {transport_results[r]['r2']/pca_results[r]['r2']:.2%}")
+    print(f"Rank {r}: R²_T(r) = {transport_results[r]['r2']:.3f}, R²_CCA(r) = {cca_results[r]:.3f}, Efficiency = {transport_results[r]['r2']/cca_results[r]:.2%}")
 """
 
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.decomposition import PCA
 from tqdm import tqdm
 
 from src.activation_loader import ActivationDataset, EfficientActivationDataset
@@ -335,30 +338,6 @@ def variance_weighted_r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(weighted_r2)
 
 
-# def whitened_r2(y_gt, y_pred, y_mean, cov_yy_inv_sqrt):
-#     # Center the ground truth and predicted values
-#     y_gt_centered = y_gt - y_mean
-#     y_pred_centered = y_pred - y_mean
-
-#     # Whiten the centered values
-#     y_gt_whitened = y_gt_centered @ cov_yy_inv_sqrt
-#     y_pred_whitened = y_pred_centered @ cov_yy_inv_sqrt
-
-#     # Compute R² score on the whitened values
-#     return (
-#         1
-#         - np.linalg.norm(y_gt_whitened - y_pred_whitened, ord="fro") ** 2
-#         / np.linalg.norm(y_gt_whitened, ord="fro") ** 2
-#     )
-
-
-def inv_sqrt_psd(S, ridge=1e-6, eps=1e-12):
-    S = 0.5 * (S + S.T)
-    w, V = np.linalg.eigh(S + ridge * np.eye(S.shape[0]))
-    w = np.clip(w, eps, None)
-    return (V * (w**-0.5)) @ V.T
-
-
 def calibrate_intercept_whitened(Y_tr, Yhat_tr, muY_tr, W):
     # Compute the u that minimizes ||(Y_tr - (Yhat_tr + 1 c^T)) W||_F^2
     Ew_tr = (Y_tr - Yhat_tr) @ W
@@ -377,57 +356,6 @@ def whitened_r2(Y, Yhat, muY, W):
     sse = np.linalg.norm(Yw - Yhatw, "fro") ** 2
     sst = np.linalg.norm(Yw, "fro") ** 2
     return 0.0 if sst < 1e-12 else 1.0 - sse / sst
-
-
-def pca_ceiling(
-    y_train: np.ndarray, y_test: np.ndarray, ranks: list[int]
-) -> dict[int, dict[str, float]]:
-    """
-    Compute PCA ceiling: fit PCA on Y_train, reconstruct Y_test for each rank.
-
-    Args:
-        y_train: Training targets [n_train, n_features]
-        y_test: Test targets [n_test, n_features]
-        ranks: List of ranks to evaluate
-
-    Returns:
-        Dictionary mapping rank -> {"R2": float, "explained_variance_ratio": float}
-    """
-    y_train = np.asarray(y_train)
-    y_test = np.asarray(y_test)
-
-    max_r = int(max(ranks))
-    max_components = min(max_r, y_train.shape[1], y_train.shape[0] - 1)
-
-    pca = PCA(n_components=max_components, svd_solver="full", whiten=False)
-    pca.fit(y_train)  # centers internally
-
-    mu_tr = np.mean(y_train, axis=0, keepdims=True)
-    z_te_full = (y_test - mu_tr) @ pca.components_.T
-
-    results = {}
-    for r in ranks:
-        r = int(r)
-        r_eff = min(r, max_components)
-
-        comps_r = pca.components_[:r_eff, :]
-        z_te_r = z_te_full[:, :r_eff]
-        y_hat = z_te_r @ comps_r + mu_tr
-
-        r2_score = variance_weighted_r2(y_test, y_hat)
-        explained_var_ratio = np.sum(pca.explained_variance_ratio_[:r_eff])
-
-        results[r] = {
-            "R2": r2_score,
-            "explained_variance_ratio": float(explained_var_ratio),
-            "effective_rank": r_eff,
-        }
-
-        logger.debug(
-            f"PCA ceiling rank {r}: R2={r2_score:.4f}, explained_var={explained_var_ratio:.4f}"
-        )
-
-    return results
 
 
 def fit_transport_rank_r(
@@ -461,8 +389,6 @@ def fit_transport_rank_r(
     x_test = np.asarray(x_test)
     y_test = np.asarray(y_test)
 
-    # Create temporary datasets for TransportOperator
-    test_dataset = _create_numpy_dataset(x_test, y_test)
     base_transport_op = load_transport_operator(L, k, "./cache")
 
     results = {}
@@ -479,21 +405,6 @@ def fit_transport_rank_r(
         }
 
         try:
-            # Create rank-constrained transport operator
-            # transport_op = RankConstrainedTransportOperator(
-            #     L=0,  # Dummy values since we're using it standalone
-            #     k=1,
-            #     rank=int(r),
-            #     method="ridge",
-            #     regularization=float(alpha),
-            #     auto_tune=False,  # We're manually tuning
-            #     use_cache=False,  # Disable caching for this analysis
-            #     normalize=False,  # Keep consistent with original implementation
-            # )
-
-            # Fit the transport operator
-            # transport_op.fit(train_dataset)
-            # base_transport_op = transport_op
             transport_op = RankConstrainedTransportOperator.from_pretrained(
                 base_transport_op, rank=r
             )
@@ -502,7 +413,7 @@ def fit_transport_rank_r(
             y_test_hat = transport_op.predict(x_test)
             muY_tr = y_train.mean(axis=0, keepdims=True)
             Syy_tr = np.cov((y_train - muY_tr).T, bias=True)
-            W = inv_sqrt_psd(Syy_tr)
+            W = _inv_sqrt_psd(Syy_tr)
 
             y_train_hat = transport_op.predict(x_train)
             # Calibrate intercept in the whitened metric on TRAIN ONLY
@@ -587,224 +498,6 @@ def _create_numpy_dataset(x: np.ndarray, y: np.ndarray) -> _NumpyActivationDatas
     return _NumpyActivationDataset(x, y)
 
 
-def orthogonal_complement_r2(
-    y_train: np.ndarray,
-    y_test: np.ndarray,
-    y_pred_dict: dict[int, np.ndarray],
-    ranks_for_pca: list[int],
-) -> dict[int, dict[int, float]]:
-    """
-    Compute R^2 in orthogonal complement of top-r0 PCA components.
-
-    For each r0, compute R^2 in the orthogonal complement of top-r0 PCA(Y_train).
-    Y_pred_dict: {rank_r: Y_pred_on_test}.
-
-    Args:
-        y_train: Training targets for fitting PCA
-        y_test: Test targets
-        y_pred_dict: Dictionary mapping rank -> predicted targets on test set
-        ranks_for_pca: List of PCA ranks to use for orthogonal complement
-
-    Returns:
-        Dictionary mapping pca_rank -> {transport_rank: R2_orthogonal}
-    """
-    if not ranks_for_pca:
-        return {}
-
-    max_r0 = max(ranks_for_pca)
-    max_components = min(max_r0, y_train.shape[1], y_train.shape[0] - 1)
-
-    pca = PCA(n_components=max_components, svd_solver="full", whiten=False)
-    pca.fit(y_train)
-    mu_tr = np.mean(y_train, axis=0, keepdims=True)
-
-    results = {}
-    for r0 in ranks_for_pca:
-        r0_eff = min(int(r0), max_components)
-        comps = pca.components_[:r0_eff, :]
-        P = comps.T @ comps  # Projection matrix onto top-r0 subspace
-        I = np.eye(P.shape[0], dtype=y_test.dtype)
-        Proj_perp = I - P  # Projection onto orthogonal complement
-
-        # Project test targets onto orthogonal complement
-        y_test_perp = ((y_test - mu_tr) @ Proj_perp) + mu_tr
-
-        results[int(r0)] = {}
-        for r_pred, y_hat in y_pred_dict.items():
-            # Project predictions onto orthogonal complement
-            y_hat_perp = ((y_hat - mu_tr) @ Proj_perp) + mu_tr
-            r2_perp = variance_weighted_r2(y_test_perp, y_hat_perp)
-            results[int(r0)][int(r_pred)] = float(r2_perp)
-
-    return results
-
-
-def compare_pca_vs_transport(
-    x_train: np.ndarray,
-    y_train: np.ndarray,
-    x_val: np.ndarray,
-    y_val: np.ndarray,
-    x_test: np.ndarray,
-    y_test: np.ndarray,
-    ranks: list[int] | None = None,
-    alpha_grid: list[float] | None = None,
-    orthogonal_test_ranks: list[int] | None = None,
-    plot: bool = True,
-) -> dict[str, Any]:
-    """
-    Main function to compare PCA ceiling vs rank-r transport operators.
-
-    Args:
-        x_train, y_train: Training data
-        x_val, y_val: Validation data
-        x_test, y_test: Test data
-        ranks: List of ranks to evaluate
-        alpha_grid: Ridge regularization strengths to try
-        orthogonal_test_ranks: Ranks for orthogonal complement analysis
-        plot: Whether to generate plots
-
-    Returns:
-        Dictionary with all results and metrics
-    """
-    if ranks is None:
-        ranks = [8, 16, 32, 64, 128, 256]
-    if alpha_grid is None:
-        alpha_grid = [0.1, 1.0, 10.0, 100.0]
-    if orthogonal_test_ranks is None:
-        orthogonal_test_ranks = []
-
-    ranks = list(sorted(set(int(r) for r in ranks)))
-
-    logger.info(f"Starting matched-rank analysis for ranks: {ranks}")
-    logger.info(
-        f"Data shapes: X_train={x_train.shape}, Y_train={y_train.shape}, "
-        f"X_test={x_test.shape}, Y_test={y_test.shape}"
-    )
-
-    # 1) PCA ceiling
-    logger.info("Computing PCA ceiling...")
-    pca_dict = pca_ceiling(y_train, y_test, ranks)
-
-    # 2) Transport rank-r
-    logger.info("Computing rank-r transport operators...")
-    trans_dict = fit_transport_rank_r(
-        x_train, y_train, x_val, y_val, x_test, y_test, ranks, alpha_grid
-    )
-
-    # 3) Efficiency (Transport R2 / PCA R2)
-    efficiency = {}
-    for r in ranks:
-        pca_r2 = pca_dict[int(r)]["R2"]
-        trans_r2 = trans_dict[int(r)]["R2_test"]
-        if pca_r2 > 1e-8 and trans_r2 is not None:
-            efficiency[int(r)] = float(trans_r2 / pca_r2)
-        else:
-            efficiency[int(r)] = float("nan")
-
-    # 4) Optional orthogonal complement analysis
-    ortho_results = {}
-    if orthogonal_test_ranks and False:
-        logger.info("Computing orthogonal complement analysis...")
-        # Recompute test predictions for orthogonal analysis
-        preds = {}
-        for r in ranks:
-            alpha = trans_dict[int(r)]["alpha"]
-            if alpha is not None:
-                # Create and fit transport operator with the best alpha
-                transport_op = RankConstrainedTransportOperator(
-                    L=0,
-                    k=1,
-                    rank=int(r),
-                    method="ridge",
-                    regularization=float(alpha),
-                    auto_tune=False,
-                    use_cache=False,
-                    normalize=False,
-                )
-
-                train_dataset = _create_numpy_dataset(x_train, y_train)
-                transport_op.fit(train_dataset)
-                preds[int(r)] = transport_op.predict(x_test)
-
-        ortho_results = orthogonal_complement_r2(
-            y_train, y_test, preds, orthogonal_test_ranks
-        )
-
-    # 5) Generate plots if requested
-    if plot:
-        try:
-            plt.figure(figsize=(12, 5))
-
-            # Main comparison plot
-            plt.subplot(1, 2, 1)
-            pca_r2_values = [pca_dict[r]["R2"] for r in ranks]
-            trans_r2_values = [
-                trans_dict[r]["R2_test"] if trans_dict[r]["R2_test"] is not None else 0
-                for r in ranks
-            ]
-
-            plt.plot(ranks, pca_r2_values, marker="o", label="PCA ceiling", linewidth=2)
-            plt.plot(
-                ranks,
-                trans_r2_values,
-                marker="s",
-                label="Transport (rank-r)",
-                linewidth=2,
-            )
-            plt.xlabel("Rank r")
-            plt.ylabel("Variance-weighted $R^2$ (test)")
-            plt.title("PCA vs Transport ($X \\to Y$)")
-            plt.legend()
-            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
-
-            # Efficiency plot
-            plt.subplot(1, 2, 2)
-            eff_values = [efficiency[r] for r in ranks]
-            plt.plot(ranks, eff_values, marker="o", linewidth=2)
-            plt.xlabel("Rank r")
-            plt.ylabel("Efficiency = $R^2_T(r) / R^2_{PCA}(r)$")
-            plt.title("Transport Efficiency vs Rank")
-            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
-            plt.ylim(0, 1.1)
-
-            plt.tight_layout()
-            plt.show()
-
-        except Exception as e:
-            logger.warning(f"Failed to generate plots: {e}")
-
-    # Compile results
-    results = {
-        "ranks": ranks,
-        "pca_R2": {int(r): float(pca_dict[int(r)]["R2"]) for r in ranks},
-        "pca_explained_variance": {
-            int(r): float(pca_dict[int(r)]["explained_variance_ratio"]) for r in ranks
-        },
-        "transport": trans_dict,  # contains R2_val, R2_test, alpha per rank
-        "efficiency": {int(r): float(efficiency[int(r)]) for r in ranks},
-        "orthogonal_complement_R2": ortho_results,
-        "summary_stats": {
-            "max_pca_r2": max(pca_dict[r]["R2"] for r in ranks),
-            "max_transport_r2": max(
-                trans_dict[r]["R2_test"]
-                for r in ranks
-                if trans_dict[r]["R2_test"] is not None
-            ),
-            "mean_efficiency": np.nanmean([efficiency[r] for r in ranks]),
-            "best_rank_pca": max(ranks, key=lambda r: pca_dict[r]["R2"]),
-            "best_rank_transport": max(
-                ranks,
-                key=lambda r: trans_dict[r]["R2_test"]
-                if trans_dict[r]["R2_test"] is not None
-                else -1,
-            ),
-        },
-    }
-
-    logger.info("Matched-rank analysis completed successfully")
-    return results
-
-
 def compare_cca_vs_transport(
     L: int,
     k: int,
@@ -838,7 +531,7 @@ def compare_cca_vs_transport(
     logger.info("Computing rank-r transport operators...")
     trans_dict = fit_transport_rank_r(x_train, y_train, x_test, y_test, L, k, ranks)
 
-    # 3) Efficiency (Transport R2 / PCA R2)
+    # 3) Efficiency (Transport R2 / CCA R2)
     efficiency = {}
     for r in ranks:
         cca_r2 = cca_dict[int(r)]
@@ -850,21 +543,19 @@ def compare_cca_vs_transport(
 
     print(efficiency)
 
-    # 4) Optional orthogonal complement analysis
-    ortho_results = {}
-    # 5) Generate plots if requested
+    # Generate plots if requested
     try:
         plt.figure(figsize=(12, 5))
 
         # Main comparison plot
         plt.subplot(1, 2, 1)
-        pca_r2_values = [cca_dict[r] for r in ranks]
+        cca_r2_values = [cca_dict[r] for r in ranks]
         trans_r2_values = [
             trans_dict[r]["R2_test"] if trans_dict[r]["R2_test"] is not None else 0
             for r in ranks
         ]
 
-        plt.plot(ranks, pca_r2_values, marker="o", label="PCA ceiling", linewidth=2)
+        plt.plot(ranks, cca_r2_values, marker="o", label="CCA ceiling", linewidth=2)
         plt.plot(
             ranks,
             trans_r2_values,
@@ -874,7 +565,7 @@ def compare_cca_vs_transport(
         )
         plt.xlabel("Rank r")
         plt.ylabel("Variance-weighted $R^2$ (test)")
-        plt.title("PCA vs Transport ($X \\to Y$)")
+        plt.title("CCA vs Transport ($X \\to Y$)")
         plt.legend()
         plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
 
@@ -883,7 +574,7 @@ def compare_cca_vs_transport(
         eff_values = [efficiency[r] for r in ranks]
         plt.plot(ranks, eff_values, marker="o", linewidth=2)
         plt.xlabel("Rank r")
-        plt.ylabel("Efficiency = $R^2_T(r) / R^2_{PCA}(r)$")
+        plt.ylabel("Efficiency = $R^2_T(r) / R^2_{CCA}(r)$")
         plt.title("Transport Efficiency vs Rank")
         plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)
         plt.ylim(0, 1.1)
@@ -926,25 +617,23 @@ def compare_cca_vs_transport(
     return results
 
 
-def run_matched_PCA_rank_analysis_from_datasets(
+def run_matched_CCA_rank_analysis_from_datasets(
     train_dataset: ActivationDataset | EfficientActivationDataset,
     val_dataset: ActivationDataset | EfficientActivationDataset,
     test_dataset: ActivationDataset | EfficientActivationDataset,
     ranks: list[int] | None = None,
-    alpha_grid: list[float] | None = None,
-    orthogonal_test_ranks: list[int] | None = None,
-    plot: bool = True,
+    L: int = 0,
+    k: int = 1,
     max_samples: int | None = None,
 ) -> dict[str, Any]:
     """
-    Run matched-rank analysis using ActivationDataset | EfficientActivationDataset objects.
+    Run matched-rank analysis using ActivationDataset | EfficientActivationDataset objects with CCA ceiling.
 
     Args:
         train_dataset, val_dataset, test_dataset: ActivationDataset | EfficientActivationDataset objects
         ranks: List of ranks to evaluate
-        alpha_grid: Ridge regularization strengths to try
-        orthogonal_test_ranks: Ranks for orthogonal complement analysis
-        plot: Whether to generate plots
+        L: Layer number
+        k: Offset for target layer
         max_samples: Maximum number of samples to use (for computational efficiency)
 
     Returns:
@@ -989,23 +678,20 @@ def run_matched_PCA_rank_analysis_from_datasets(
     x_val, y_val = dataset_to_arrays(val_dataset, max_samples)
     x_test, y_test = dataset_to_arrays(test_dataset, max_samples)
 
-    logger.info(f"Dataset conversion complete. Final shapes:")
+    logger.info("Dataset conversion complete. Final shapes:")
     logger.info(f"  Train: X={x_train.shape}, Y={y_train.shape}")
     logger.info(f"  Val: X={x_val.shape}, Y={y_val.shape}")
     logger.info(f"  Test: X={x_test.shape}, Y={y_test.shape}")
 
-    # Run the main analysis
-    return compare_pca_vs_transport(
+    # Run the CCA-based analysis
+    return compare_cca_vs_transport(
+        L,
+        k,
         x_train,
         y_train,
-        x_val,
-        y_val,
         x_test,
         y_test,
-        ranks=ranks,
-        alpha_grid=alpha_grid,
-        orthogonal_test_ranks=orthogonal_test_ranks,
-        plot=plot,
+        ranks,
     )
 
 
@@ -1069,7 +755,7 @@ def run_matched_rank_analysis_from_datasets(
     x_test, y_test = dataset_to_arrays(test_dataset, max_samples)
     x_train, y_train = dataset_to_arrays(train_dataset, max_samples)
 
-    logger.info(f"Dataset conversion complete. Final shapes:")
+    logger.info("Dataset conversion complete. Final shapes:")
     logger.info(f"  Train: X={x_train.shape}, Y={y_train.shape}")
     logger.info(f"  Test: X={x_test.shape}, Y={y_test.shape}")
 

@@ -36,11 +36,6 @@ eval:
 
 # Baseline transport operators configuration
 baselines:
-  # Enable PCA baseline transport operator
-  enable_pca: true
-  # Number of PCA components (null = all components, int = specific number)
-  pca_n_components: 50
-  
   # Enable Identity baseline transport operator  
   enable_identity: true
 

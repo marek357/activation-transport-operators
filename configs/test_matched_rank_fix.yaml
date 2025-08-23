@@ -40,7 +40,7 @@ eval:
 
 # Baselines (optional)
 baselines:
-  enable_pca: false
+  enable_identity: false
   enable_identity: false
 
 activation_dir: "activations-gemma2-2b-slimpajama-500k/activations_part_0000.zarr.zip"

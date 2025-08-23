@@ -25,7 +25,6 @@ from src.activation_loader import (
 )
 from src.sae_loader import load_sae_from_cfg
 from src.transport_operator import (
-    PCABaselineTransportOperator,
     IdentityBaselineTransportOperator,
     TransportOperator,
     load_transport_operator,
@@ -552,7 +551,6 @@ def create_baseline_transport_operators(
 ) -> dict[
     tuple[int, int, str],
     TransportOperator
-    | PCABaselineTransportOperator
     | IdentityBaselineTransportOperator,
 ]:
     """Create baseline transport operators for evaluation."""
@@ -567,23 +565,6 @@ def create_baseline_transport_operators(
                 train_dataset, _, _ = get_train_val_test_datasets(
                     layer_l, k, activation_loader, j_policy
                 )
-
-                # Create PCA baseline if enabled
-                if baseline_configs.get("enable_pca", False):
-                    n_components = baseline_configs.get("pca_n_components", None)
-                    pca_op = PCABaselineTransportOperator(
-                        L=layer_l, k=k, n_components=n_components
-                    )
-                    pca_op.fit(train_dataset)
-                    baseline_operators[(layer_l, k, f"{j_policy}_pca")] = pca_op
-
-                    logger.info(
-                        "Created PCA baseline for L=%d, k=%d, j_policy=%s with %s components",
-                        layer_l,
-                        k,
-                        j_policy,
-                        n_components if n_components else "all",
-                    )
 
                 # Create Identity baseline if enabled
                 if baseline_configs.get("enable_identity", False):
@@ -865,23 +846,14 @@ def interpret_calibration_metrics(calib_metrics: dict[str, float]) -> dict[str, 
     return interpretation
 
 
-def run_pca_eval():
-    pass
-
-
 def run_matched_rank_experiment(
     cfg: DictConfig,
     activation_loader: ActivationLoader,
 ) -> dict[str, Any]:
     """
-    Run matched-rank curves analysis comparing PCA ceiling vs rank-r transport.
+    Run matched-rank curves analysis comparing CCA ceiling vs rank-r transport.
 
-    This implements the core matched-rank analysis:
-    1) PCA ceiling: learn PCs on Y_train, reconstruct Y_test with rank-r approximation
-    2) Rank-r transport: fit ridge + SVD truncation to rank r, predict Y_test from X_test
-    3) Compare R²(r) curves and compute efficiency ratios
-
-    The key insight is that R²_T(r) ≤ R²_PCA(r) is expected (PCA is the best possible
+    The key insight is that R²_T(r) ≤ R²_CCA(r) is expected (CCA is the best possible
     rank-r Y-only reconstruction). The gap shows how much of compressible variance
     is actually predictable from X.
     """
@@ -1091,7 +1063,6 @@ def run_experiment(
     transport_operators: dict[
         tuple[int, int, str],
         TransportOperator
-        | PCABaselineTransportOperator
         | IdentityBaselineTransportOperator,
     ],
     chosen_layers: list[int],
@@ -1136,51 +1107,6 @@ def run_experiment(
                     continue
 
                 transport_op = transport_operators[(layer_l, k, j_policy)]
-
-                # Handle PCA baseline differently - it's for variance analysis, not prediction
-                if isinstance(transport_op, PCABaselineTransportOperator):
-                    logger.info("Processing PCA baseline for variance analysis...")
-
-                    # Get PCA metrics and add them to results for this layer configuration
-                    try:
-                        pca_metrics = transport_op.get_pca_metrics()
-
-                        # Create a single result entry for the PCA analysis
-                        # We'll use feature index -1 to indicate this is a layer-level analysis
-                        pca_result_key = (layer_l, k, j_policy, -1)
-                        results[pca_result_key] = {
-                            "analysis_type": "pca_variance_analysis",
-                            "target_layer": layer_l + k,
-                            **pca_metrics,
-                            # Add interpretation
-                            "variance_analysis": {
-                                "high_dimensional": pca_metrics["n_components_95pct"]
-                                > pca_metrics["original_n_features"] * 0.8,
-                                "low_rank": pca_metrics["n_components_95pct"]
-                                < pca_metrics["original_n_features"] * 0.2,
-                                "effective_dimensionality": pca_metrics[
-                                    "n_components_95pct"
-                                ],
-                                "dimensionality_reduction_ratio": pca_metrics[
-                                    "n_components_95pct"
-                                ]
-                                / pca_metrics["original_n_features"],
-                            },
-                        }
-
-                        logger.info(
-                            "PCA analysis complete for L=%d, k=%d: %d components explain 95%% variance (original: %d features)",
-                            layer_l,
-                            k,
-                            pca_metrics["n_components_95pct"],
-                            pca_metrics["original_n_features"],
-                        )
-
-                    except Exception as e:
-                        logger.error("Failed to get PCA metrics: %s", e)
-
-                    # Skip to next transport operator since PCA doesn't do prediction
-                    continue
 
                 _, _, dataset = get_train_val_test_datasets(
                     layer_l,
@@ -1403,7 +1329,6 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
         "log_mse_ratios": [],
         "assessments": {"excellent": 0, "good": 0, "fair": 0, "poor": 0},
         "bias_directions": {"overestimation": 0, "underestimation": 0, "minimal": 0},
-        "pca_analysis": [],  # Store PCA variance analysis results
         "activation_summary": {
             "total_features": 0,
             "never_activated_features": 0,
@@ -1416,29 +1341,6 @@ def summarize_calibration_across_features(results: dict) -> dict[str, Any]:
 
     for key, metrics in results.items():
         layer_l, k, j_policy, feat_idx = key
-
-        # Handle PCA analysis results separately
-        if feat_idx == -1 and metrics.get("analysis_type") == "pca_variance_analysis":
-            calibration_summary["pca_analysis"].append(
-                {
-                    "layer_l": layer_l,
-                    "k": k,
-                    "j_policy": j_policy,
-                    "target_layer": metrics.get("target_layer"),
-                    "original_n_features": metrics.get("original_n_features"),
-                    "n_components_50pct": metrics.get("n_components_50pct"),
-                    "n_components_80pct": metrics.get("n_components_80pct"),
-                    "n_components_95pct": metrics.get("n_components_95pct"),
-                    "total_variance_explained": metrics.get("total_variance_explained"),
-                    "effective_dimensionality": metrics.get(
-                        "variance_analysis", {}
-                    ).get("effective_dimensionality"),
-                    "dimensionality_reduction_ratio": metrics.get(
-                        "variance_analysis", {}
-                    ).get("dimensionality_reduction_ratio"),
-                }
-            )
-            continue
 
         # Track feature activation statistics
         calibration_summary["activation_summary"]["total_features"] += 1
@@ -1648,7 +1550,7 @@ def main(cfg: DictConfig) -> dict:
         logger.info("=== MATCHED-RANK ANALYSIS SUMMARY ===")
         aggregate_stats = matched_rank_summary.get("aggregate_stats", {})
         logger.info(
-            f"Best overall PCA R²: {aggregate_stats.get('max_pca_r2_overall', 0):.4f}"
+            f"Best overall CCA R²: {aggregate_stats.get('max_cca_r2_overall', 0):.4f}"
         )
         logger.info(
             f"Best overall Transport R²: {aggregate_stats.get('max_transport_r2_overall', 0):.4f}"
@@ -1691,7 +1593,7 @@ def main(cfg: DictConfig) -> dict:
         # Log to wandb
         wandb.log(
             {
-                "matched_rank/max_pca_r2": aggregate_stats.get("max_pca_r2_overall", 0),
+                "matched_rank/max_cca_r2": aggregate_stats.get("max_cca_r2_overall", 0),
                 "matched_rank/max_transport_r2": aggregate_stats.get(
                     "max_transport_r2_overall", 0
                 ),
@@ -1723,7 +1625,6 @@ def main(cfg: DictConfig) -> dict:
 
     if (
         eval_mode == "baselines"
-        or cfg.get("baselines", {}).get("enable_pca", False)
         or cfg.get("baselines", {}).get("enable_identity", False)
     ):
         logger.info("Creating baseline transport operators...")
@@ -1767,26 +1668,6 @@ def main(cfg: DictConfig) -> dict:
     # Analyze calibration performance across all features
     calibration_summary = summarize_calibration_across_features(results)
     logger.info("=== ANALYSIS SUMMARY ===")
-
-    # Report PCA analysis results if available
-    pca_results = calibration_summary.get("pca_analysis", [])
-    if pca_results:
-        logger.info("=== PCA VARIANCE ANALYSIS ===")
-        for pca_result in pca_results:
-            logger.info(
-                "Layer %d -> %d (k=%d, j_policy=%s): %d features, "
-                "effective dimensionality: %d (%.1f%% of original), "
-                "variance explained: %.3f",
-                pca_result["layer_l"],
-                pca_result["target_layer"],
-                pca_result["k"],
-                pca_result["j_policy"],
-                pca_result["original_n_features"],
-                pca_result["effective_dimensionality"],
-                pca_result["dimensionality_reduction_ratio"] * 100,
-                pca_result["total_variance_explained"],
-            )
-        logger.info("=== END PCA ANALYSIS ===")
 
     # Report feature activation statistics if available
     activation_summary = calibration_summary.get("activation_summary", {})
@@ -1862,7 +1743,7 @@ def main(cfg: DictConfig) -> dict:
         )
     else:
         logger.info(
-            "No prediction-based calibration metrics available (PCA analysis only)"
+            "No prediction-based calibration metrics available"
         )
 
     # Save results to JSON

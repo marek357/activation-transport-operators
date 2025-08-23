@@ -1,4 +1,3 @@
-from scipy.linalg import fractional_matrix_power
 from src.activation_loader import (
     ActivationDataset,
     ActivationLoader,
@@ -13,33 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_r2_ceiling(X, y):
+    """Compute the R² ceiling for predicting y from X using linear regression."""
     sigma_x_x = (X.T @ X) / X.shape[0]
     sigma_x_y = (X.T @ y) / X.shape[0]
     sigma_y = (y.T @ y) / y.shape[0]
     r2_ceiling = (sigma_x_y.T @ np.linalg.inv(sigma_x_x) @ sigma_x_y) / sigma_y
     return r2_ceiling.item()
-
-
-def get_r2_ceiling_r(X, Y, r):
-    # centered
-    X = X - X.mean(axis=0)
-    Y = Y - Y.mean(axis=0)
-
-    sigma_x_x = (X.T @ X) / X.shape[0]
-    sigma_y_y = (Y.T @ Y) / Y.shape[0]
-    sigma_x_x_neg_half = fractional_matrix_power(sigma_x_x, -0.5)
-    sigma_y_y_neg_half = fractional_matrix_power(sigma_y_y, -0.5)
-    y_hat = Y @ sigma_y_y_neg_half
-    x_hat = X @ sigma_x_x_neg_half
-    a = (y_hat.T @ y_hat) / (y_hat.shape[0])
-    eps = 1e-3
-    a[np.abs(a) < eps] = 0
-    print(a)
-    C = (y_hat.T @ x_hat) / (y_hat.shape[0])
-    K = C @ C.T
-
-    # print(x_hat.T @ x_hat / (x_hat.shape[0]))
-    return
 
 
 def _inv_sqrt_psd(S, eps=1e-12, ridge=0.0):
