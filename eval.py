@@ -863,9 +863,17 @@ def run_matched_rank_experiment(
 
     # Get configuration for matched-rank analysis
     matched_rank_cfg = cfg.get("matched_rank", {})
-    # ranks = matched_rank_cfg.get("ranks", [8, 16, 32, 64, 128, 256])
-    ranks = list(range(1, 2300, 100))
-    ranks.append(2304)  # the full rank is 2304
+    # Allow ranks to be specified directly, or via start/stop/step/max
+    if "ranks" in matched_rank_cfg:
+        ranks = matched_rank_cfg["ranks"]
+    else:
+        rank_start = matched_rank_cfg.get("rank_start", 1)
+        rank_stop = matched_rank_cfg.get("rank_stop", 2300)
+        rank_step = matched_rank_cfg.get("rank_step", 100)
+        rank_max = matched_rank_cfg.get("rank_max", 2304)
+        ranks = list(range(rank_start, rank_stop, rank_step))
+        if rank_max not in ranks:
+            ranks.append(rank_max)  # the full rank
     alpha_grid = matched_rank_cfg.get("alpha_grid", [0.1, 1.0, 10.0, 100.0])
     orthogonal_test_ranks = matched_rank_cfg.get("orthogonal_test_ranks", [16, 32, 64])
     # Limit samples for computational efficiency

@@ -15,12 +15,11 @@ eval_mode: pretrained
 
 # Matched-rank specific settings
 matched_rank:
-  ranks: [8, 16, 64, 128, 256, 512, 1024, 2048, 2304]
+  # ranks: [10, 50, 200, 500, 1000, 1500, 2000, 2304]
+  rank_start: 1
+  rank_stop: 2304
+  rank_step: 100
   alpha_grid: [1500.0]
-  orthogonal_test_ranks: [16, 32, 64]
-  # max_samples: 5000
-  generate_plots: true
-
 
 # Evaluation parameters
 eval:
