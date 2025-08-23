@@ -11,11 +11,11 @@ matched_rank_only: false
 
 # Matched-rank specific settings
 matched_rank:
-  ranks: [8, 16, 32, 64, 128, 256]
-  alpha_grid: [0.1, 1.0, 10.0, 100.0]
-  orthogonal_test_ranks: [16, 32, 64]
-  max_samples: 5000
-  generate_plots: true
+  # ranks: [10, 50, 200, 500, 1000, 1500, 2000, 2304]
+  rank_start: 1
+  rank_stop: 2304
+  rank_step: 100
+  alpha_grid: [1500.0]
 
 # Standard eval settings (required even for matched-rank analysis)
 eval:
@@ -26,7 +26,7 @@ eval:
 # Other required settings...
 activation_dir: "${oc.env:ACTIVATION_DIR}"
 seed: 42
-activation_dtype: "float16"
+activation_dtype: "float32"
 
 # Logging configuration
 logger:
