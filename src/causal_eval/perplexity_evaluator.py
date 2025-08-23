@@ -5,7 +5,7 @@ Computes log perplexity.
 
 import logging
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 import torch
 from datasets import load_dataset
@@ -30,6 +30,9 @@ class PerplexityResult:
     num_sequences: int
     model_name: str
     modification: str
+    per_sequence_log_ppls: List[float] = (
+        None  # Log perplexity for each individual sequence (for statistical analysis)
+    )
 
 
 class PerplexityEvaluator:
@@ -134,6 +137,7 @@ class PerplexityEvaluator:
         total_tokens = 0
         sample_count = 0
         total_samples = 0
+        per_sequence_log_ppls = []  # Store per-sequence log perplexities
 
         logger.info(f"Evaluating {modification_name}...")
 
@@ -168,6 +172,10 @@ class PerplexityEvaluator:
                     )
 
                     if sequence_tokens > 0:  # Only add if we have valid tokens
+                        # Calculate per-sequence log perplexity
+                        sequence_log_ppl = sequence_loss / sequence_tokens
+                        per_sequence_log_ppls.append(sequence_log_ppl)
+
                         total_loss += sequence_loss
                         total_tokens += sequence_tokens
                         sample_count += 1
@@ -191,7 +199,8 @@ class PerplexityEvaluator:
             f"Evaluation complete for {modification_name}: "
             f"log_perplexity={log_perplexity:.4f}, "
             f"total_tokens={total_tokens}, "
-            f"num_sequences={sample_count}"
+            f"num_sequences={sample_count}, "
+            f"per_sequence_log_ppls_collected={len(per_sequence_log_ppls)}"
         )
 
         return PerplexityResult(
@@ -201,6 +210,7 @@ class PerplexityEvaluator:
             num_sequences=sample_count,
             model_name=self.cfg.model.name,
             modification=modification_name,
+            per_sequence_log_ppls=per_sequence_log_ppls,
         )
 
     def evaluate_baseline(self) -> PerplexityResult:
