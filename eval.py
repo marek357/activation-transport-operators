@@ -892,7 +892,7 @@ def run_matched_rank_experiment(
     # Get configuration for matched-rank analysis
     matched_rank_cfg = cfg.get("matched_rank", {})
     # ranks = matched_rank_cfg.get("ranks", [8, 16, 32, 64, 128, 256])
-    ranks = list(range(1, 2300, 500))
+    ranks = list(range(1, 2300, 100))
     ranks.append(2304)  # the full rank is 2304
     alpha_grid = matched_rank_cfg.get("alpha_grid", [0.1, 1.0, 10.0, 100.0])
     orthogonal_test_ranks = matched_rank_cfg.get("orthogonal_test_ranks", [16, 32, 64])
@@ -937,7 +937,7 @@ def run_matched_rank_experiment(
                     # Log summary
                     summary = results["summary_stats"]
                     logger.info(
-                        f"  Max PCA R²: {summary['max_pca_r2']:.4f} at rank {summary['best_rank_pca']}"
+                        f"  Max CCA R²: {summary['max_cca_r2']:.4f} at rank {summary['best_rank_cca']}"
                     )
                     logger.info(
                         f"  Max Transport R²: {summary['max_transport_r2']:.4f} at rank {summary['best_rank_transport']}"
@@ -947,7 +947,7 @@ def run_matched_rank_experiment(
                     # Log rank-by-rank comparison
                     logger.info("  Rank-by-rank comparison:")
                     for r in ranks:
-                        pca_r2 = results["pca_R2"][r]
+                        cca_r2 = results["cca_R2"][r]
                         trans_r2 = results["transport"][r]["R2_test"]
                         efficiency = results["efficiency"][r]
                         alpha = results["transport"][r]["alpha"]
@@ -955,12 +955,12 @@ def run_matched_rank_experiment(
                         if trans_r2 is not None:
                             alpha_str = f"{alpha}" if alpha is not None else "None"
                             logger.info(
-                                f"    r={r:3d}: PCA={pca_r2:.3f}, Transport={trans_r2:.3f} "
+                                f"    r={r:3d}: CCA={cca_r2:.3f}, Transport={trans_r2:.3f} "
                                 f"(α={alpha_str}), Efficiency={efficiency:.3f}"
                             )
                         else:
                             logger.info(
-                                f"    r={r:3d}: PCA={pca_r2:.3f}, Transport=FAILED"
+                                f"    r={r:3d}: CCA={cca_r2:.3f}, Transport=FAILED"
                             )
 
                 except Exception as e:
@@ -981,7 +981,7 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
     summary = {
         "configurations": [],
         "aggregate_stats": {
-            "max_pca_r2_overall": 0.0,
+            "max_cca_r2_overall": 0.0,
             "max_transport_r2_overall": 0.0,
             "mean_efficiency_overall": 0.0,
             "best_configs": {},
@@ -990,7 +990,7 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
     }
 
     all_efficiencies = []
-    all_pca_r2 = []
+    all_cca_r2 = []
     all_transport_r2 = []
 
     for key, results in matched_rank_results.items():
@@ -1001,17 +1001,17 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
             "layer_l": layer_l,
             "k": k,
             "j_policy": j_policy,
-            "max_pca_r2": results["summary_stats"]["max_pca_r2"],
+            "max_cca_r2": results["summary_stats"]["max_cca_r2"],
             "max_transport_r2": results["summary_stats"]["max_transport_r2"],
             "mean_efficiency": results["summary_stats"]["mean_efficiency"],
-            "best_rank_pca": results["summary_stats"]["best_rank_pca"],
+            "best_rank_cca": results["summary_stats"]["best_rank_cca"],
             "best_rank_transport": results["summary_stats"]["best_rank_transport"],
         }
         summary["configurations"].append(config_summary)
 
         # Collect values for aggregate stats
         for r in results["ranks"]:
-            all_pca_r2.append(results["pca_R2"][r])
+            all_cca_r2.append(results["cca_R2"][r])
             if results["transport"][r]["R2_test"] is not None:
                 all_transport_r2.append(results["transport"][r]["R2_test"])
             if not np.isnan(results["efficiency"][r]):
@@ -1019,13 +1019,13 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
 
         # Track best overall performance
         if (
-            results["summary_stats"]["max_pca_r2"]
-            > summary["aggregate_stats"]["max_pca_r2_overall"]
+            results["summary_stats"]["max_cca_r2"]
+            > summary["aggregate_stats"]["max_cca_r2_overall"]
         ):
-            summary["aggregate_stats"]["max_pca_r2_overall"] = results["summary_stats"][
-                "max_pca_r2"
+            summary["aggregate_stats"]["max_cca_r2_overall"] = results["summary_stats"][
+                "max_cca_r2"
             ]
-            summary["aggregate_stats"]["best_configs"]["pca"] = key
+            summary["aggregate_stats"]["best_configs"]["cca"] = key
 
         if (
             results["summary_stats"]["max_transport_r2"]
@@ -1048,8 +1048,8 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
             np.median(all_efficiencies)
         )
 
-    if all_pca_r2:
-        summary["aggregate_stats"]["mean_pca_r2_overall"] = float(np.mean(all_pca_r2))
+    if all_cca_r2:
+        summary["aggregate_stats"]["mean_cca_r2_overall"] = float(np.mean(all_cca_r2))
 
     if all_transport_r2:
         summary["aggregate_stats"]["mean_transport_r2_overall"] = float(
@@ -1060,19 +1060,19 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
     if matched_rank_results:
         first_result = next(iter(matched_rank_results.values()))
         for r in first_result["ranks"]:
-            rank_pca_r2 = []
+            rank_cca_r2 = []
             rank_transport_r2 = []
             rank_efficiency = []
 
             for results in matched_rank_results.values():
-                rank_pca_r2.append(results["pca_R2"][r])
+                rank_cca_r2.append(results["cca_R2"][r])
                 if results["transport"][r]["R2_test"] is not None:
                     rank_transport_r2.append(results["transport"][r]["R2_test"])
                 if not np.isnan(results["efficiency"][r]):
                     rank_efficiency.append(results["efficiency"][r])
 
             summary["rank_performance"][r] = {
-                "mean_pca_r2": float(np.mean(rank_pca_r2)) if rank_pca_r2 else 0.0,
+                "mean_cca_r2": float(np.mean(rank_cca_r2)) if rank_cca_r2 else 0.0,
                 "mean_transport_r2": float(np.mean(rank_transport_r2))
                 if rank_transport_r2
                 else 0.0,
@@ -1664,7 +1664,7 @@ def main(cfg: DictConfig) -> dict:
             for rank in sorted(rank_performance.keys()):
                 perf = rank_performance[rank]
                 logger.info(
-                    f"  Rank {rank}: PCA R²={perf['mean_pca_r2']:.3f}, "
+                    f"  Rank {rank}: CCA R²={perf['mean_cca_r2']:.3f}, "
                     f"Transport R²={perf['mean_transport_r2']:.3f}, "
                     f"Efficiency={perf['mean_efficiency']:.3f}±{perf['std_efficiency']:.3f}"
                 )
