@@ -46,16 +46,11 @@ eval:
   filter_inactive_features: true
   max_features: 819
 
-run_matched_rank: true
-matched_rank_only: true
+run_matched_rank: false
+matched_rank_only: false
 
 # Baseline transport operators configuration
 baselines:
-  # Enable PCA baseline transport operator
-  enable_pca: false
-  # Number of PCA components (null = all components)
-  pca_n_components: null
-  
   # Enable Identity baseline transport operator  
   enable_identity: false
 
