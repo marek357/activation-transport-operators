@@ -521,7 +521,7 @@ def fit_transport_rank_r(
             if r2_val > best_result["R2_val"]:
                 # Evaluate on test set
                 y_test_hat = transport_op.predict(x_test)
-                r2_test = whitened_r2(y_test, y_test_hat, y_mean, cov_yy_inv_sqrt)
+                r2_test = whitened_r2(y_test, Yhat_te_adj, y_mean, cov_yy_inv_sqrt)
 
                 best_result = {
                     "R2_val": float(r2_val),
@@ -831,7 +831,8 @@ def compare_cca_vs_transport(
 
     # 1) CCA ceiling
     logger.info("Computing CCA ceiling...")
-    cca_dict = r2_ceiling_from_cca(x_train, y_train, ranks)
+    cca_dict, rhos = r2_ceiling_from_cca(x_train, y_train, ranks)
+    dim_lin = sum(rhos) ** 2 / (sum(rho**2 for rho in rhos) + 1e-12)
 
     # 2) Transport rank-r
     logger.info("Computing rank-r transport operators...")
@@ -888,7 +889,7 @@ def compare_cca_vs_transport(
         plt.ylim(0, 1.1)
 
         plt.tight_layout()
-        plt.show()
+        # plt.show()
 
     except Exception as e:
         logger.warning(f"Failed to generate plots: {e}")
@@ -896,22 +897,19 @@ def compare_cca_vs_transport(
     # Compile results
     results = {
         "ranks": ranks,
-        "pca_R2": {int(r): float(cca_dict[int(r)]["R2"]) for r in ranks},
-        "pca_explained_variance": {
-            int(r): float(cca_dict[int(r)]["explained_variance_ratio"]) for r in ranks
-        },
+        "dim_lin": dim_lin,
+        "cca_R2": {int(r): float(cca_dict[int(r)]) for r in ranks},
         "transport": trans_dict,  # contains R2_val, R2_test, alpha per rank
         "efficiency": {int(r): float(efficiency[int(r)]) for r in ranks},
-        "orthogonal_complement_R2": ortho_results,
         "summary_stats": {
-            "max_pca_r2": max(cca_dict[r]["R2"] for r in ranks),
+            "max_cca_r2": max(cca_dict[r] for r in ranks),
             "max_transport_r2": max(
                 trans_dict[r]["R2_test"]
                 for r in ranks
                 if trans_dict[r]["R2_test"] is not None
             ),
             "mean_efficiency": np.nanmean([efficiency[r] for r in ranks]),
-            "best_rank_pca": max(ranks, key=lambda r: cca_dict[r]["R2"]),
+            "best_rank_cca": max(ranks, key=lambda r: cca_dict[r]),
             "best_rank_transport": max(
                 ranks,
                 key=lambda r: trans_dict[r]["R2_test"]
@@ -922,6 +920,9 @@ def compare_cca_vs_transport(
     }
 
     logger.info("Matched-rank analysis completed successfully")
+    logger.info("Results:")
+    for key, value in results.items():
+        logger.info(f"  {key}: {value}")
     return results
 
 

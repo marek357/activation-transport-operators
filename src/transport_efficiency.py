@@ -84,7 +84,7 @@ def r2_ceiling_from_cca(X, Y, rs, *, center=True, ridge=0.0, eps=1e-12):
         R2_ceiling_r = float(np.sum(rho[:k] ** 2) / dx)
         ceilings[r] = R2_ceiling_r
 
-    return ceilings
+    return ceilings, rho
 
 
 def dataset_to_arrays(
