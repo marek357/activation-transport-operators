@@ -1,7 +1,8 @@
 # Activation Transport Operators
 
-This repository implements transport operators for mapping neural network activations between layers, with a focus on analysing how features propagate through transformer models. The work studies how high-quality sparse autoencoder (SAE) features can be "transported" from one layer to another using learned affine transformations.
+This repository implements transport operators for mapping neural network activations between layers, with a focus on analysing how features propagate through transformer models. The work studies how high-quality sparse autoencoder (SAE) features can be "transported" from one layer to another using learned affine transformations. 
 
+[📄 [ArXiv Paper](https://arxiv.org/abs/2508.17540)]
 ## Overview
 
 Transport operators learn linear mappings that predict downstream layer activations from upstream layer activations. This enables analysis of:
@@ -263,7 +264,19 @@ python causal_perplexity_eval.py causal_eval=layer_6_to_10
 
 ## Citation
 
-If you use this code in your research, please cite the associated paper [citation to be added].
+If you use this code in your research, please cite the associated paper:
+
+```
+@misc{szablewski2025activationtransportoperators,
+      title={Activation Transport Operators}, 
+      author={Andrzej Szablewski and Marek Masiak},
+      year={2025},
+      eprint={2508.17540},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2508.17540}, 
+}
+```
 
 ## License
 
