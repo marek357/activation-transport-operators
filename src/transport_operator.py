@@ -37,8 +37,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         max_iter: int = 5000,
         tol: float = 1e-3,
         cache_dir: Optional[str] = None,
-        use_cache: bool = True,
+        use_cache_model: bool = True,
+        use_cache_data: bool = True,
         n_proc_cv: int = -1,
+        fit_intercept: bool = True,
     ):
         """
         Initialize the transport operator.
@@ -57,8 +59,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             max_iter: Maximum iterations for iterative solvers
             tol: Tolerance for convergence
             cache_dir: Directory to store cached X, y matrices. If None, uses 'cache' in current directory
-            use_cache: Whether to use caching for X, y matrices
+            use_cache_model: Whether to use caching for caching model
+            use_cache_data: Whether to use caching for dataset
             n_proc_cv: Number of processes to use for cross-validation. Defaults to -1 (all available cores).
+            fit_intercept: Whether to fit the intercept term in the model.
         """
         self.L = L
         self.k = k
@@ -73,8 +77,10 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.cache_dir = cache_dir or "cache"
-        self.use_cache = use_cache
+        self.use_cache_model = use_cache_model
+        self.use_cache_data = use_cache_data
         self.n_proc_cv = n_proc_cv
+        self.fit_intercept = fit_intercept
 
         self.model = None
         self.scaler_X = None
@@ -101,17 +107,19 @@ class TransportOperator(BaseEstimator, TransformerMixin):
     def _create_model(self, **params) -> BaseEstimator:
         """Create the appropriate regression model with given parameters."""
         if self.method == "linear":
-            return LinearRegression(fit_intercept=True)
+            return LinearRegression(fit_intercept=self.fit_intercept)
         elif self.method == "ridge":
             alpha = params.get("alpha", self.regularization or 1.0)
             return Ridge(
-                alpha=alpha, fit_intercept=True, random_state=self.random_state
+                alpha=alpha,
+                fit_intercept=self.fit_intercept,
+                random_state=self.random_state,
             )
         elif self.method == "lasso":
             alpha = params.get("alpha", self.regularization or 1.0)
             return Lasso(
                 alpha=alpha,
-                fit_intercept=True,
+                fit_intercept=self.fit_intercept,
                 random_state=self.random_state,
                 max_iter=self.max_iter,
                 tol=self.tol,
@@ -122,7 +130,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             return ElasticNet(
                 alpha=alpha,
                 l1_ratio=l1_ratio,
-                fit_intercept=True,
+                fit_intercept=self.fit_intercept,
                 random_state=self.random_state,
                 max_iter=self.max_iter,
                 tol=self.tol,
@@ -373,7 +381,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         start_time = time.time()
 
         # Check for cached model first
-        if self.use_cache:
+        if self.use_cache_model:
             model_cache_filename = self._get_model_cache_filename(dataset)
             model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             print(f"Checking for cached model: {model_cache_path}")
@@ -385,7 +393,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
         # Check for cached data
         X, y = None, None
-        if self.use_cache:
+        if self.use_cache_data:
             cache_filename = self._get_cache_filename(dataset)
             cache_path = os.path.join(self.cache_dir, cache_filename)
             print(f"Checking for cached data: {cache_path}")
@@ -444,7 +452,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             print(f"  Loading time: {load_time:.2f}s")
 
             # Save to cache if enabled
-            if self.use_cache:
+            if self.use_cache_data:
                 cache_filename = self._get_cache_filename(dataset)
                 cache_path = os.path.join(self.cache_dir, cache_filename)
                 self._save_cache(X, y, cache_path)
@@ -511,7 +519,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
         self.is_fitted_ = True
 
         # Save trained model to cache if enabled
-        if self.use_cache:
+        if self.use_cache_model:
             model_cache_filename = self._get_model_cache_filename(dataset)
             model_cache_path = os.path.join(self.cache_dir, model_cache_filename)
             self._save_model_cache(model_cache_path)
@@ -652,7 +660,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
 
         # Check for cached evaluation data first
         X, y = None, None
-        if self.use_cache:
+        if self.use_cache_data:
             cache_filename = f"eval_{self._get_cache_filename(dataset)}"
             cache_path = os.path.join(self.cache_dir, cache_filename)
             print(f"Checking for cached evaluation data: {cache_path}")
@@ -705,7 +713,7 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             )
 
             # Save to cache if enabled
-            if self.use_cache:
+            if self.use_cache_data:
                 cache_filename = f"eval_{self._get_cache_filename(dataset)}"
                 cache_path = os.path.join(self.cache_dir, cache_filename)
                 self._save_cache(X, y, cache_path)
@@ -810,7 +818,8 @@ class TransportOperator(BaseEstimator, TransformerMixin):
             "max_iter": self.max_iter,
             "tol": self.tol,
             "cache_dir": self.cache_dir,
-            "use_cache": self.use_cache,
+            "use_cache_model": self.use_cache_model,
+            "use_cache_data": self.use_cache_data,
         }
 
     def set_params(self, **params) -> "TransportOperator":

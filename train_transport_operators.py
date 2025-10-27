@@ -26,8 +26,7 @@ def main(cfg: DictConfig):
         project=cfg.logger.project,
         entity=cfg.logger.entity,
         name=cfg.experiment_name,
-        config=cast(dict[str, Any] | None,
-                    OmegaConf.to_container(cfg, resolve=True)),
+        config=cast(dict[str, Any] | None, OmegaConf.to_container(cfg, resolve=True)),
         mode=cfg.logger.wandb_mode,  # NOTE: disabled by default
     )
 
@@ -49,9 +48,15 @@ def main(cfg: DictConfig):
     for L in cfg.experiment.L:
         for k in cfg.experiment.k:
             logging.info(f"Training transport operator for L={L}, k={k}")
-            train_dataset, val_dataset, test_dataset = get_train_val_test_datasets(
-                L, k, loader
-            )
+            try:
+                train_dataset, val_dataset, _ = get_train_val_test_datasets(
+                    L, k, loader
+                )
+            except FileNotFoundError as e:
+                logging.error(
+                    f"Error loading datasets for L={L}, k={k}: {e}. Skipping training for this pair."
+                )
+                continue
 
             # Initialize transport operator with better convergence settings
             transport_operator = TransportOperator(
@@ -73,6 +78,13 @@ def main(cfg: DictConfig):
                 max_iter=cfg.get("max_iter", 500),
                 tol=cfg.get("tol", 1e-3),  # Relax tolerance slightly
                 n_proc_cv=cfg.get("n_proc_cv", 2),  # Use 2 processes for CV
+                fit_intercept=cfg.get("fit_intercept", True),
+                use_cache_model=cfg.get(
+                    "use_cache_model", True
+                ),  # Use cached model if available
+                use_cache_data=cfg.get(
+                    "use_cache_data", True
+                ),  # Use cached data if available
             )
 
             try:
@@ -84,27 +96,38 @@ def main(cfg: DictConfig):
                 logging.info(f"Validation metrics for L={L}, k={k}:")
                 logging.info(f"  R² Score: {val_metrics['r2_score']:.4f}")
                 logging.info(f"  RMSE: {val_metrics['rmse']:.6f}")
-                if 'num_outputs' in val_metrics:
+                if "num_outputs" in val_metrics:
                     logging.info(
-                        f"  Per-output R² range: [{val_metrics['r2_per_output_min']:.4f}, {val_metrics['r2_per_output_max']:.4f}]")
+                        f"  Per-output R² range: [{val_metrics['r2_per_output_min']:.4f}, {val_metrics['r2_per_output_max']:.4f}]"
+                    )
 
                 # Log key metrics to wandb
                 wandb_metrics = {
-                    f"val_r2_L{L}_k{k}": val_metrics['r2_score'],
-                    f"val_mse_L{L}_k{k}": val_metrics['mse'],
-                    f"val_rmse_L{L}_k{k}": val_metrics['rmse'],
+                    f"val_r2_L{L}_k{k}": val_metrics["r2_score"],
+                    f"val_mse_L{L}_k{k}": val_metrics["mse"],
+                    f"val_rmse_L{L}_k{k}": val_metrics["rmse"],
                     "L": L,
-                    "k": k
+                    "k": k,
                 }
 
                 # Add per-output summary metrics if available
-                if 'num_outputs' in val_metrics:
-                    wandb_metrics.update({
-                        f"val_r2_mean_per_output_L{L}_k{k}": val_metrics['r2_per_output_mean'],
-                        f"val_r2_std_per_output_L{L}_k{k}": val_metrics['r2_per_output_std'],
-                        f"val_r2_min_per_output_L{L}_k{k}": val_metrics['r2_per_output_min'],
-                        f"val_r2_max_per_output_L{L}_k{k}": val_metrics['r2_per_output_max'],
-                    })
+                if "num_outputs" in val_metrics:
+                    wandb_metrics.update(
+                        {
+                            f"val_r2_mean_per_output_L{L}_k{k}": val_metrics[
+                                "r2_per_output_mean"
+                            ],
+                            f"val_r2_std_per_output_L{L}_k{k}": val_metrics[
+                                "r2_per_output_std"
+                            ],
+                            f"val_r2_min_per_output_L{L}_k{k}": val_metrics[
+                                "r2_per_output_min"
+                            ],
+                            f"val_r2_max_per_output_L{L}_k{k}": val_metrics[
+                                "r2_per_output_max"
+                            ],
+                        }
+                    )
 
                 wandb.log(wandb_metrics)
 
@@ -112,11 +135,11 @@ def main(cfg: DictConfig):
 
             except Exception as e:
                 logging.error(
-                    f"Error training transport operator for L={L}, k={k}: {e}")
+                    f"Error training transport operator for L={L}, k={k}: {e}"
+                )
                 continue  # Continue with next L,k pair instead of crashing
 
-    logging.info(
-        f"Successfully trained {len(transport_operators)} transport operators")
+    logging.info(f"Successfully trained {len(transport_operators)} transport operators")
     wandb.finish()
 
 

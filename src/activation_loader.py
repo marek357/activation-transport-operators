@@ -148,10 +148,15 @@ class ActivationLoader:
         for store_id, store_object in self.store_objects.items():
             z = zarr.open(store_object, mode="r")
 
-            np_activations_arr = np.ascontiguousarray(
-                z["activations"][f"layer_{layer}"]
-            )
-            np_attention_mask_arr = np.ascontiguousarray(z["attention_mask"])
+            try:
+                np_activations_arr = np.ascontiguousarray(
+                    z["activations"][f"layer_{layer}"]
+                )
+                np_attention_mask_arr = np.ascontiguousarray(z["attention_mask"])
+            except KeyError as e:
+                msg = f"Layer {layer} not found in the activations."
+                logger.error(msg)
+                raise FileNotFoundError(msg) from e
 
             all_activations[store_id] = torch.from_numpy(np_activations_arr)
             all_attention_masks[store_id] = torch.from_numpy(np_attention_mask_arr)
