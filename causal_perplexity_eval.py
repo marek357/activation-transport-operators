@@ -184,6 +184,13 @@ def main(cfg: DictConfig):
         js=js,
         prefix="intervention",
     )
+    upstream_intervention_hooks = create_j_hook_family(
+        transport_operator=None,
+        source_layer=f"model.layers.{L}",
+        target_layer=f"model.layers.{L + k}",
+        js=js,
+        prefix="upstream_intervention",
+    )
     ablation_hooks = create_j_hook_family(
         transport_operator,
         source_layer=None,
@@ -206,6 +213,10 @@ def main(cfg: DictConfig):
     intervention_results = evaluator.evaluate_with_hooks(intervention_hooks)
     ablation_results = evaluator.evaluate_with_hooks(ablation_hooks)
     zero_results = evaluator.evaluate_with_hooks(zero_hooks)
+
+    upstream_intervention_hooks = evaluator.evaluate_with_hooks(
+        upstream_intervention_hooks
+    )
 
     # Calculate averaged results
     def average_results(
@@ -249,22 +260,28 @@ def main(cfg: DictConfig):
     avg_intervention_result = average_results(intervention_results, "intervention")
     avg_ablation_result = average_results(ablation_results, "ablation")
     avg_zero_result = average_results(zero_results, "zero")
+    avg_upstream_intervention_result = average_results(
+        upstream_intervention_hooks, "upstream_intervention"
+    )
 
     # Combine all results including individual and averaged
     hook_results = {}
     hook_results.update(intervention_results)
     hook_results.update(ablation_results)
     hook_results.update(zero_results)
+    hook_results.update(upstream_intervention_hooks)
     hook_results["avg_intervention"] = avg_intervention_result
     hook_results["avg_ablation"] = avg_ablation_result
     hook_results["avg_zero"] = avg_zero_result
+    hook_results["avg_upstream_intervention"] = avg_upstream_intervention_result
 
     # Combine all results
-    results = {"baseline": baseline_result}
+    results = {}
+    results.update({"baseline": baseline_result})
     results.update(hook_results)
 
     # Print and log results
-    print_evaluation_results(results)
+    # print_evaluation_results(results)
 
     # Save results to JSON file
     save_results_to_json(results, cfg, L, k, js)

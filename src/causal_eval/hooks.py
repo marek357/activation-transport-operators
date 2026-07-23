@@ -67,7 +67,7 @@ class ZeroHook:
             self.hook_handle = None
 
 
-class TransportHook:
+class TransportHookWithOperator:
     """Hook for transport operator interventions that captures from source and modifies target layer."""
 
     def __init__(
@@ -206,34 +206,156 @@ class TransportHook:
         self.captured_activation = None
 
 
+class TransportUpstreamResidualHook:
+    """Hook that captures activations from source layer and adds them directly to target layer without transport operator."""
+
+    def __init__(
+        self,
+        name: str,
+        source_layer: str,
+        target_layer: str,
+        target_j_positions: list[int],
+    ):
+        self.name = name
+        self.source_layer = source_layer
+        self.target_layer = target_layer
+        self.captured_activation = None
+        self.source_hook_handle = None
+        self.target_hook_handle = None
+        self.target_j_positions = target_j_positions
+
+    def apply(self, model: PreTrainedModel):
+        """Apply both source capture and target modification hooks."""
+        if self.source_layer is not None:
+            # Hook for capturing from source layer
+            source_module = model
+            for attr in self.source_layer.split("."):
+                source_module = getattr(source_module, attr)
+
+            def capture_hook(module, input_tensors, output):
+                # Store the hidden states for direct addition
+                if isinstance(output, torch.Tensor):
+                    self.captured_activation = output[
+                        :, self.target_j_positions, :
+                    ].detach()
+                elif isinstance(output, tuple):
+                    # For layers that return tuples (like attention), take the first element
+                    self.captured_activation = output[0][
+                        :, self.target_j_positions, :
+                    ].detach()
+                return output
+
+            self.source_hook_handle = source_module.register_forward_hook(capture_hook)
+
+        # Hook for modifying target layer
+        target_module = model
+        for attr in self.target_layer.split("."):
+            target_module = getattr(target_module, attr)
+
+        def residual_hook(module, input_tensors, output):
+            if self.source_layer is None:
+                # No source layer, nothing to add
+                return output
+
+            # Use captured activation from source layer
+            if self.captured_activation is None:
+                raise RuntimeError(
+                    "No captured activation available for residual addition"
+                )
+
+            try:
+                # Add the captured activation directly to target positions
+                if isinstance(output, torch.Tensor):
+                    modified_output = output.clone()
+                    for j, j_position in enumerate(self.target_j_positions):
+                        if j_position < modified_output.size(
+                            1
+                        ) and j < self.captured_activation.size(1):
+                            modified_output[:, j_position, :] += (
+                                self.captured_activation[:, j, :]
+                            )
+                    return modified_output
+                elif isinstance(output, tuple):
+                    modified_output = list(output)
+                    modified_output[0] = output[0].clone()
+                    for j, j_position in enumerate(self.target_j_positions):
+                        if j_position < modified_output[0].size(
+                            1
+                        ) and j < self.captured_activation.size(1):
+                            modified_output[0][:, j_position, :] += (
+                                self.captured_activation[:, j, :]
+                            )
+                    return tuple(modified_output)
+                else:
+                    raise RuntimeError("Unsupported output type")
+
+            except Exception as e:
+                logger.exception(f"Residual addition operation failed: {e}.")
+                raise RuntimeError("Residual addition operation failed")
+
+        self.target_hook_handle = target_module.register_forward_hook(residual_hook)
+        logger.info(
+            f"Applied upstream residual hook '{self.name}': {self.source_layer} -> {self.target_layer}"
+        )
+
+    def remove(self):
+        """Remove both hooks."""
+        if self.source_hook_handle:
+            self.source_hook_handle.remove()
+            self.source_hook_handle = None
+        if self.target_hook_handle:
+            self.target_hook_handle.remove()
+            self.target_hook_handle = None
+        self.captured_activation = None
+
+
 def create_j_hook_family(
     transport_operator,
     source_layer: str,
     target_layer: str,
     js: list[list[int]],
     prefix: str,
-) -> dict[str, TransportHook]:
+) -> dict[str, TransportHookWithOperator]:
     """Create a family of transport operator hooks for a specific layer."""
     hooks = {}
     for j in js:
-        hooks[f"{prefix}_{str(j)}"] = create_transport_hook(
-            transport_operator,
-            source_layer=source_layer,
-            target_layer=target_layer,
-            j_positions=j,
-        )
+        if transport_operator is not None:
+            hooks[f"{prefix}_{str(j)}"] = create_transport_hook_with_operator(
+                transport_operator,
+                source_layer=source_layer,
+                target_layer=target_layer,
+                j_positions=j,
+            )
+        else:
+            hooks[f"{prefix}_{str(j)}"] = create_upstream_residual_hook(
+                source_layer=source_layer,
+                target_layer=target_layer,
+                j_positions=j,
+            )
     return hooks
 
 
-def create_transport_hook(
+def create_transport_hook_with_operator(
     transport_operator, source_layer: str, target_layer: str, j_positions: list[int]
-) -> TransportHook:
+) -> TransportHookWithOperator:
     """Create a transport operator hook that captures from source and transports to target."""
-    return TransportHook(
-        "transport_intervention",
+    return TransportHookWithOperator(
+        "transport_with_operator_intervention",
         source_layer,
         target_layer,
         transport_operator,
+        j_positions,
+    )
+
+
+def create_upstream_residual_hook(
+    source_layer: str, target_layer: str, j_positions: list[int]
+) -> TransportUpstreamResidualHook:
+    """Create an upstream residual hook that captures from source and adds directly to target."""
+    return TransportUpstreamResidualHook(
+        "transport_without_operator_intervention",
+        source_layer,
+        target_layer,
         j_positions,
     )
 

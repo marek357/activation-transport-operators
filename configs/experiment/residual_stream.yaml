@@ -1,12 +1,7 @@
 L: 
-  - 5
-  - 10
-  - 12
-  - 13
+  - 24
 k:
-  - 1
   - 2
-  - 5
-  - 8
 
 n_proc_cv: 2
+use_cache_data: false

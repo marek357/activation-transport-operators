@@ -373,6 +373,13 @@ def load_sae_decoders(
     required_layers = set()
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
+            if layer_l + k >= 26:
+                logger.warning(
+                    "Skipping eval for L=%d, k=%d: target layer exceeds model depth",
+                    layer_l,
+                    k,
+                )
+                continue
             required_layers.add(layer_l + k)  # Target layer L+k
 
     logger.info("Loading SAE decoders for layers: %s", sorted(required_layers))
@@ -399,8 +406,8 @@ def load_sae_decoders(
                 decoder_weights.dtype,
             )
         except Exception:
-            logger.exception("Failed to load SAE for layer %d", layer)
-            raise
+            logger.warning("Failed to load SAE for layer %d", layer)
+            continue
 
     return sae_decoders
 
@@ -413,6 +420,13 @@ def load_full_saes(cfg: DictConfig) -> dict[int, Any]:
     required_layers = set()
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
+            if layer_l + k >= 26:
+                logger.warning(
+                    "Skipping eval for L=%d, k=%d: target layer exceeds model depth",
+                    layer_l,
+                    k,
+                )
+                continue
             required_layers.add(layer_l + k)  # Target layer L+k
 
     logger.info("Loading full SAEs for layers: %s", sorted(required_layers))
@@ -517,6 +531,13 @@ def generate_feature_dict(cfg: DictConfig) -> dict[int, list[int]]:
     required_layers = set()
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
+            if layer_l + k >= 26:
+                logger.warning(
+                    "Skipping eval for L=%d, k=%d: target layer exceeds model depth",
+                    layer_l,
+                    k,
+                )
+                continue
             required_layers.add(layer_l + k)  # Target layer L+k
 
     for layer_id in required_layers:
@@ -550,8 +571,7 @@ def create_baseline_transport_operators(
     cfg: DictConfig, activation_loader: ActivationLoader
 ) -> dict[
     tuple[int, int, str],
-    TransportOperator
-    | IdentityBaselineTransportOperator,
+    TransportOperator | IdentityBaselineTransportOperator,
 ]:
     """Create baseline transport operators for evaluation."""
     baseline_operators = {}
@@ -560,6 +580,13 @@ def create_baseline_transport_operators(
 
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
+            if layer_l + k >= 26:
+                logger.warning(
+                    "Skipping baseline creation for L=%d, k=%d: target layer exceeds model depth",
+                    layer_l,
+                    k,
+                )
+                continue
             for j_policy in cfg.eval.j_policy:
                 # Get training dataset for fitting baselines
                 train_dataset, _, _ = get_train_val_test_datasets(
@@ -586,7 +613,7 @@ def create_baseline_transport_operators(
 
 
 def load_trained_transport_operators(
-    cfg: DictConfig, activation_loader: ActivationLoader
+    cfg: DictConfig,
 ) -> dict[tuple[int, int, str], TransportOperator]:
     """
     Load trained transport operators from saved models.
@@ -595,57 +622,16 @@ def load_trained_transport_operators(
     """
     transport_operators = {}
 
-    # TODO: Implement loading of trained transport operators
-    # Example implementation:
-
-    # Option 1: Load from pickle files
-    # for layer_l in cfg.eval.Ls:
-    #     for k in cfg.eval.ks:
-    #         for j_policy in cfg.eval.j_policy:
-    #             model_file = Path(cfg.get("model_dir", "models")) / f"transport_L{layer_l}_k{k}_{j_policy}.pkl"
-    #             if model_file.exists():
-    #                 with open(model_file, 'rb') as f:
-    #                     transport_op = pickle.load(f)
-    #                 transport_operators[(layer_l, k, j_policy)] = transport_op
-    #                 logger.info(f"Loaded transport operator from {model_file}")
-    #             else:
-    #                 logger.warning(f"Model file not found: {model_file}")
-
-    # Option 2: Train operators on-demand
-    # for layer_l in cfg.eval.Ls:
-    #     for k in cfg.eval.ks:
-    #         for j_policy in cfg.eval.j_policy:
-    #             train_dataset, _, _ = get_train_val_test_datasets(
-    #                 layer_l, k, activation_loader, j_policy
-    #             )
-    #             transport_op = TransportOperator(L=layer_l, k=k, method="ridge", )
-    #             transport_op.fit(train_dataset)
-    #             transport_operators[(layer_l, k, j_policy)] = transport_op
-    #             logger.info(
-    #                 f"Trained transport operator for L={layer_l}, k={k}, j_policy={j_policy}"
-    #             )
-
-    # logger.info("Loading trained transport operators...")
-
-    # for layer_l in cfg.eval.Ls:
-    #     for k in cfg.eval.ks:
-    #         for j_policy in cfg.eval.j_policy:
-    #             # TODO: Replace with actual loading from saved .pkl files
-    #             # For now, create a dummy trained operator
-    #             transport_op = TransportOperator(L=layer_l, k=k, method="ridge")
-    #             # In a real implementation, the operator would already be fitted
-
-    #             transport_operators[(layer_l, k, j_policy)] = transport_op
-
-    #             logger.info(
-    #                 "Created placeholder transport operator for L=%d, k=%d, j_policy=%s",
-    #                 layer_l,
-    #                 k,
-    #                 j_policy,
-    #             )
-
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
+            logger.info(f"Loading transport operator for L={layer_l}, k={k}...")
+            if layer_l + k >= 26:
+                logger.warning(
+                    "Skipping eval for L=%d, k=%d: target layer exceeds model depth",
+                    layer_l,
+                    k,
+                )
+                continue
             for j_policy in cfg.eval.j_policy:
                 # Note, that currently loading does not support choosing the j_policy because it is not hashed
                 transport_operators[(layer_l, k, j_policy)] = load_transport_operator(
@@ -887,6 +873,13 @@ def run_matched_rank_experiment(
 
     for layer_l in cfg.eval.Ls:
         for k in cfg.eval.ks:
+            if layer_l + k >= 26:
+                logger.warning(
+                    "Skipping eval for L=%d, k=%d: target layer exceeds model depth",
+                    layer_l,
+                    k,
+                )
+                continue
             for j_policy in cfg.eval.j_policy:
                 logger.info(
                     f"Matched-rank analysis for L={layer_l}, k={k}, j_policy={j_policy}"
@@ -1070,8 +1063,7 @@ def summarize_matched_rank_results(matched_rank_results: dict) -> dict[str, Any]
 def run_experiment(
     transport_operators: dict[
         tuple[int, int, str],
-        TransportOperator
-        | IdentityBaselineTransportOperator,
+        TransportOperator | IdentityBaselineTransportOperator,
     ],
     chosen_layers: list[int],
     activation_loader: ActivationLoader,
@@ -1089,6 +1081,7 @@ def run_experiment(
     else "mps"
     if torch.backends.mps.is_available()
     else "cpu",
+    use_cache_data: bool = True,
 ) -> dict[tuple[int, int, str, int], dict[str, float]]:
     """Run evaluation of transport operators on SAE features."""
     # Input validation
@@ -1150,21 +1143,23 @@ def run_experiment(
                     saes.get(target_layer) if filter_inactive_features else None
                 )
 
-                # Use cache directory similar to transport operator
-                cache_dir = "cache"
+                x_up_all = None
+                if use_cache_data:
+                    # Use cache directory similar to transport operator
+                    cache_dir = "cache"
 
-                # Check for cached evaluation data first
-                dataset_id = getattr(dataset, "dataset_id", "default")
-                dataset_num_sequences = len(dataset.idx_list)
-                cache_filename = _get_eval_cache_filename(
-                    layer_l, k, j_policy, dataset_id, dataset_num_sequences
-                )
-                cache_path = os.path.join(cache_dir, cache_filename)
+                    # Check for cached evaluation data first
+                    dataset_id = getattr(dataset, "dataset_id", "default")
+                    dataset_num_sequences = len(dataset.idx_list)
+                    cache_filename = _get_eval_cache_filename(
+                        layer_l, k, j_policy, dataset_id, dataset_num_sequences
+                    )
+                    cache_path = os.path.join(cache_dir, cache_filename)
 
-                logger.info(f"Checking for cached evaluation data: {cache_path}")
-                x_up_all, y_dn_all, y_hat_all, feature_masks_all = _load_eval_cache(
-                    cache_path
-                )
+                    logger.info(f"Checking for cached evaluation data: {cache_path}")
+                    x_up_all, y_dn_all, y_hat_all, feature_masks_all = _load_eval_cache(
+                        cache_path
+                    )
 
                 # If no cached data found, load from dataset
                 if x_up_all is None:
@@ -1262,10 +1257,11 @@ def run_experiment(
                             for feat_idx in features_dict[target_layer]
                         }
 
-                    # Save to cache
-                    _save_eval_cache(
-                        x_up_all, y_dn_all, y_hat_all, feature_masks_all, cache_path
-                    )
+                    if use_cache_data:
+                        # Save to cache
+                        _save_eval_cache(
+                            x_up_all, y_dn_all, y_hat_all, feature_masks_all, cache_path
+                        )
 
                 else:
                     logger.info("Using cached evaluation data")
@@ -1631,9 +1627,8 @@ def main(cfg: DictConfig) -> dict:
     # baselines, pretrained, or dummy
     eval_mode = cfg.get("eval_mode", "baselines")
 
-    if (
-        eval_mode == "baselines"
-        or cfg.get("baselines", {}).get("enable_identity", False)
+    if eval_mode == "baselines" or cfg.get("baselines", {}).get(
+        "enable_identity", False
     ):
         logger.info("Creating baseline transport operators...")
         transport_operators = create_baseline_transport_operators(
@@ -1642,7 +1637,7 @@ def main(cfg: DictConfig) -> dict:
 
     elif eval_mode == "pretrained":
         logger.info("Loading trained transport operators...")
-        transport_operators = load_trained_transport_operators(cfg, activation_loader)
+        transport_operators = load_trained_transport_operators(cfg)
 
     else:
         # Default mode: create dummy transport operators for testing
@@ -1669,6 +1664,7 @@ def main(cfg: DictConfig) -> dict:
         score_residual=score_residual_fn,
         decoder_normalize=cfg.eval.decoders.normalize,
         filter_inactive_features=filter_inactive_features,
+        use_cache_data=cfg.eval.get("use_cache_data", True),
     )
 
     logger.info("Evaluation completed. Generated %d result entries.", len(results))
@@ -1750,9 +1746,7 @@ def main(cfg: DictConfig) -> dict:
             bias_dirs.get("minimal", 0),
         )
     else:
-        logger.info(
-            "No prediction-based calibration metrics available"
-        )
+        logger.info("No prediction-based calibration metrics available")
 
     # Save results to JSON
 

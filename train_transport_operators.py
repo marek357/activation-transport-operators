@@ -83,7 +83,7 @@ def main(cfg: DictConfig):
                     "use_cache_model", True
                 ),  # Use cached model if available
                 use_cache_data=cfg.get(
-                    "use_cache_data", True
+                    "use_cache_data", False
                 ),  # Use cached data if available
             )
 

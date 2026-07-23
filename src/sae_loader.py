@@ -60,13 +60,16 @@ def load_sae_from_cfg(cfg) -> Tuple[SAE, Dict[str, Any], Optional[torch.Tensor]]
     logging.info(
         f"Loading SAE from release='{release}', id='{sae_id}' on device='{device}'..."
     )
-
-    sae, sae_cfg, log_sparsities = SAE.from_pretrained_with_cfg_and_sparsity(
-        release=release,
-        sae_id=sae_id,
-        device=device,
-        force_download=force_download,
-    )
+    try:
+        sae, sae_cfg, log_sparsities = SAE.from_pretrained_with_cfg_and_sparsity(
+            release=release,
+            sae_id=sae_id,
+            device=device,
+            force_download=force_download,
+        )
+    except ValueError as e:
+        logging.error(f"Error loading SAE: {e}")
+        raise
 
     # Basic summary
     n_feats = getattr(sae.cfg, "d_sae", None) or getattr(sae, "d_sae", None)

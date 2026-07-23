@@ -7,3 +7,16 @@ venv/
 
 activations*/
 cache/
+
+.DS_Store
+all_operators_plots/
+causal_results/
+explanations_dict_cache/
+feature_explanations/
+feature_ids/
+pdf/
+plots/
+plots_no_intercept/
+plotting_data/
+plotting_data_no_intercept/
+transport_efficiency/

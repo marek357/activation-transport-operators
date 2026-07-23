@@ -8,8 +8,8 @@ js:
   # - [11, 51, 71, 101, 121]
   # - [12, 52, 72, 102, 122]
 
-L: 2
-k: 1
+L: 5
+k: 1 
 j_policy: "j==i"
 
 cache_dir: "./cache"                # Directory containing pre-trained transport operators

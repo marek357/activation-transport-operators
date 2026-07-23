@@ -4,7 +4,7 @@ defaults:
   - logger: wandb_disabled
   - model: gemma_2_2b
   - datasets: slimpajama
-  - causal_eval: all_js
+  - causal_eval: multiple_js
 
 # Global
 seed: 42
