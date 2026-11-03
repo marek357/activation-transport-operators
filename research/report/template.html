@@ -1,0 +1,382 @@
+<title>Gemma-2 Feature Transport</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a single reading column (~68ch) for the argument, widening to ~1080px for the
+   tables and the explorer; the residual stream drawn as a 0-25 layer axis is the one figure. */
+:root {
+  --paper: #f4f6f4;
+  --panel: #ffffff;
+  --ink: #1a2127;
+  --muted: #5a6670;
+  --rule: #d7ddd9;
+  --accent: #1f5f8b;
+  --accent-soft: #e2ecf3;
+  --c-transported: #2b78ad;
+  --c-assembled: #6b5bb3;
+  --c-synthesized: #b8731b;
+  --c-partial: #6f8f5e;
+  --c-unexplained: #a7adb2;
+  --good: #2f7d4f;
+  --bad: #a8433a;
+  --f-display: "Literata", Georgia, "Times New Roman", serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11161a; --panel: #182026; --ink: #e3e8ec; --muted: #9aa6af; --rule: #2a343b;
+    --accent: #7db7e2; --accent-soft: #1d2d39;
+    --c-transported: #5aa6dc; --c-assembled: #9b8de0; --c-synthesized: #e0a04a;
+    --c-partial: #98b886; --c-unexplained: #6f777d; --good: #6cc391; --bad: #e0857b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11161a; --panel: #182026; --ink: #e3e8ec; --muted: #9aa6af; --rule: #2a343b;
+  --accent: #7db7e2; --accent-soft: #1d2d39;
+  --c-transported: #5aa6dc; --c-assembled: #9b8de0; --c-synthesized: #e0a04a;
+  --c-partial: #98b886; --c-unexplained: #6f777d; --good: #6cc391; --bad: #e0857b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--f-body);
+  font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 56px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 650; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2rem, 4.2vw, 2.9rem); line-height: 1.1; }
+h2 { font-size: 1.55rem; line-height: 1.2; }
+h3 { font-size: 1.1rem; }
+p { margin: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; color: var(--ink); }
+.muted { color: var(--muted); }
+section { display: grid; gap: 18px; min-width: 0; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--f-mono); font-size: 0.86em; }
+header { display: grid; gap: 18px; }
+
+/* layer axis figure */
+.axis { width: 100%; max-width: 760px; height: auto; display: block; }
+.axis text { fill: var(--muted); font-family: var(--f-mono); font-size: 10px; }
+.axis .lab { fill: var(--ink); font-size: 11px; }
+
+/* findings */
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.finding { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.finding .num { font-family: var(--f-display); font-size: 1.9rem; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
+.finding p { font-size: 0.94rem; color: var(--muted); }
+
+/* tables */
+.tablebox { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-family: var(--f-mono); font-size: 0.74rem; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+tbody tr:last-child td { border-bottom: 0; }
+td.best { font-weight: 600; color: var(--accent); }
+td.neg { color: var(--bad); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--panel); flex-wrap: wrap; }
+.seg button { font: inherit; font-size: 0.88rem; background: none; border: 0; padding: 7px 12px; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+
+/* taxonomy bars */
+.tax { display: grid; gap: 10px; }
+.taxrow { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: center; }
+.taxrow .lbl { font-family: var(--f-mono); font-size: 0.82rem; }
+.bar { display: flex; height: 22px; border-radius: 4px; overflow: hidden; background: var(--rule); min-width: 0; }
+.bar span { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.88rem; color: var(--muted); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+.defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 22px; font-size: 0.92rem; }
+.defs div { min-width: 0; }
+
+/* explorer */
+.controls { display: grid; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 0.86rem; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.chip .n { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); }
+#q { font: inherit; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); color: var(--ink); width: min(100%, 360px); }
+.list { display: grid; gap: 10px; }
+.pairrow { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.pairhead { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: start; }
+.feat { min-width: 0; display: grid; gap: 2px; }
+.feat .id { font-family: var(--f-mono); font-size: 0.8rem; }
+.feat .ex { font-size: 0.95rem; overflow-wrap: anywhere; }
+.arrow { font-family: var(--f-mono); color: var(--muted); padding-top: 14px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); align-items: center; }
+.pill { font-family: var(--f-body); font-size: 0.76rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--panel); }
+details summary { cursor: pointer; font-size: 0.86rem; color: var(--accent); }
+details ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.9rem; }
+.empty { color: var(--muted); font-size: 0.95rem; }
+.notes { display: grid; gap: 10px; font-size: 0.95rem; }
+.notes li { margin-bottom: 6px; }
+@media (max-width: 640px) {
+  .pairhead { grid-template-columns: 1fr; }
+  .arrow { padding-top: 0; transform: rotate(90deg); width: max-content; }
+  .taxrow { grid-template-columns: 70px 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bar span { transition: width .4s ease; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Activation transport operators · Gemma-2-2B · Gemma Scope 16k residual SAEs</div>
+    <h1>Which features move between layers</h1>
+    <p class="lede prose">We hill-climbed the linear maps between Gemma-2-2B residual layers (Szablewski &amp; Masiak, arXiv:2508.17540). We then used them to say, feature by feature, what reaches a later layer: what is carried over, what is linearly assembled, and what the layers in between create.</p>
+    <svg class="axis" id="axis" viewBox="0 0 760 120" role="img" aria-label="Residual-stream layers 0 to 25 with the six source to target pairs studied"></svg>
+  </header>
+
+  <section>
+    <h2>What changed</h2>
+    <div class="findings" id="findings"></div>
+  </section>
+
+  <section>
+    <div class="row" style="justify-content: space-between">
+      <h2>Scorecard</h2>
+      <div class="seg" id="metricSeg" role="group" aria-label="Metric"></div>
+    </div>
+    <p class="prose muted" id="metricHelp"></p>
+    <div class="tablebox"><table id="score"></table></div>
+  </section>
+
+  <section>
+    <h2>Taxonomy of downstream features</h2>
+    <p class="prose muted">Every Gemma Scope feature at the target layer that fires at least 20 times on the test split is put into one class, using held-out data only.</p>
+    <div class="legend" id="legend"></div>
+    <div class="tax" id="tax"></div>
+    <div class="defs" id="defs"></div>
+  </section>
+
+  <section>
+    <h2>Matching features across layers</h2>
+    <p class="prose muted">To say which upstream feature a downstream feature came from, prior work compares raw decoder directions. That assumes the residual stream does not rotate. We push upstream decoders through the learned operator first, with and without CSLS hubness correction. The oracle is the partner with the highest activation correlation on the train split. The table shows how often each rule picks it on test.</p>
+    <div class="tablebox"><table id="match"></table></div>
+  </section>
+
+  <section>
+    <div class="row" style="justify-content: space-between">
+      <h2>Feature explorer</h2>
+      <div class="seg" id="pairSeg" role="group" aria-label="Layer pair"></div>
+    </div>
+    <p class="prose muted" id="explorerHelp"></p>
+    <div class="controls">
+      <div class="chips" id="classChips" role="group" aria-label="Class filter"></div>
+      <label class="muted" for="q" style="font-size:.88rem">Search explanations or feature ids
+        <br><input id="q" type="search" placeholder="e.g. code, legal, 7236" autocomplete="off">
+      </label>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section class="prose">
+    <h2>Method, briefly</h2>
+    <ul class="notes">
+      <li><b>Data.</b> The 251k-token SlimPajama activations released with the paper, with the repo's 60/20/20 split by sequence. All numbers are on the test split, excluding the &lt;bos&gt; position. Its residual is a constant vector about 12× the norm of a normal token, so we predict it by lookup.</li>
+      <li><b>Linear operator.</b> ŷ = A·x + B·x̂ + b, with x̂ = x / rms(x). Gemma-2 sublayers read RMSNorm(x) and write through a post-norm, so the update depends on the direction of x. Ridge shrinks toward the identity, and α is chosen on validation.</li>
+      <li><b>Sparse correction.</b> W<sub>dec</sub>·topk<sub>64</sub>(ReLU(W<sub>enc</sub> x̂)) with 8192 units, trained on the linear operator's residual. Neuron-like sparse units did as well as dense ones in our sweep, in line with work showing transcoder features are largely neurons in disguise.</li>
+      <li><b>Feature R².</b> The R² of the projection onto a unit SAE decoder direction, over the tokens where that feature fires. This is the paper's metric, here applied to all active features instead of a curated 5%.</li>
+      <li><b>Explanations.</b> Neuronpedia auto-interp labels, fetched per feature. Feature ids link to the Neuronpedia page.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const CLASSES = ["transported", "assembled", "synthesized", "partial", "unexplained"];
+const CLASS_DEF = {
+  transported: "One upstream feature carries it (test activation corr ≥ 0.8) and the linear operator predicts it (R² ≥ 0.8).",
+  assembled: "The linear operator predicts it (R² ≥ 0.8), but no single upstream feature does. It is a linear mix.",
+  synthesized: "The linear operator misses it (R² < 0.8). The sparse correction recovers it (R² ≥ 0.5, +0.2 or more).",
+  partial: "Best R² is between 0.5 and 0.8.",
+  unexplained: "Neither map reaches R² 0.5 from the same token. This is likely context written by attention."
+};
+const pairName = p => { const [L, k] = p.slice(1).split("_k").map(Number); return `L${L} → L${L + k}`; };
+const pairLK = p => p.slice(1).split("_k").map(Number);
+const fmt = (v, d = 3) => v == null || isNaN(v) ? "–" : v.toFixed(d);
+const pct = v => v == null ? "–" : (100 * v).toFixed(1) + "%";
+const np = (layer, idx) => `https://www.neuronpedia.org/gemma-2-2b/${layer}-gemmascope-res-16k/${idx}`;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- layer axis ---------- */
+(function axis() {
+  const svg = document.getElementById("axis");
+  const x = l => 30 + l * 27.6, y0 = 92;
+  let s = `<line x1="${x(0)}" y1="${y0}" x2="${x(25)}" y2="${y0}" stroke="var(--rule)" stroke-width="2"/>`;
+  for (let l = 0; l <= 25; l++) {
+    s += `<circle cx="${x(l)}" cy="${y0}" r="${[10, 20].includes(l) ? 4.5 : 2.5}" fill="${[10, 20].includes(l) ? "var(--accent)" : "var(--muted)"}"/>`;
+    if (l % 5 === 0) s += `<text x="${x(l)}" y="${y0 + 18}" text-anchor="middle">${l}</text>`;
+  }
+  DATA.pairs.forEach((p, i) => {
+    const [L, k] = pairLK(p), a = x(L), b = x(L + k), h = 14 + k * 6.5;
+    s += `<path d="M${a},${y0 - 3} C${a},${y0 - h} ${b},${y0 - h} ${b},${y0 - 3}" fill="none" stroke="var(--accent)" stroke-width="1.6" opacity="${0.45 + 0.08 * k}"/>`;
+  });
+  s += `<text class="lab" x="${x(10)}" y="12" text-anchor="middle">target 10</text><text class="lab" x="${x(20)}" y="12" text-anchor="middle">target 20</text>`;
+  s += `<text x="${x(25) + 10}" y="${y0 + 4}" text-anchor="start">layer</text>`;
+  svg.innerHTML = s;
+})();
+
+/* ---------- scorecard ---------- */
+const METRICS = {
+  feat_r2_median: ["Median feature R²", "Median over all active target-layer SAE features of the R² of their decoder-direction projection, on tokens where the feature fires. 1 is perfect, and below 0 is worse than predicting the feature's mean."],
+  fve: ["Residual FVE", "Fraction of the target residual's variance explained (variance-weighted R²)."],
+  "feat_frac_r2>0.9": ["Features with R² > 0.9", "Share of active target-layer features predicted with R² above 0.9."]
+};
+let metric = "feat_r2_median";
+function renderScore() {
+  const S = DATA.score, methods = Object.keys(S), pairs = DATA.pairs;
+  document.getElementById("metricHelp").textContent = METRICS[metric][1];
+  const isPct = metric === "feat_frac_r2>0.9";
+  const val = (m, p) => S[m][p]?.[metric];
+  let h = `<thead><tr><th>method</th>${pairs.map(p => `<th>${pairName(p)}</th>`).join("")}<th>mean</th></tr></thead><tbody>`;
+  const best = {};
+  [...pairs, "mean"].forEach(p => {
+    let b = -Infinity;
+    methods.forEach(m => { const v = p === "mean" ? mean(m) : val(m, p); if (v != null && v > b) b = v; });
+    best[p] = b;
+  });
+  function mean(m) { const v = pairs.map(p => val(m, p)); return v.every(x => x != null) ? v.reduce((a, b) => a + b, 0) / v.length : null; }
+  methods.forEach(m => {
+    h += `<tr><td>${esc(m)}</td>`;
+    [...pairs, "mean"].forEach(p => {
+      const v = p === "mean" ? mean(m) : val(m, p);
+      const cls = [v != null && v === best[p] ? "best" : "", v != null && v < 0 ? "neg" : ""].join(" ");
+      h += `<td class="${cls}">${v == null ? "–" : isPct ? pct(v) : fmt(v)}</td>`;
+    });
+    h += `</tr>`;
+  });
+  document.getElementById("score").innerHTML = h + "</tbody>";
+}
+const seg = document.getElementById("metricSeg");
+Object.entries(METRICS).forEach(([k, [label]]) => {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+  b.setAttribute("aria-pressed", k === metric); b.onclick = () => { metric = k; [...seg.children].forEach(c => c.setAttribute("aria-pressed", c === b)); renderScore(); };
+  seg.appendChild(b);
+});
+
+/* ---------- findings ---------- */
+function renderFindings() {
+  const S = DATA.score, P = DATA.pairs;
+  const m = (name, key) => { const v = P.map(p => S[name][p]?.[key]); return v.every(x => x != null) ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const base = m("Repo ATO (ridge, CV α)", "feat_r2_median"), lin = m("Norm-aware linear ATO", "feat_r2_median"),
+        nl = m("+ sparse correction (top-k 8192)", "feat_r2_median");
+  const fb = m("Repo ATO (ridge, CV α)", "fve"), fl = m("Norm-aware linear ATO", "fve"), fn = m("+ sparse correction (top-k 8192)", "fve");
+  const items = [];
+  if (base != null && lin != null) items.push([`${fmt(base, 2)} → ${fmt(lin, 2)}`, `Mean median feature R² over six layer pairs, repo ridge vs. the norm-aware linear operator. It is better on every pair, at the same cost.`]);
+  if (nl != null) items.push([`${fmt(nl, 2)}`, `Mean median feature R² once a sparse 64-of-8192 correction is added for what the intermediate layers synthesize.`]);
+  if (fb != null && fn != null) items.push([`${fmt(fb, 3)} → ${fmt(fn ?? fl, 3)}`, `Mean residual FVE. Small gains here hide large per-feature gains: linear maps under-predict exactly where a feature fires.`]);
+  const t = DATA.feat["L9_k1"]?.meta?.taxonomy, t5 = DATA.feat["L5_k5"]?.meta?.taxonomy;
+  if (t && t5) {
+    const tot = o => Object.values(o).reduce((a, b) => a + b, 0);
+    items.push([`${pct(t.transported / tot(t))} → ${pct(t5.transported / tot(t5))}`, `Share of layer-10 features carried by a single upstream feature, one layer back (L9) vs. five layers back (L5).`]);
+  }
+  document.getElementById("findings").innerHTML = items.map(([n, p]) => `<div class="finding"><div class="num">${n}</div><p>${p}</p></div>`).join("");
+}
+
+/* ---------- taxonomy ---------- */
+function renderTax() {
+  document.getElementById("legend").innerHTML = CLASSES.map(c => `<span><span class="sw" style="background:var(--c-${c})"></span>${c}</span>`).join("");
+  document.getElementById("defs").innerHTML = CLASSES.map(c => `<div><b style="color:var(--c-${c})">${c}</b> <span class="muted">${CLASS_DEF[c]}</span></div>`).join("");
+  let h = "";
+  DATA.pairs.forEach(p => {
+    const t = DATA.feat[p]?.meta?.taxonomy;
+    if (!t) { h += `<div class="taxrow"><span class="lbl">${pairName(p)}</span><span class="muted" style="font-size:.88rem">pending</span></div>`; return; }
+    const tot = CLASSES.reduce((a, c) => a + (t[c] || 0), 0) + (t.other || 0);
+    const title = CLASSES.map(c => `${c}: ${t[c] || 0} (${pct((t[c] || 0) / tot)})`).join(", ");
+    h += `<div class="taxrow"><span class="lbl">${pairName(p)}</span><div class="bar" title="${title}" role="img" aria-label="${title}">` +
+      CLASSES.map(c => `<span style="width:${100 * (t[c] || 0) / tot}%;background:var(--c-${c})"></span>`).join("") +
+      `</div></div>`;
+  });
+  document.getElementById("tax").innerHTML = h;
+}
+
+/* ---------- matching ---------- */
+function renderMatch() {
+  const RULES = [["dec-cos", "decoder cosine"], ["ato-dec", "through operator"], ["dec-cos-csls", "decoder cosine + CSLS"], ["ato-dec-csls", "through operator + CSLS"]];
+  let h = `<thead><tr><th>pair</th>${RULES.map(r => `<th>${r[1]}</th>`).join("")}<th>oracle corr (median)</th></tr></thead><tbody>`;
+  DATA.pairs.forEach(p => {
+    const m = DATA.feat[p]?.meta?.matching; if (!m) return;
+    const vals = RULES.map(([k]) => m[k]?.agree_with_oracle);
+    const b = Math.max(...vals.filter(v => v != null));
+    h += `<tr><td>${pairName(p)}</td>${vals.map(v => `<td class="${v === b ? "best" : ""}">${v == null ? "–" : pct(v)}</td>`).join("")}<td>${fmt(m["oracle(train-corr)"]?.test_corr_median, 2)}</td></tr>`;
+  });
+  document.getElementById("match").innerHTML = h + "</tbody>";
+}
+
+/* ---------- explorer ---------- */
+let curPair = DATA.pairs.find(p => DATA.feat[p]?.rows?.length) || DATA.pairs[0];
+let curClass = "all", query = "", shown = 20;
+try { const s = JSON.parse(localStorage.getItem("ft-explorer") || "{}"); if (s.pair && DATA.feat[s.pair]?.rows?.length) curPair = s.pair; } catch (e) {}
+const pseg = document.getElementById("pairSeg");
+DATA.pairs.forEach(p => {
+  if (!DATA.feat[p]?.rows?.length) return;
+  const b = document.createElement("button"); b.type = "button"; b.textContent = pairName(p);
+  b.setAttribute("aria-pressed", p === curPair);
+  b.onclick = () => { curPair = p; curClass = "all"; shown = 20; [...pseg.children].forEach(c => c.setAttribute("aria-pressed", c === b));
+    try { localStorage.setItem("ft-explorer", JSON.stringify({ pair: p })); } catch (e) {} renderExplorer(); };
+  pseg.appendChild(b);
+});
+document.getElementById("q").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); shown = 20; renderList(); });
+function renderExplorer() {
+  const F = DATA.feat[curPair]; const [L, k] = pairLK(curPair);
+  const t = F.meta.taxonomy || {};
+  document.getElementById("explorerHelp").textContent =
+    `A sample of ${F.rows.length} of the ${F.meta.n_rows_total ?? "?"} classified layer-${L + k} features, drawn from each class. Each row pairs a downstream feature with its best-correlated layer-${L} feature (train split). Correlation and R² are on test.`;
+  const chips = document.getElementById("classChips");
+  chips.innerHTML = "";
+  ["all", ...CLASSES].forEach(c => {
+    const n = c === "all" ? F.rows.length : F.rows.filter(r => r.cls === c).length;
+    if (c !== "all" && !n) return;
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip";
+    b.innerHTML = (c === "all" ? "" : `<span class="sw" style="background:var(--c-${c});margin:0"></span>`) + `${c}<span class="n">${n}</span>`;
+    b.setAttribute("aria-pressed", c === curClass);
+    b.onclick = () => { curClass = c; shown = 20; [...chips.children].forEach(x => x.setAttribute("aria-pressed", x === b)); renderList(); };
+    chips.appendChild(b);
+  });
+  renderList();
+}
+function renderList() {
+  const F = DATA.feat[curPair]; const [L, k] = pairLK(curPair), T = L + k;
+  let rows = F.rows.filter(r => curClass === "all" || r.cls === curClass);
+  if (query) rows = rows.filter(r => [r.de, r.ue, String(r.d), String(r.u), ...r.top.map(t => t.e)].join(" ").toLowerCase().includes(query));
+  const el = document.getElementById("list");
+  if (!rows.length) { el.innerHTML = `<p class="empty">No features match. Clear the search or pick another class.</p>`; return; }
+  const total = rows.length; rows = rows.slice(0, shown);
+  el.innerHTML = rows.map(r => `
+    <article class="pairrow">
+      <div class="pairhead">
+        <div class="feat"><a class="id" href="${np(L, r.u)}" target="_blank" rel="noopener">L${L} #${r.u}</a><span class="ex">${esc(r.ue) || '<span class="muted">no explanation</span>'}</span></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="feat"><a class="id" href="${np(T, r.d)}" target="_blank" rel="noopener">L${T} #${r.d}</a><span class="ex">${esc(r.de) || '<span class="muted">no explanation</span>'}</span></div>
+      </div>
+      <div class="meta">
+        <span class="pill" style="background:var(--c-${r.cls})">${r.cls}</span>
+        <span>corr ${fmt(r.c, 2)}</span><span>R² linear ${fmt(r.rl, 2)}</span><span>R² +correction ${fmt(r.rn, 2)}</span>
+        ${r.n ? `<span>fires ${r.n.toLocaleString()}× on test</span>` : ""}
+      </div>
+      ${r.top?.length ? `<details><summary>Top upstream contributors through the operator</summary><ul>${r.top.map(t =>
+        `<li><a class="mono" href="${np(L, t.u)}" target="_blank" rel="noopener">L${L} #${t.u}</a> <span class="muted mono">cos ${fmt(t.s, 2)}</span> ${esc(t.e)}</li>`).join("")}</ul></details>` : ""}
+    </article>`).join("") + (total > shown
+      ? `<button type="button" class="chip" id="more" style="justify-self:start">Show ${Math.min(20, total - shown)} more of ${total - shown} remaining</button>` : "");
+  const more = document.getElementById("more");
+  if (more) more.onclick = () => { shown += 20; renderList(); };
+}
+
+renderFindings(); renderScore(); renderTax(); renderMatch();
+if (DATA.feat[curPair]?.rows?.length) renderExplorer();
+else document.getElementById("list").innerHTML = `<p class="empty">Feature data is still being computed.</p>`;
+</script>
