@@ -341,3 +341,19 @@ reproduce the downstream SAE code? Test, nobos.
 * Raising λ further keeps inflating the paper's metric. Code F1 and FVE
   peak at λ ∈ [0.3, 1], and residual FVE drops steadily.
 * Width helps the MSE objective more than the feature objective.
+
+### Iteration 7: width / sparsity of the sparse correction (15→20, MSE, 3 epochs)
+
+| width h | k | FVE | median feat R² | frac R²>0.9 | relative cost |
+|---|---|---|---|---|---|
+| (linear only) | – | 0.589 | −0.100 | 0.005 | – |
+| 8192 | 32 | 0.628 | 0.212 | 0.032 | 1× |
+| 8192 | 64 | 0.633 | 0.246 | 0.037 | 1× |
+| 8192 | 128 | 0.636 | 0.268 | 0.039 | ≈1× (sparse decoder) |
+| 16384 | 64 | **0.639** | **0.284** | **0.045** | 2× (dense encoder) |
+
+* Capacity has not saturated in either direction. k is nearly free to
+  raise, because the decoder is an `embedding_bag` over k rows. Width
+  doubles the dense encoder cost.
+* With 151k training tokens, all of these still peak at epoch 2–3, so a
+  larger activation set is the most promising next lever.
