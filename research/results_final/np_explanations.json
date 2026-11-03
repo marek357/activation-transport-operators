@@ -1,0 +1,30 @@
+{
+"10:100": {
+"explanation": "references to experimental results and analysis methods in scientific research",
+"frac_nonzero": 0.00501,
+"top_logits": [
+"\u304b\u308f\u3089\u305a",
+"\u2581\u201c",
+"UrlEncoded",
+"koe",
+"\u51fa\u7248\u5e74",
+"\u2581The",
+"\u2581And",
+"\u2581\u2581"
+]
+},
+"9:100": {
+"explanation": "concepts related to patient-centered research and its implications",
+"frac_nonzero": 0.00259,
+"top_logits": [
+"\u2581oprot",
+"\u2581CreateTagHelper",
+"\u2581<=\",",
+"\u2581autorytatywna",
+"AccessorTable",
+"\u2581propOrder",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"\u2581'\\\\;'"
+]
+}
+}

@@ -124,6 +124,8 @@ def main():
     res = {}
     oracle = argmax_over_up(C_tr[:, j_idx])
     best_te = C_te[oracle, j_idx]
+    oracle_tr_corr = C_tr[oracle, j_idx]
+    del C_tr
     rules = {
         "oracle(train-corr)": oracle,
         "dec-cos": argmax_over_up(DL @ DT[j_idx].T),
@@ -143,7 +145,6 @@ def main():
               flush=True)
 
     # --- per-downstream-feature R^2 for linear ATO (+ optional nonlinear)
-    _, _, pte = layer_tokens(L, "test", drop_bos=True)
     Yh_lin = phi_norm(Xte) @ W + b
     _, pf_lin = feature_metrics(Yte, Yh_lin, saeT, min_count=a.min_count)
     r2_lin = np.full(16384, np.nan); r2_lin[pf_lin["idx"]] = pf_lin["r2"]
@@ -156,10 +157,12 @@ def main():
         model.load_state_dict(torch.load(f"results/corr_{a.corr}_L{L}_k{k}.pt"))
         model.eval()
         info = json.load(open(f"results/exp3_{a.corr}_L{L}_k{k}.json"))
-        # residual scale used in training
-        Xtr_, _, _ = layer_tokens(L, "train", drop_bos=True)
-        Ytr_, _, _ = layer_tokens(T, "train", drop_bos=True)
-        rs = float((Ytr_ - (phi_norm(Xtr_) @ W + b)).std()); del Xtr_, Ytr_
+        rs = info.get("resid_scale")
+        if rs is None:  # older runs: recompute residual scale on a train subsample
+            Xtr_, _, _ = layer_tokens(L, "train", drop_bos=True)
+            Ytr_, _, _ = layer_tokens(T, "train", drop_bos=True)
+            Xtr_, Ytr_ = Xtr_[::3].copy(), Ytr_[::3].copy()
+            rs = float((Ytr_ - (phi_norm(Xtr_) @ W + b)).std()); del Xtr_, Ytr_
         Xh = e3.rmsn(Xte).astype(np.float32)
         P = torch.cat([model(torch.from_numpy(Xh[i:i + 4096])) for i in range(0, len(Xh), 4096)]).numpy() * rs
         _, pf_nl = feature_metrics(Yte, Yh_lin + P, saeT, min_count=a.min_count)

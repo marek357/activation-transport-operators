@@ -144,7 +144,7 @@ def main():
     tag = f"{a.kind}_h{a.h}" + (f"_k{a.topk}" if a.kind == "topk" else "")
     print(f"[L={L},k={k}] linear   {fmt({'nobos': r_lin})}")
     print(f"[L={L},k={k}] {tag} {fmt({'nobos': r_nl})}")
-    save_result(f"exp3_{tag}_L{L}_k{k}", {"args": vars(a), "val_best_fve": best,
+    save_result(f"exp3_{tag}_L{L}_k{k}", {"args": vars(a), "val_best_fve": best, "resid_scale": rs,
                                           "linear": r_lin, "nonlinear": r_nl})
     torch.save(model.state_dict(), f"results/corr_{tag}_L{L}_k{k}.pt")
 
