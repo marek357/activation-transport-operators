@@ -125,6 +125,20 @@
 "Tikang"
 ]
 },
+"10:10155": {
+"explanation": "information related to questions and answers in conversations",
+"frac_nonzero": 0.00289,
+"top_logits": [
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"expandindo",
+"\u2581doubtnut",
+"contentLoaded",
+"tvguidetime",
+"protoimpl",
+"\u2581nahilalakip",
+"GEBURTSDATUM"
+]
+},
 "10:10183": {
 "explanation": "terms related to technical specifications and compliance documentation",
 "frac_nonzero": 0.00513,
@@ -137,6 +151,20 @@
 "\u2581sp\u00e9ciaux",
 "ISupport",
 "\u4f59\u8a08"
+]
+},
+"10:10195": {
+"explanation": "words related to desire or wishes",
+"frac_nonzero": 0.00099,
+"top_logits": [
+"\u2581my\u017felf",
+"\u2581Desire",
+"Desire",
+"\u2581i\u017ft",
+"\u2581Majefty",
+"\u2581it\u017felf",
+"\u2581Re\u017f",
+"\u2581Jefus"
 ]
 },
 "10:10216": {
@@ -307,6 +335,20 @@
 "\u2581p\u00e9ld\u00e1ul"
 ]
 },
+"10:10681": {
+"explanation": " indications of objectives or aims within the text",
+"frac_nonzero": 0.00335,
+"top_logits": [
+"@[+][",
+"ViewImports",
+"\ufeff/**",
+"}`).",
+"okovic",
+"]');",
+"JspWriter",
+"\u2581calendriers"
+]
+},
 "10:10697": {
 "explanation": " punctuation and formatting elements in the text",
 "frac_nonzero": 0.00034,
@@ -363,6 +405,20 @@
 "\u2581Departments"
 ]
 },
+"10:11015": {
+"explanation": "mathematical operations and numerical values",
+"frac_nonzero": 0.00391,
+"top_logits": [
+"Datuak",
+"\u2581\u0635\u0648\u062a\u064a\u0647",
+"\u2581SafeMath",
+"DeleteBehavior",
+"ChildScrollView",
+"AddTagHelper",
+"tvguidetime",
+"\u2581\u8df3\u8f6c\u81f3"
+]
+},
 "10:11020": {
 "explanation": " mathematical symbols and variables commonly used in equations or scientific contexts",
 "frac_nonzero": 0.00324,
@@ -389,6 +445,34 @@
 "\u8acb\u7e7c\u7e8c\u5f80\u4e0b\u95b1\u8b80",
 "\u017ei\u0173",
 "\u2581f\u00f3"
+]
+},
+"10:11039": {
+"explanation": "references to beaches and seaside locations",
+"frac_nonzero": 0.00053,
+"top_logits": [
+"\u2581beaches",
+"\u2581Beach",
+"\u2581beach",
+"\u2581Beaches",
+"Beach",
+"\u2581BEACH",
+"beach",
+"\u2581plages"
+]
+},
+"10:11065": {
+"explanation": "references to businesses or organizations recognized for their achievements",
+"frac_nonzero": 0.00222,
+"top_logits": [
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"tagHelperRunner",
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"\u2581GenerationType",
+"\u2581purpo\u017fe",
+"\u2581larmes",
+"\u2581semoga",
+"]\";"
 ]
 },
 "10:11071": {
@@ -447,6 +531,20 @@
 "\u2581royals"
 ]
 },
+"10:1124": {
+"explanation": " numerical data and corresponding identifiers or codes",
+"frac_nonzero": 0.00966,
+"top_logits": [
+"tagHelperRunner",
+"\u2728:",
+"\u2581Exacts",
+"DoubleQuotes",
+"SourceChecksum",
+"Jeografia",
+"\"](",
+"\u09a4\u09a5\u09cd\u09af\u09b8\u09c2\u09a4\u09cd\u09b0"
+]
+},
 "10:11294": {
 "explanation": "phrases indicating exceptions or exclusions",
 "frac_nonzero": 0.00145,
@@ -459,6 +557,20 @@
 "\u2581EXCEPT",
 "\u2581Ausnahme",
 "\u2581excepto"
+]
+},
+"10:11329": {
+"explanation": "descriptions of obscured or hidden elements within narratives, particularly focusing on shadowy or concealed aspects",
+"frac_nonzero": 0.00388,
+"top_logits": [
+"\u2581obscurity",
+"tvguidetime",
+"\u2581concealment",
+"\u2581\u0627\u0644\u0627\u0637\u0644\u0627\u0639",
+"\u2581concealing",
+"\u2581shroud",
+"\u2581Conce",
+"\u2581hides"
 ]
 },
 "10:11343": {
@@ -517,6 +629,34 @@
 "Website"
 ]
 },
+"10:11499": {
+"explanation": " code-related terminology and structure, particularly in the context of web development with controllers and actions",
+"frac_nonzero": 0.00098,
+"top_logits": [
+"\u2581propOrder",
+"\u2581it\u017felf",
+"\u043a\u043b\u043e\u043f\u0435",
+"WebServlet",
+"\u2581my\u017felf",
+"\u2581Efq",
+"\u2581plea\u017fure",
+"\u2581jadx"
+]
+},
+"10:11559": {
+"explanation": "technical processes and instructions related to electrical components and systems",
+"frac_nonzero": 0.00655,
+"top_logits": [
+"\u2581initial",
+"startup",
+"\u2581onboarding",
+"initial",
+"\u2581initState",
+"PostConstruct",
+"ViewFeatures",
+"\u2581inicial"
+]
+},
 "10:11596": {
 "explanation": "terms related to spreadsheets and documentation",
 "frac_nonzero": 0.00047,
@@ -529,6 +669,20 @@
 "sheet",
 "Sheet",
 "Sheets"
+]
+},
+"10:11597": {
+"explanation": "financial costs and expenses related to incarceration, healthcare, and consumer goods",
+"frac_nonzero": 0.00382,
+"top_logits": [
+"\u2581($",
+"UpInside",
+"engkapnya",
+"\u2581basket",
+"\u2581alone",
+"Refer\u00eancias",
+"[$",
+"\u2581compared"
 ]
 },
 "10:11668": {
@@ -585,6 +739,20 @@
 "An",
 "Portale",
 "\u2581cet"
+]
+},
+"10:11915": {
+"explanation": "phrases indicating structures or components related to data or technology",
+"frac_nonzero": 0.006979999999999999,
+"top_logits": [
+"\u2581\u0644\u0644\u0645\u0639\u0627\u0631\u0641",
+"\u2581>=\",",
+"UVWXYZ",
+"\u2581nakalista",
+"\u2581dabei",
+"\u0c32\u0c3e\u0c32\u0c41",
+"\u2581\u0645\u0634\u064a\u0646",
+"\u03c1\u03af\u03b6"
 ]
 },
 "10:11969": {
@@ -713,6 +881,20 @@
 "\u2581bothered"
 ]
 },
+"10:12334": {
+"explanation": "positive attributes of both students and individuals off the field, emphasizing their character and preparation",
+"frac_nonzero": 0.00459,
+"top_logits": [
+"\u2581backstage",
+"TestingModule",
+"GoogleApiClient",
+"audiovisuel",
+"\u2581fan",
+"ModelAdmin",
+"SBATCH",
+"\u2581fans"
+]
+},
 "10:12366": {
 "explanation": "patterns or structures in sequences of numbers or data",
 "frac_nonzero": 0.00097,
@@ -783,6 +965,20 @@
 "LAW"
 ]
 },
+"10:1251": {
+"explanation": "terms related to health, physical fitness, and somatic symptoms",
+"frac_nonzero": 0.00795,
+"top_logits": [
+"\u2581health",
+"health",
+"\u2581Health",
+"Health",
+"\u2581HEALTH",
+"HEALTH",
+"\u2581kesehatan",
+"\u2581zdrow"
+]
+},
 "10:12520": {
 "explanation": "elements related to procedural rules or guidelines",
 "frac_nonzero": 0.00252,
@@ -795,6 +991,20 @@
 "\n\n\n\n",
 "tvguidetime",
 "\n\n\n"
+]
+},
+"10:12556": {
+"explanation": "phrases related to demographic statistics and health conditions",
+"frac_nonzero": 0.00417,
+"top_logits": [
+"NewUrlParser",
+"WebControls",
+"\u2581(>",
+"\u2581ExecuteAsync",
+"hoeddwyd",
+"\u2581Quadrant",
+")?;",
+"\u2581Wikimedijinoj"
 ]
 },
 "10:12560": {
@@ -867,6 +1077,34 @@
 "b\u00f6z"
 ]
 },
+"10:12853": {
+"explanation": "terms related to historical printing processes and machinery",
+"frac_nonzero": 0.00865,
+"top_logits": [
+"\u2581traditional",
+"Traditional",
+"\u2581Traditional",
+"traditional",
+"\u2581tradisional",
+"\u2581traditionellen",
+"\u2581traditionelle",
+"\u2581manually"
+]
+},
+"10:12981": {
+"explanation": "terms related to clinical evaluations of treatments or substances",
+"frac_nonzero": 0.01724,
+"top_logits": [
+"\u2581ExecuteAsync",
+"\u2581due",
+"\u2581conmigo",
+"endcsname",
+".",
+"\u2581not",
+"\u2581contigo",
+"\u2581his"
+]
+},
 "10:13046": {
 "explanation": "names and proper nouns associated with individuals and entities",
 "frac_nonzero": 0.01037,
@@ -907,6 +1145,20 @@
 "\u2581antenna",
 "\u24e7",
 "\u2581Broadcast"
+]
+},
+"10:13172": {
+"explanation": "components related to financial transactions and service industries",
+"frac_nonzero": 0.007039999999999999,
+"top_logits": [
+"\u2581fevere",
+"\u2581caro",
+"\u2581enfans",
+"\u2581potest",
+"\u2581darm",
+"\u00e9drale",
+"\u2581Alphonse",
+"\u2581stepmother"
 ]
 },
 "10:13278": {
@@ -993,6 +1245,20 @@
 "\u2581vinegar"
 ]
 },
+"10:13470": {
+"explanation": "specific technical or programming terms related to coding practices",
+"frac_nonzero": 0.01172,
+"top_logits": [
+"\u2581kasarigan",
+"\u2581nahilalakip",
+"\u2581autorytatywna",
+"\u00e9valuateur",
+"tvguidetime",
+"SourceChecksum",
+"\u2581gynhyrchwyd",
+"findpost"
+]
+},
 "10:13518": {
 "explanation": " references and citations within text",
 "frac_nonzero": 0.00289,
@@ -1035,6 +1301,20 @@
 "\f"
 ]
 },
+"10:13759": {
+"explanation": " numerical data and date formats",
+"frac_nonzero": 0.00111,
+"top_logits": [
+"\">:",
+"ilizaci\u00f3n",
+"\u2581MainAxisSize",
+"hdys",
+"woordig",
+"\u03ad\u03c1\u03b1",
+"BeginContext",
+"\u0561\u0563\u0580\u0578\u0582\u0569\u0575\u0578\u0582\u0576\u0576\u0565\u0580"
+]
+},
 "10:1381": {
 "explanation": "historical references or events involving political power transitions and conflicts",
 "frac_nonzero": 0.00432,
@@ -1063,6 +1343,20 @@
 "\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439"
 ]
 },
+"10:1388": {
+"explanation": "phrases related to intentions and objectives",
+"frac_nonzero": 0.00061,
+"top_logits": [
+"\u2581Aims",
+"Aims",
+"\u2581AIM",
+"\u2581Aim",
+"AIM",
+"Aim",
+"\u2581SAI",
+"\u2581auroit"
+]
+},
 "10:13881": {
 "explanation": "nested structures or complex data types in programming contexts",
 "frac_nonzero": 0.05738000000000001,
@@ -1089,6 +1383,20 @@
 "windowFixed",
 "\u2581BitmapFactory",
 "Trend"
+]
+},
+"10:13944": {
+"explanation": "references to specific studies or reviews with detailed assessments",
+"frac_nonzero": 0.00243,
+"top_logits": [
+"setVerticalGroup",
+"InputTagHelper",
+"\u2581MainAxisSize",
+"BagConstraints",
+"XmlAccessType",
+"\u2581AssemblyCulture",
+"TagMode",
+"RuleContext"
 ]
 },
 "10:13962": {
@@ -1147,6 +1455,20 @@
 "httphttps"
 ]
 },
+"10:14057": {
+"explanation": "conditional statements and their associated structures in code",
+"frac_nonzero": 0.00101,
+"top_logits": [
+"MouseAdapter",
+"</thead>",
+"\u2581present",
+"createStatement",
+"\u03c6\u03b1\u03bb",
+"\u2581handelt",
+"\u2581{",
+"\u2581("
+]
+},
 "10:1406": {
 "explanation": " programming code structure and control statements",
 "frac_nonzero": 0.00097,
@@ -1173,6 +1495,34 @@
 "ContentAsync",
 "\u2581ivelany",
 "TagHelper"
+]
+},
+"10:14154": {
+"explanation": "terms related to silicone and its properties or applications",
+"frac_nonzero": 0.02809,
+"top_logits": [
+"ConstraintMaker",
+"expandindo",
+"\u2581\u062f\u06cc\u06a9\u06be\u06cc\u06d2",
+"\u2581BoxDecoration",
+"RectangleBorder",
+"extAlignment",
+"PerformLayout",
+"HtmlAttribute"
+]
+},
+"10:14165": {
+"explanation": " terms and symbols related to programming or coding in a software context",
+"frac_nonzero": 0.00186,
+"top_logits": [
+"\u2581t",
+"T",
+"t",
+"\u2581T",
+"getT",
+"\uff54",
+"\ud835\ude01",
+"\u062a"
 ]
 },
 "10:14192": {
@@ -1231,6 +1581,20 @@
 "\u2581I"
 ]
 },
+"10:14310": {
+"explanation": "complex scientific concepts and terminology related to theories",
+"frac_nonzero": 0.00376,
+"top_logits": [
+"\u2581\u0627\u0644\u0631\u064a\u0627\u0636\u064a\u0647",
+"tonsoft",
+"\u2939",
+"\u272b",
+"\u2581sowohl",
+"ativement",
+"ApiModelProperty",
+"wu\u00dft"
+]
+},
 "10:14317": {
 "explanation": "transitional phrases and conjunctions that connect thoughts or ideas",
 "frac_nonzero": 0.00225,
@@ -1257,6 +1621,20 @@
 "\u2581\u0627\u0644\u062c\u0627\u0646",
 "neming",
 "Databases"
+]
+},
+"10:14513": {
+"explanation": "terms related to medical conditions and diagnoses",
+"frac_nonzero": 0.00846,
+"top_logits": [
+"HasAnnotation",
+"PreferredItem",
+"\u2581intptr",
+"NgModule",
+"Rhestr",
+"\u2581Italijanski",
+"djangoproject",
+"RepeatedField"
 ]
 },
 "10:14527": {
@@ -1369,6 +1747,20 @@
 "GEBURTSDATUM",
 "\u2581her",
 "DateTimeField"
+]
+},
+"10:1489": {
+"explanation": "medical terms related to injuries and their characteristics",
+"frac_nonzero": 0.00791,
+"top_logits": [
+"\u2581initComponents",
+"\u2581EventArgs",
+"\ufeff#",
+"RenderAtEndOf",
+"\u624d",
+"LikeLike",
+"\u2581estekak",
+"Mappings"
 ]
 },
 "10:1490": {
@@ -1595,6 +1987,20 @@
 "IBOutlet"
 ]
 },
+"10:1555": {
+"explanation": "references to weapons and related military terms, particularly in the context of conflict or political discussions",
+"frac_nonzero": 0.01751,
+"top_logits": [
+"UrlResolution",
+"LookAnd",
+"\u2581my\u017felf",
+"CloseOperation",
+"\u2581i\u017ft",
+"DockStyle",
+"WebVitals",
+"expandindo"
+]
+},
 "10:15576": {
 "explanation": "the pronoun 'I' and variations of the verb 'to be' in various contexts",
 "frac_nonzero": 0.00102,
@@ -1637,6 +2043,34 @@
 "\u2581could"
 ]
 },
+"10:15600": {
+"explanation": "phrases that suggest planning and preparation for events or situations",
+"frac_nonzero": 0.00317,
+"top_logits": [
+"\u2581purpo\u017fe",
+"\u2581AssemblyCulture",
+"\u2581fa\u017ft",
+"\u2581my\u017felf",
+"\u2581An\u017f",
+"\u2581LoggerFactory",
+"\u2581\u017find",
+"\u2581\u0432\u0456\u043a\u0456\u0441\u0442\u043e\u0440\u0456\u043d\u043a\u0443"
+]
+},
+"10:15825": {
+"explanation": "calls to action, particularly encouraging clicking on links or buttons",
+"frac_nonzero": 0.00038,
+"top_logits": [
+"\u2581CLICK",
+"\u2581clicks",
+"Clicks",
+"CLICK",
+"\u2581Click",
+"\u2581click",
+"clicks",
+"\u2581Klick"
+]
+},
 "10:15837": {
 "explanation": "key concepts and terms related to institutional and legal frameworks",
 "frac_nonzero": 0.0027,
@@ -1649,6 +2083,20 @@
 "IntoConstraints",
 "\u2581That",
 "Those"
+]
+},
+"10:15898": {
+"explanation": "elements related to data processing and handling in programming",
+"frac_nonzero": 0.00317,
+"top_logits": [
+"SequentialGroup",
+"ConstraintMaker",
+"esez",
+"\u2581fiecare",
+"\u2581tramonto",
+"\u4e00\u6123",
+"\u2581ma\u0219",
+"\u0627\u0646\u062c\u0644\u064a\u0632"
 ]
 },
 "10:15976": {
@@ -1691,6 +2139,20 @@
 "\u2581Gene",
 "Gene",
 "\u2581GENE"
+]
+},
+"10:16090": {
+"explanation": "connections and relationships between concepts, particularly focusing on equivalence and interdependence",
+"frac_nonzero": 0.00553,
+"top_logits": [
+"\u2581vapeur",
+"\u2581iprot",
+"Obras",
+"\u0161tina",
+"Cat\u00e9gorie",
+"g\u00e9nero",
+"DeleteBehavior",
+"\u2581darte"
 ]
 },
 "10:16148": {
@@ -1749,6 +2211,20 @@
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581"
 ]
 },
+"10:16226": {
+"explanation": "infinite verbs and phrases suggesting continuity or persistence",
+"frac_nonzero": 0.0006900000000000001,
+"top_logits": [
+")\");\r",
+"AsUp",
+"AndEndTag",
+"\u2581useRouter",
+"expandindo",
+"LabelTagHelper",
+"\u2581unknownFields",
+"\u0625\u0646\u0647"
+]
+},
 "10:16263": {
 "explanation": " code structure elements and conventions, such as classes, methods, and access modifiers",
 "frac_nonzero": 0.00151,
@@ -1775,6 +2251,20 @@
 "\u2581CreateTagHelper",
 "\u2581autorytatywna",
 "\u2581Olympics"
+]
+},
+"10:16337": {
+"explanation": "references to evaluation or assessment of strategies and interventions related to health or social issues",
+"frac_nonzero": 0.00855,
+"top_logits": [
+"\u2581also",
+"\u2581other",
+"\u2581pre",
+"\u2581subsequent",
+"\u2581single",
+"\u2581em",
+"\u2581multiple",
+"\u2581the"
 ]
 },
 "10:16345": {
@@ -1875,6 +2365,20 @@
 "\u2581iconTwitter"
 ]
 },
+"10:2034": {
+"explanation": " numerical values and mathematical operations",
+"frac_nonzero": 0.00658,
+"top_logits": [
+"\ue315",
+"\u2581my\u017felf",
+"\u2581Majefty",
+"\u2581\u2015\u2015\u2015\u2015\u2015",
+")\");\r",
+".\"));",
+"\u2581\u017fche",
+"\u2581purpo\u017fe"
+]
+},
 "10:207": {
 "explanation": "terms related to digital computing and binary data processing",
 "frac_nonzero": 0.00435,
@@ -1917,6 +2421,20 @@
 "\n\n"
 ]
 },
+"10:2267": {
+"explanation": "references to academic contexts or institutions",
+"frac_nonzero": 0.00074,
+"top_logits": [
+"Academics",
+"\u2581Aca",
+"\u2581academics",
+"\u2581Academic",
+"Aca",
+"academic",
+"\u2581academic",
+"\u2581Academia"
+]
+},
 "10:2369": {
 "explanation": "keywords related to legal terms and processes",
 "frac_nonzero": 0.01133,
@@ -1957,6 +2475,20 @@
 "for",
 "\u2581f\u00fcr",
 "ForValue"
+]
+},
+"10:2559": {
+"explanation": " terms related to biochemical interactions and receptor activity",
+"frac_nonzero": 0.01132,
+"top_logits": [
+"endpush",
+"\u2581GenerationType",
+"\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439",
+"\udb40\udc62",
+"RSpec",
+"\u2581CreateTagHelper",
+"inergic",
+"XmlAccessType"
 ]
 },
 "10:2739": {
@@ -2043,6 +2575,20 @@
 "\u4f8b\u6587\u5e33\u306b\u8ffd\u52a0"
 ]
 },
+"10:2936": {
+"explanation": " references to medical topics and legal proceedings",
+"frac_nonzero": 0.00314,
+"top_logits": [
+"\u2581{?>",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"\u2581propOrder",
+"\u2581TextAppearance",
+"corbic",
+"tvguidetime",
+"onix",
+"utos"
+]
+},
 "10:2943": {
 "explanation": " exclamation marks and other punctuation indicating strong emotion or emphasis",
 "frac_nonzero": 0.0008699999999999999,
@@ -2069,6 +2615,20 @@
 ").",
 "}.",
 "]))."
+]
+},
+"10:305": {
+"explanation": "high-profile political and legal controversies involving presidents and key figures",
+"frac_nonzero": 0.0074,
+"top_logits": [
+"\u2581America",
+"\u2581American",
+"American",
+"\u2581Trump",
+"\u2581Biden",
+"\u2581US",
+"\u2581Washington",
+"\u2581Obama"
 ]
 },
 "10:3216": {
@@ -2281,6 +2841,20 @@
 "\u2581Tamb\u00e9m"
 ]
 },
+"10:3943": {
+"explanation": "phrases related to improving clarity and efficiency in tasks or processes",
+"frac_nonzero": 0.00478,
+"top_logits": [
+"contentLoaded",
+"\u2581\u0628\u0647\u062a\u0631",
+"\u2581pr\u00e9f\u00e9rable",
+"\u2581better",
+"\u2581meilleurs",
+"better",
+"\u2581Meilleures",
+"\u66f4\u597d\u5730"
+]
+},
 "10:3957": {
 "explanation": "phrases emphasizing ownership and collective identity",
 "frac_nonzero": 0.00061,
@@ -2379,6 +2953,20 @@
 "Products"
 ]
 },
+"10:4087": {
+"explanation": "characters who are voice actors or narrators in a story",
+"frac_nonzero": 0.00432,
+"top_logits": [
+"djangoproject",
+"\u2581assigned",
+"\u2581assigns",
+"\u2581assigning",
+"\u2581allocated",
+"\u2581assign",
+"\u2581resourceCulture",
+"\u2581Assign"
+]
+},
 "10:4108": {
 "explanation": "variables and their assignments in a programming context",
 "frac_nonzero": 0.00142,
@@ -2463,6 +3051,34 @@
 "DockStyle"
 ]
 },
+"10:4251": {
+"explanation": "references to batch processing in various contexts",
+"frac_nonzero": 0.00104,
+"top_logits": [
+"\u2581batch",
+"\u2581Batch",
+"\u2581BATCH",
+"Batch",
+"batch",
+"\u2581batches",
+"BATCH",
+"batches"
+]
+},
+"10:4352": {
+"explanation": "phrases indicating the movement or transition into new contexts or states",
+"frac_nonzero": 0.00118,
+"top_logits": [
+"\u2581INTO",
+"\u2581Into",
+"Into",
+"\u2581into",
+"INTO",
+"into",
+"\u2581onto",
+"*</"
+]
+},
 "10:4456": {
 "explanation": "phrases related to commitment to customer service and privacy",
 "frac_nonzero": 0.00137,
@@ -2545,6 +3161,20 @@
 "\u2581Later",
 "\u2581\u043f\u043e\u0437\u0436\u0435",
 "\u2581eventual"
+]
+},
+"10:4934": {
+"explanation": "terms related to seals or sealing mechanisms in mechanical contexts",
+"frac_nonzero": 0.00378,
+"top_logits": [
+"\u2581seal",
+"\u2581seals",
+"\u2581Seal",
+"\u2581sealing",
+"\u2581Seals",
+"seal",
+"Seal",
+"\u2581stamp"
 ]
 },
 "10:5018": {
@@ -2687,6 +3317,20 @@
 "\u2581Herrera"
 ]
 },
+"10:5320": {
+"explanation": "numbers and other structured data elements",
+"frac_nonzero": 0.0029,
+"top_logits": [
+"\u2581\\&",
+"\u2581\\#",
+"\u2581my\u017felf",
+"\u2581Efq",
+"\u2581him\u017felf",
+"PhysRevD",
+"\\#",
+"\u2581metall"
+]
+},
 "10:5425": {
 "explanation": "keywords related to fatty acids and their biochemical properties",
 "frac_nonzero": 0.01242,
@@ -2727,6 +3371,20 @@
 "ViewState",
 "\u2581tomb\u00e9",
 "\u2581Kardinal"
+]
+},
+"10:5658": {
+"explanation": " code structures and conditional statements that check for sizes and emptiness of lists or collections",
+"frac_nonzero": 0.00124,
+"top_logits": [
+"\u2581colspan",
+"\u2581isEmpty",
+"isEmpty",
+"\u2581Reverso",
+"OrWhiteSpace",
+"\u2581significativa",
+"\u043f\u0435\u0440\u0432\u044b\u0445",
+"\u2581segni"
 ]
 },
 "10:5663": {
@@ -2797,6 +3455,20 @@
 "Provide",
 "\u2581Provide",
 "\u2581provide"
+]
+},
+"10:5873": {
+"explanation": "components related to user authentication in code",
+"frac_nonzero": 0.00103,
+"top_logits": [
+"\u0627\u0644\u062d\u064a\u0627\u0647",
+"ViewImports",
+"WithEmail",
+"AndPassword",
+"\u2581she",
+"userdetails",
+"Sc\u00e9nario",
+"\u2581RoutedEventArgs"
 ]
 },
 "10:5943": {
@@ -2911,6 +3583,20 @@
 "+\"_"
 ]
 },
+"10:6290": {
+"explanation": "elements related to coding, functions, and programming structures",
+"frac_nonzero": 0.00259,
+"top_logits": [
+"\u2581\u2581",
+"\u2581",
+"\u2581,",
+"\u2581K",
+"\u2581in",
+"\u2581d",
+"\u2581C",
+"\u2581de"
+]
+},
 "10:6336": {
 "explanation": " instances of text that start with a special token or denote the beginning of a new segment, including the initial token of data streams",
 "frac_nonzero": 0.00199,
@@ -2923,6 +3609,20 @@
 "\u0410\u0440\u0445\u0456\u0432\u043e\u0432\u0430\u043d\u043e",
 "AntiForgeryToken",
 "Personendaten"
+]
+},
+"10:6363": {
+"explanation": "structured data or mathematical representations",
+"frac_nonzero": 0.01187,
+"top_logits": [
+"\u2581betweenstory",
+"InjectAttribute",
+"\".\r",
+"\u2581'',\r",
+"\u2581Efq",
+"\u2581The\u017fe",
+"AddTagHelper",
+"BrowserModule"
 ]
 },
 "10:6389": {
@@ -2967,6 +3667,20 @@
 "\u017felves"
 ]
 },
+"10:6516": {
+"explanation": " references to practical approaches and solutions",
+"frac_nonzero": 0.00103,
+"top_logits": [
+"\u2581practical",
+"\u2581Practical",
+"practical",
+"Practical",
+"\u2581practicality",
+"\u2581pragmatic",
+"\u2581PRACTICAL",
+"\u2581prak"
+]
+},
 "10:6621": {
 "explanation": "references to legal documents and proceedings",
 "frac_nonzero": 0.00025,
@@ -2993,6 +3707,20 @@
 "UnusedPrivate",
 "ScopeManager",
 "sizeCache"
+]
+},
+"10:6652": {
+"explanation": "conditional phrases and hypothetical scenarios",
+"frac_nonzero": 0.00253,
+"top_logits": [
+"\u2581would",
+"would",
+"\u2581such",
+"\u2581gdyby",
+"\u2581\u0431\u044b",
+"\u2581WOULD",
+"\u2581Would",
+"\u2581were"
 ]
 },
 "10:673": {
@@ -3135,6 +3863,20 @@
 "\u2581thri"
 ]
 },
+"10:7030": {
+"explanation": "terms related to ethnic identities and conflicts",
+"frac_nonzero": 0.00373,
+"top_logits": [
+"Ethnicity",
+"\u2581ethnicity",
+"\u2581Ethnicity",
+"\u2581origines",
+"tagext",
+"\u2581\u00e9tn",
+"\u2581ethnic",
+"\u2581AdapterView"
+]
+},
 "10:7044": {
 "explanation": "references to reviews and awards for literature or media",
 "frac_nonzero": 0.00117,
@@ -3191,6 +3933,20 @@
 "\u2581Yard"
 ]
 },
+"10:7431": {
+"explanation": "expressions of personal sentiment and acknowledgment in writing",
+"frac_nonzero": 0.0008,
+"top_logits": [
+"\u2581fanfic",
+"\u2581fanfiction",
+"ObjectContext",
+"\u2581escrit",
+"\u2581fic",
+"\u2581Geschichten",
+"\u2581unfore",
+"abuse"
+]
+},
 "10:7603": {
 "explanation": "numerical data related to health metrics and statistics",
 "frac_nonzero": 0.01044,
@@ -3203,6 +3959,20 @@
 "0",
 "\u4fa3",
 "\u2581"
+]
+},
+"10:7628": {
+"explanation": "general structure and elements related to subscription queries in a programming or database context",
+"frac_nonzero": 0.00137,
+"top_logits": [
+"graphql",
+"\u2581gql",
+"\u2581GraphQL",
+"\u2581graphql",
+"apollo",
+"GraphQL",
+"gatsby",
+"schema"
 ]
 },
 "10:7656": {
@@ -3273,6 +4043,20 @@
 "\u043d\u0456\u043a\u0430",
 "\u2581chi\u030dt",
 "utom"
+]
+},
+"10:7983": {
+"explanation": "references to companies or organizations, particularly with the prefix \"Ar\"",
+"frac_nonzero": 0.00111,
+"top_logits": [
+"\u2581Ar",
+"Ar",
+"\u2581ar",
+"\u2581\u0410\u0440",
+"\u0410\u0440",
+"\u2581Arjun",
+"\u2581\u0430\u0440",
+"\u2581Arce"
 ]
 },
 "10:803": {
@@ -3429,6 +4213,20 @@
 "\u2581\u043f\u0440\u0438\u0445\u043e\u0434\u0438\u0442\u0441\u044f"
 ]
 },
+"10:829": {
+"explanation": "specific scientific measurements and properties related to physiological responses and material characteristics",
+"frac_nonzero": 0.01793,
+"top_logits": [
+"\u2581SqlDbType",
+"\u2581E\u017f",
+"\u2581resultCode",
+"\u2581density",
+"\u0e31\u0e1e\u0e17\u0e4c",
+"\u2581plea\u017fure",
+"itability",
+"\u2581MainAxisSize"
+]
+},
 "10:8329": {
 "explanation": "references to instructions or recommendations related to comfort and user experience",
 "frac_nonzero": 0.007229999999999999,
@@ -3527,6 +4325,20 @@
 "Personensuche"
 ]
 },
+"10:8702": {
+"explanation": "references to \"mini\" or \"miniature\" objects and concepts",
+"frac_nonzero": 0.00139,
+"top_logits": [
+"\u2581MINI",
+"\u2581mini",
+"MINI",
+"\u2581miniature",
+"\u2581jumbo",
+"\u2581mega",
+"Sized",
+"\u2581dandy"
+]
+},
 "10:8707": {
 "explanation": "names of individuals and characters",
 "frac_nonzero": 0.00319,
@@ -3597,6 +4409,20 @@
 "\u2581suddenly"
 ]
 },
+"10:8910": {
+"explanation": "academic and research-related terms associated with various fields of study",
+"frac_nonzero": 0.006670000000000001,
+"top_logits": [
+"\u2581lenker",
+"jspx",
+"\u062a\u0641\u0635\u06cc\u0644\u0627\u062a",
+"\">:",
+"\u2581\u0935\u093f\u0936\u094d\u0935\u0938\u0928\u0940\u092f\u0924\u093e",
+"\u0414\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0456\u044f",
+"futbolista",
+"ElementException"
+]
+},
 "10:8933": {
 "explanation": "phrases indicating associations or relationships between concepts",
 "frac_nonzero": 0.00388,
@@ -3609,6 +4435,20 @@
 "related",
 "\u2581resourceCulture",
 "associated"
+]
+},
+"10:895": {
+"explanation": "terms related to data access and information retrieval mechanisms",
+"frac_nonzero": 0.00826,
+"top_logits": [
+"\u2581access",
+"Access",
+"\u2581acc\u00e8s",
+"\u2581Access",
+"acc\u00e8s",
+"access",
+"\u2581acesso",
+"\u2581accessing"
 ]
 },
 "10:9020": {
@@ -3735,6 +4575,20 @@
 "\u2581BorderRadius",
 "\u2581&___",
 ";;;;"
+]
+},
+"10:9457": {
+"explanation": "references to shader programming and graphics rendering",
+"frac_nonzero": 0.00208,
+"top_logits": [
+"Xna",
+"\u2581WebGL",
+"\u2581/\\.(",
+"\u2581Majefty",
+"\u2581Monfieur",
+"\u2581OpenGL",
+"glGen",
+"\u2581gddr"
 ]
 },
 "10:9559": {
@@ -10835,6 +11689,20 @@
 "erl"
 ]
 },
+"9:10024": {
+"explanation": "references to links or hyperlinks in the text",
+"frac_nonzero": 0.00044,
+"top_logits": [
+"\u2581link",
+"\u2581Link",
+"\u2581LINK",
+"\u2581links",
+"Link",
+"link",
+"LINK",
+"links"
+]
+},
 "9:10044": {
 "explanation": "phrases related to performance evaluation metrics in machine learning models",
 "frac_nonzero": 0.00713,
@@ -10891,6 +11759,34 @@
 "\u2581Tweet"
 ]
 },
+"9:10167": {
+"explanation": " keywords related to medical conditions and treatments",
+"frac_nonzero": 0.00834,
+"top_logits": [
+"\u2581@\"/",
+"\u2581esternos",
+"Diweddarwch",
+"AddTagHelper",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"SourceChecksum",
+"principalTable",
+"ValueStyle"
+]
+},
+"9:10205": {
+"explanation": "contact and informational prompts related to online services",
+"frac_nonzero": 0.0006900000000000001,
+"top_logits": [
+"kh\u00e1u",
+"########.",
+"windowFixed",
+">{@",
+"zzleHttp",
+"webElementGuid",
+"ThemeOverlay",
+"\u044c\u0430\u0436"
+]
+},
 "9:10207": {
 "explanation": " structured data or code formats",
 "frac_nonzero": 0.00688,
@@ -10917,6 +11813,20 @@
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
 "\u2581\u2581\u2581",
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581"
+]
+},
+"9:10247": {
+"explanation": "programming concepts related to data structures and memory management",
+"frac_nonzero": 0.00582,
+"top_logits": [
+"navigationItem",
+"webElement",
+"HasValue",
+"May",
+"g\u00e5ng",
+"\u2581\u6765\u81ea",
+"twimg",
+"\u2581\u0645\u0639\u0631\u0641"
 ]
 },
 "9:10295": {
@@ -11031,6 +11941,20 @@
 "UIAlert"
 ]
 },
+"9:10502": {
+"explanation": " phrases that refer to capabilities or skills",
+"frac_nonzero": 0.00115,
+"top_logits": [
+"\u2581ability",
+"\u2581Ability",
+"\u2581abilities",
+"Ability",
+"\u2581Abilities",
+"\u2581capability",
+"\u2581capabilities",
+"ability"
+]
+},
 "9:10632": {
 "explanation": "terms related to bacterial infections and antibiotics",
 "frac_nonzero": 0.004010000000000001,
@@ -11043,6 +11967,20 @@
 "bacteria",
 "\u2581bact\u00e9",
 "bacterial"
+]
+},
+"9:10635": {
+"explanation": "terms related to initial events or beginnings in various contexts",
+"frac_nonzero": 0.00294,
+"top_logits": [
+"TagMode",
+"UnsafeEnabled",
+"\u2581inaugural",
+"\u2581introductory",
+"\u2581inicial",
+"\u2581initial",
+"\u2581INITIAL",
+"Initial"
 ]
 },
 "9:10642": {
@@ -11073,6 +12011,20 @@
 "\u2581situe"
 ]
 },
+"9:10716": {
+"explanation": "time-related phrases and references to specific historical periods",
+"frac_nonzero": 0.0028,
+"top_logits": [
+"Personendaten",
+"\u2581EconPapers",
+"RectangleBorder",
+"\u044c\u0430\u0436",
+"enterOuterAlt",
+"SharedDtor",
+"enumii",
+"Geplaatst"
+]
+},
 "9:10722": {
 "explanation": "elements related to document object model (DOM) manipulation",
 "frac_nonzero": 0.00279,
@@ -11099,6 +12051,20 @@
 "enderror",
 "ither",
 "\u2581NSCoder"
+]
+},
+"9:10753": {
+"explanation": "data fields and attributes in structured formats like XML or JSON",
+"frac_nonzero": 0.00455,
+"top_logits": [
+"__(/*!",
+"}{|",
+"<strong>",
+"\ufeff/**",
+"carpa",
+"</strong>",
+"<h2>",
+"InlineData"
 ]
 },
 "9:10754": {
@@ -11185,6 +12151,20 @@
 "algorithm"
 ]
 },
+"9:10918": {
+"explanation": "specific scientific or technical terms and names",
+"frac_nonzero": 0.00803,
+"top_logits": [
+"\u24e7",
+"k",
+"ak",
+"kik",
+"xk",
+"\u2581Duk",
+"kkkk",
+"ik"
+]
+},
 "9:10923": {
 "explanation": "technical specifications and measurements in a scientific context",
 "frac_nonzero": 0.01332,
@@ -11197,6 +12177,34 @@
 "Referanser",
 "\u2581.",
 "\u2581"
+]
+},
+"9:10931": {
+"explanation": "code structure and function definitions in programming scripts",
+"frac_nonzero": 0.00016,
+"top_logits": [
+"HttpPost",
+"ViewFeatures",
+"\u3063\u3066\u307f\u308b",
+"RenderAtEndOf",
+"}>;",
+"StatusBadRequest",
+"\u0561\u0563\u0580\u0578\u0582\u0569\u0575\u0578\u0582\u0576\u0576\u0565\u0580",
+"migrationBuilder"
+]
+},
+"9:10943": {
+"explanation": "terms related to streets and urban settings",
+"frac_nonzero": 0.00031,
+"top_logits": [
+"Streets",
+"\u2581Streets",
+"\u2581streets",
+"\u2581Street",
+"\u2581street",
+"streets",
+"\u2581STREET",
+"Street"
 ]
 },
 "9:10944": {
@@ -11241,6 +12249,20 @@
 "\u2581Sonn"
 ]
 },
+"9:10996": {
+"explanation": "specific time-related events and the associated contexts",
+"frac_nonzero": 0.00296,
+"top_logits": [
+"\u2581Preparations",
+"\u2581preparations",
+"\u2581Preparation",
+"\u2581preparation",
+"preparation",
+"\u2581pr\u00e9paration",
+"\u2581PREPARATION",
+"\u2581preparazione"
+]
+},
 "9:11008": {
 "explanation": "emotional responses and regrets associated with personal decisions",
 "frac_nonzero": 0.00182,
@@ -11253,6 +12275,34 @@
 "sego",
 "\ue315",
 "rull"
+]
+},
+"9:11035": {
+"explanation": "terms and phrases related to changes in health status, particularly those involving respiratory function and treatment outcomes",
+"frac_nonzero": 0.01306,
+"top_logits": [
+"\u2581Efq",
+"apatalk",
+"LookAnd",
+"WebElementEntity",
+"principalColumn",
+"NgModule",
+"\u2581ContentValues",
+"HasForeignKey"
+]
+},
+"9:11039": {
+"explanation": "starting points or key markers in a sequence",
+"frac_nonzero": 0.00152,
+"top_logits": [
+"expandindo",
+"DebuggerNonUser",
+"\u2581poveznice",
+"\u2581\u017ftate",
+"\u2581CreateTagHelper",
+"OGND",
+"tonode",
+"TypedDataSet"
 ]
 },
 "9:11049": {
@@ -11311,6 +12361,34 @@
 "\u2581S"
 ]
 },
+"9:1125": {
+"explanation": "references to voter fraud and its implications in electoral integrity",
+"frac_nonzero": 0.00171,
+"top_logits": [
+"\u2581election",
+"\u2581Electoral",
+"\u2581Election",
+"Geplaatst",
+"lectoral",
+"enderror",
+"\u2581navide\u00f1as",
+"\u2581electoral"
+]
+},
+"9:11252": {
+"explanation": " references to web development and routing in programming languages",
+"frac_nonzero": 0.00153,
+"top_logits": [
+"ToAction",
+"sendRedirect",
+"\u2581\u0645\u0634\u064a\u0646",
+"\u2581propOrder",
+"\u2581Majefty",
+"RegressionTest",
+"]\")]",
+"WebServlet"
+]
+},
 "9:11256": {
 "explanation": "elements related to programming or coding syntax",
 "frac_nonzero": 0.01258,
@@ -11323,6 +12401,20 @@
 "\u2581\u0627\u0633\u062a\u0646\u0627\u062f\u0649",
 "\u2581\u0627\u0644\u0644",
 "\u0449"
+]
+},
+"9:11270": {
+"explanation": "political discussions involving the Republican Party and various investigations",
+"frac_nonzero": 0.00612,
+"top_logits": [
+"\u2581Trump",
+"\u2581America",
+"\u2581Biden",
+"\u2581President",
+"\u2581US",
+"\u2581American",
+"President",
+"American"
 ]
 },
 "9:11273": {
@@ -11437,6 +12529,48 @@
 "WithIOException"
 ]
 },
+"9:11601": {
+"explanation": "relations and interactions between elements, especially in mathematical or collaborative contexts",
+"frac_nonzero": 0.00759,
+"top_logits": [
+"\u2581espoir",
+"\u2581disparu",
+"\u2581charit\u00e9",
+"Asie",
+"nel",
+"\u2581croix",
+"RefNanny",
+"\u2581keduanya"
+]
+},
+"9:11624": {
+"explanation": " mentions of colleges and institutions of higher education",
+"frac_nonzero": 0.00025,
+"top_logits": [
+"\u2581college",
+"\u2581College",
+"\u2581colleges",
+"College",
+"\u2581COLLEGE",
+"college",
+"COLLEGE",
+"\u2581Colleges"
+]
+},
+"9:11672": {
+"explanation": "phrases indicating goals, intentions, or aspirations",
+"frac_nonzero": 0.00179,
+"top_logits": [
+"Personendaten",
+"@[+][",
+"\u2581m\u00f6glichst",
+"\u2581hoppas",
+"Semoga",
+"rawDesc",
+"am\u00e9li",
+"Datuak"
+]
+},
 "9:11706": {
 "explanation": "references to God and His spiritual influence in human lives",
 "frac_nonzero": 0.00107,
@@ -11449,6 +12583,48 @@
 "BASEPATH",
 "AddTagHelper",
 "\u2581lenker"
+]
+},
+"9:11728": {
+"explanation": "references to medical fields, particularly relating to anesthesia, pain management, and compliance in healthcare settings",
+"frac_nonzero": 0.006710000000000001,
+"top_logits": [
+"\u0631\u0634\u0641",
+"th\u00e2u",
+"\u2581ph\u1ed1",
+"\u00e1bbi",
+"\u2581lequel",
+"malink",
+"Referanser",
+"bouncycastle"
+]
+},
+"9:11756": {
+"explanation": "references to business performance and rankings in professional contexts",
+"frac_nonzero": 0.00177,
+"top_logits": [
+"tidaknya",
+"Carriera",
+"getLong",
+"\u2581personnalit\u00e9",
+"\u2581readers",
+"ReadInt",
+"\u2581award",
+"duct"
+]
+},
+"9:1176": {
+"explanation": "numerical data and statistical references related to rates and assessments",
+"frac_nonzero": 0.005600000000000001,
+"top_logits": [
+"NameInMap",
+"ChildScrollView",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"\u00e8cie",
+"TypedDataSet",
+"IntoConstraints",
+"RenderAtEndOf",
+"\u811a\u6ce8\u306e\u4f7f\u3044\u65b9"
 ]
 },
 "9:11814": {
@@ -11477,6 +12653,76 @@
 "\u2581genetics",
 "\u2581GENE",
 "\u2581Gene"
+]
+},
+"9:11865": {
+"explanation": "words related to conditions and mechanisms in scientific or medical contexts",
+"frac_nonzero": 0.00463,
+"top_logits": [
+"\u2581or",
+"\u2581either",
+"\u305d\u308c\u3068\u3082",
+"\u2581StatefulWidget",
+"either",
+"ITHER",
+"\u2581StatelessWidget",
+"\u2581Whether"
+]
+},
+"9:1187": {
+"explanation": " elements related to programming code and data structure identifiers",
+"frac_nonzero": 0.005430000000000001,
+"top_logits": [
+"\u2581AssemblyCulture",
+"\u2581SafeMath",
+"\u2581newOwner",
+"GrantedAuthority",
+"twimg",
+"jsonwebtoken",
+"\u2581GenerationType",
+"rungsseite"
+]
+},
+"9:1189": {
+"explanation": "numbers and mathematical expressions",
+"frac_nonzero": 0.01991,
+"top_logits": [
+"2",
+"3",
+"4",
+"1",
+"0",
+"5",
+"6",
+"8"
+]
+},
+"9:11894": {
+"explanation": " terms and concepts related to MongoDB and JSON data structures",
+"frac_nonzero": 0.0021,
+"top_logits": [
+"mongodb",
+"\u2581pymongo",
+"elasticsearch",
+"mongo",
+"\u2581mongo",
+"\u2581mongodb",
+"\u2581MongoDB",
+"\u2581Mongo"
+]
+},
+"9:1197": {
+"explanation": " references to leather and related materials or products",
+"frac_nonzero": 0.00166,
+"top_logits": [
+"\u2581leather",
+"\u2581Leather",
+"Leather",
+"leather",
+"\u2581cuir",
+"\u2581couro",
+"\u2581glove",
+"\u2581\u0686\u0631\u0645"
 ]
 },
 "9:12009": {
@@ -11519,6 +12765,34 @@
 "\u2581Drapeau",
 "\u2581aste",
 "\u2581ph\u00f2ng"
+]
+},
+"9:12058": {
+"explanation": "numbers and their contextual relationships, particularly in a structured format",
+"frac_nonzero": 0.0005899999999999999,
+"top_logits": [
+"\u2581Reif",
+"\u03c1\u03b9\u03b8",
+"\u2581\u017ftate",
+"\u2581Wern",
+"\u2581realisation",
+"\u2581greate\u017ft",
+"\u2581'*':",
+"latest"
+]
+},
+"9:12082": {
+"explanation": "phrases indicating benefits and improvements in medical therapies",
+"frac_nonzero": 0.00567,
+"top_logits": [
+"\u2581All\u00ed",
+"\u2581MCS",
+"\u2581advantageous",
+"\u4f8b\u53e5",
+"\u2581DMG",
+"\u2581Pixabay",
+"extAlignment",
+"Famili"
 ]
 },
 "9:12096": {
@@ -11591,6 +12865,48 @@
 "quiao"
 ]
 },
+"9:12209": {
+"explanation": "references to Germany and German-related entities",
+"frac_nonzero": 0.00054,
+"top_logits": [
+"\u2581Germany",
+"Germany",
+"\u2581GERMANY",
+"germany",
+"\u2581GERMAN",
+"\u2581German",
+"\u2581germany",
+"\u2581Germans"
+]
+},
+"9:12210": {
+"explanation": "terms related to vehicle accidents and specifications",
+"frac_nonzero": 0.00222,
+"top_logits": [
+"\u2581dimensionless",
+"\u66ff",
+"\u2581\\%",
+"\u2581$",
+"\u2581legend",
+"\\%",
+"\u2581danh",
+"\u2581quantity"
+]
+},
+"9:12257": {
+"explanation": "references to social constructs and accountability, particularly regarding race and reparations",
+"frac_nonzero": 0.02091,
+"top_logits": [
+"\u201d\u2026",
+"enderror",
+"\u2557",
+"WidgetItem",
+"Personendaten",
+"uruh",
+"ystema",
+"$',"
+]
+},
 "9:12259": {
 "explanation": "references to individuals and their relationships to specific actions or events",
 "frac_nonzero": 0.006840000000000001,
@@ -11647,6 +12963,20 @@
 "\u2581\u0627\u0644\u062d\u0631\u0647"
 ]
 },
+"9:12342": {
+"explanation": "references to schema-related concepts or terms",
+"frac_nonzero": 0.00032,
+"top_logits": [
+"Schema",
+"\u2581schema",
+"schema",
+"\u2581Schema",
+"SCHEMA",
+"\u2581schemas",
+"\u2581SCHE",
+"chema"
+]
+},
 "9:1243": {
 "explanation": "references to extraction options and json object manipulations",
 "frac_nonzero": 0.00344,
@@ -11673,6 +13003,20 @@
 "webElementXpaths",
 "CloseOperation",
 "Sebagai"
+]
+},
+"9:12474": {
+"explanation": "elements related to formal documents, such as titles and sections",
+"frac_nonzero": 0.01575,
+"top_logits": [
+"\u2581alfo",
+"\u2581al\u017fo",
+"\u2581also",
+"tambi\u00e9n",
+"also",
+"\u2581tambin",
+"\u2581asimismo",
+"\u2581tam\u00e9n"
 ]
 },
 "9:12490": {
@@ -11717,6 +13061,20 @@
 "\u2581ringan"
 ]
 },
+"9:12504": {
+"explanation": "terms related to health, safety, and various professions",
+"frac_nonzero": 0.00601,
+"top_logits": [
+"TextWatcher",
+"\u2581voed",
+"\u2581repro",
+"\u2581pener",
+"\u2581Automotive",
+"ca",
+"com",
+"\u2581automotive"
+]
+},
 "9:12541": {
 "explanation": "references to Olympic sports and athletes",
 "frac_nonzero": 0.00073,
@@ -11731,6 +13089,20 @@
 "\u2581olymp"
 ]
 },
+"9:12546": {
+"explanation": "conditional statements and hypothetical scenarios",
+"frac_nonzero": 0.00176,
+"top_logits": [
+"\u2581would",
+"\u2581such",
+"RegistryLite",
+"would",
+"\u2581wouldn",
+"\u2581fosse",
+"\u2581were",
+"\u2581other"
+]
+},
 "9:12585": {
 "explanation": "adverbs that modify verbs or adjectives",
 "frac_nonzero": 0.00744,
@@ -11743,6 +13115,20 @@
 "ificantly",
 "cerely",
 "ALLY"
+]
+},
+"9:12604": {
+"explanation": "elements related to queries, mutations, and subscriptions in a programming context",
+"frac_nonzero": 0.00135,
+"top_logits": [
+"\u2581gql",
+"graphql",
+"\u2581GraphQL",
+"\u2581graphql",
+"apollo",
+"gatsby",
+"GraphQL",
+"ql"
 ]
 },
 "9:12619": {
@@ -11773,6 +13159,20 @@
 "\u2581\u2581"
 ]
 },
+"9:12649": {
+"explanation": "references to indigenous peoples and their cultural context",
+"frac_nonzero": 0.004759999999999999,
+"top_logits": [
+"AndEndTag",
+"Hentet",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"expandindo",
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"MemoryWarning",
+"ViewFeatures",
+"KommentareTeilen"
+]
+},
 "9:12661": {
 "explanation": "phrases related to societal issues and challenges",
 "frac_nonzero": 0.00501,
@@ -11801,6 +13201,20 @@
 "\u2581picasso"
 ]
 },
+"9:12771": {
+"explanation": " concepts related to historical societal changes and women's roles",
+"frac_nonzero": 0.00525,
+"top_logits": [
+"\u6614\u306e",
+"\u2581nowadays",
+"\u2581Nowadays",
+"\u2581yester",
+"Nowadays",
+"\u2581olden",
+"\u6614",
+"\u2581era"
+]
+},
 "9:12783": {
 "explanation": "references to obligations and responsibilities in a legal context",
 "frac_nonzero": 0.00711,
@@ -11827,6 +13241,20 @@
 "\u2581Adu",
 "\u2581du",
 "\u2581DU"
+]
+},
+"9:12851": {
+"explanation": "references to universities",
+"frac_nonzero": 0.00047,
+"top_logits": [
+"\u2581university",
+"\u2581University",
+"\u2581universitarios",
+"\u2581universities",
+"university",
+"versities",
+"University",
+"\u2581Universities"
 ]
 },
 "9:12895": {
@@ -11871,6 +13299,20 @@
 "\u2581Translation"
 ]
 },
+"9:12978": {
+"explanation": "mentions of \"real\" and its relationships to time, world, and various contexts",
+"frac_nonzero": 0.00061,
+"top_logits": [
+"\u2581real",
+"\u2581REAL",
+"\u2581Real",
+"Real",
+"REAL",
+"real",
+"getReal",
+"\u2581Beal"
+]
+},
 "9:13020": {
 "explanation": "phrases indicating exceptions or conditions in a statement",
 "frac_nonzero": 0.00084,
@@ -11897,6 +13339,20 @@
 "\u2581Re\u017f",
 "\u2581\u017fta",
 "\u2581purpo\u017fe"
+]
+},
+"9:13089": {
+"explanation": "references to size comparisons and measurements",
+"frac_nonzero": 0.00349,
+"top_logits": [
+"\u2581size",
+"\u2581sized",
+"sized",
+"\u2581SIZE",
+"\u2581bigger",
+"\u2581Size",
+"\u2581BIG",
+"size"
 ]
 },
 "9:13100": {
@@ -11955,6 +13411,48 @@
 "</strong>"
 ]
 },
+"9:13229": {
+"explanation": " expressions related to attempts or efforts",
+"frac_nonzero": 0.00043,
+"top_logits": [
+"\u2581TRY",
+"\u2581Try",
+"Try",
+"\u2581try",
+"\u2581tries",
+"try",
+"TRY",
+"Tries"
+]
+},
+"9:13425": {
+"explanation": " programmatic structure and error handling in code snippets",
+"frac_nonzero": 0.00227,
+"top_logits": [
+"{\r",
+"__\":\r",
+"G\u00e9ographie",
+"\u2581{\r",
+"++){\r",
+"\u2581viewType",
+"makeConstraints",
+"\u2581{"
+]
+},
+"9:13435": {
+"explanation": "specific identifiers and URL structures in data entries",
+"frac_nonzero": 0.00718,
+"top_logits": [
+"\">//",
+"TagMode",
+"()]\r",
+"Refer\u00e8ncies",
+"']],",
+"\"));\r",
+"++\r",
+"\u2581consultato"
+]
+},
 "9:13459": {
 "explanation": "references to locations and organizations involved in research initiatives",
 "frac_nonzero": 0.00053,
@@ -11997,6 +13495,34 @@
 "\u0414\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0456\u044f"
 ]
 },
+"9:13565": {
+"explanation": " numerical data or measurements within the text",
+"frac_nonzero": 0.00655,
+"top_logits": [
+"rungsseite",
+"\u2581\u0644\u0644\u0627\u0633\u0645\u0627\u0621",
+"\u2581vectorielles",
+"\u2581\u00e9cl",
+"\u2581\u0627\u0644\u062d\u0631\u0647",
+"ItemBackground",
+"\u2581ki\u1ec7n",
+"\u2581atmospheres"
+]
+},
+"9:1365": {
+"explanation": "words and phrases related to concealment and secrecy",
+"frac_nonzero": 0.00089,
+"top_logits": [
+"\u2581hide",
+"\u2581hiding",
+"\u2581hides",
+"\u2581Hiding",
+"\u2581Hide",
+"hiding",
+"\u2581Hidden",
+"\u2581hid"
+]
+},
 "9:13665": {
 "explanation": "mentions of the name \"G. Ringo Star.\"",
 "frac_nonzero": 0.00207,
@@ -12009,6 +13535,20 @@
 "Proto",
 "ClientSize",
 "\u2581FirebaseAuth"
+]
+},
+"9:1367": {
+"explanation": "the presence of special characters and formatting elements in text",
+"frac_nonzero": 0.00527,
+"top_logits": [
+"NameInMap",
+"localctx",
+"\u2581campaign",
+"jspb",
+"\u2581<<<<<<<<<<<<<<",
+"\u2581estekak",
+"\u2581invokingState",
+"jspx"
 ]
 },
 "9:13699": {
@@ -12053,6 +13593,20 @@
 "ela"
 ]
 },
+"9:13776": {
+"explanation": "terms related to loading and restoring data or models",
+"frac_nonzero": 0.006059999999999999,
+"top_logits": [
+"ftagPool",
+"\u65e5\u95b2\u89a7",
+"\u2581\u043d\u0430\u0441\u0435\u0459\u0443",
+"Unmarshaller",
+"\u2581ClassNotFound",
+"\u2581endwhile",
+"\u2581Viitattu",
+"\u2581recover"
+]
+},
 "9:13821": {
 "explanation": "references to \"my\" and \"My\" indicating possession or ownership",
 "frac_nonzero": 0.00098,
@@ -12093,6 +13647,48 @@
 "oredCriteria",
 "\u062a\u0642\u0627\u0648\u0649",
 "\u0627\u0646\u064a\u0641"
+]
+},
+"9:13858": {
+"explanation": "technical terms and classifications related to scientific or statistical analysis",
+"frac_nonzero": 0.01785,
+"top_logits": [
+"SequentialGroup",
+"aarrggbb",
+"\ufeff#",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"ingtones",
+"Diwedd",
+"tahui",
+"\u2581snippetHide"
+]
+},
+"9:13890": {
+"explanation": "technical terms and details related to systems and their specifications",
+"frac_nonzero": 0.04386999999999999,
+"top_logits": [
+"SequentialGroup",
+"gdala",
+"\u2581Argentino",
+"\u2581consultato",
+"CppCodeGen",
+"UnknownFields",
+"ponses",
+"rentiel"
+]
+},
+"9:13901": {
+"explanation": "medical terms and references to healthcare-related activities",
+"frac_nonzero": 0.01752,
+"top_logits": [
+"\u2581health",
+"\u2581Health",
+"health",
+"\u2581medical",
+"Health",
+"\u2581HEALTH",
+"\u5065\u5eb7",
+"\u2581clinics"
 ]
 },
 "9:13916": {
@@ -12179,6 +13775,20 @@
 "\u2581eccl"
 ]
 },
+"9:14057": {
+"explanation": " certain conditional statements and logical expressions in code",
+"frac_nonzero": 0.00021,
+"top_logits": [
+"\u2581refus\u00e9",
+"\u2581tent\u00e9",
+"\u2581tratt",
+"\ufeff//",
+"\u2581PhpStorm",
+"#+#",
+"\u2581condamn\u00e9",
+"\"]))"
+]
+},
 "9:14062": {
 "explanation": "features and settings related to dark mode and high contrast options",
 "frac_nonzero": 0.00229,
@@ -12191,6 +13801,20 @@
 "\u2581contrast",
 "\u2581brightness",
 "\u2581customization"
+]
+},
+"9:14101": {
+"explanation": "words that describe varying types of semi-structures or semi-states",
+"frac_nonzero": 0.00063,
+"top_logits": [
+"\u2581SEMI",
+"\u2581hybrids",
+"\u2581semis",
+"\u2581Ceci",
+"Semi",
+"\u2581Semi",
+"theless",
+"\u2581dynasties"
 ]
 },
 "9:14163": {
@@ -12291,6 +13915,20 @@
 "\u2581groupes"
 ]
 },
+"9:14346": {
+"explanation": "terms related to password management and security protocols",
+"frac_nonzero": 0.0005899999999999999,
+"top_logits": [
+"libft",
+"Morfologia",
+"ThroughAttribute",
+"Configurer",
+"Enllaces",
+"\u2581mergeFrom",
+"\u2581requestCode",
+"\u2581setOpen"
+]
+},
 "9:14347": {
 "explanation": "references to mathematical utilities and functions",
 "frac_nonzero": 0.00301,
@@ -12303,6 +13941,20 @@
 "\u5de5\u5177\u7c7b",
 "atih",
 "\u2581JOptionPane"
+]
+},
+"9:1436": {
+"explanation": "information related to pricing, costs, and included services in various contexts",
+"frac_nonzero": 0.00236,
+"top_logits": [
+"IntoConstraints",
+"kopf",
+"\u7a0e\u8fbc",
+"__\":",
+"UpInside",
+"\u062f\u0627\u0646\u0634\u0646\u0627\u0645\u0647\u0654",
+"uche",
+"\u2581coaching"
 ]
 },
 "9:14409": {
@@ -12333,6 +13985,34 @@
 "4"
 ]
 },
+"9:14497": {
+"explanation": "technical jargon related to semiconductor properties and physical measurements",
+"frac_nonzero": 0.01788,
+"top_logits": [
+"\u2581hashCode",
+"\u2581density",
+"\u2581height",
+"\u2581SqlDbType",
+"\u2581diameter",
+"\u2581rate",
+"GeneratedValue",
+"TagMode"
+]
+},
+"9:14567": {
+"explanation": "specific coding terminology and programming constructs",
+"frac_nonzero": 0.00335,
+"top_logits": [
+"\u2581advice",
+"\u2581you",
+"ionView",
+"\u2581r\u00e8gle",
+"\u00edba",
+"Activator",
+"\u2581regra",
+"\u2581rule"
+]
+},
 "9:14582": {
 "explanation": "terms related to negligence and accountability in actions",
 "frac_nonzero": 0.04182,
@@ -12347,6 +14027,20 @@
 "\u2581Northwestern"
 ]
 },
+"9:14629": {
+"explanation": "references to performance issues related to frames per second (FPS) in gaming contexts",
+"frac_nonzero": 0.00173,
+"top_logits": [
+"Xna",
+"\u2581graphics",
+"\u2581gpu",
+"\u2581fps",
+"\u2581GPU",
+"\u2581Unreal",
+"\u2581s\u1ebb",
+"\u2581unplayable"
+]
+},
 "9:14637": {
 "explanation": "elements related to search functionality and user input forms",
 "frac_nonzero": 0.0018,
@@ -12359,6 +14053,20 @@
 "\u2581SearchView",
 "search",
 "SEARCH"
+]
+},
+"9:14662": {
+"explanation": "elements related to sports achievements and honors",
+"frac_nonzero": 0.01253,
+"top_logits": [
+"IUrlHelper",
+"MLLoader",
+"\u2581therein",
+"AndroidJUnit",
+"\u2581thereof",
+"rungsseite",
+"MessageTagHelper",
+"IsContent"
 ]
 },
 "9:14667": {
@@ -12387,6 +14095,20 @@
 "\t\t",
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581"
+]
+},
+"9:14721": {
+"explanation": "shader programming terminology and structure",
+"frac_nonzero": 0.00226,
+"top_logits": [
+"\u2581Majefty",
+"\u2581Monfieur",
+"\u2581\u0627\u0644\u0631\u064a\u0627\u0636\u064a\u0647",
+"\u2581/\\.(",
+"\u2581poffible",
+"\u2581Hou\u017fe",
+"\u2581hou\u017fe",
+"\u2581\u05d7\u05d9\u05e6\u05d5\u05e0\u05d9\u05d9\u05dd"
 ]
 },
 "9:14728": {
@@ -12543,6 +14265,20 @@
 "\u2581getBase"
 ]
 },
+"9:15024": {
+"explanation": "terms related to contraceptive methods and planning",
+"frac_nonzero": 0.01251,
+"top_logits": [
+"rizona",
+"\u2581m\u00f3ds",
+"\u2581Marxism",
+"RenderAtEndOf",
+"xane",
+"\u2581Moli\u00e8re",
+"antren",
+"\u2581tradition"
+]
+},
 "9:15025": {
 "explanation": " negations or exceptions in the text",
 "frac_nonzero": 0.00332,
@@ -12627,6 +14363,20 @@
 "onavirus"
 ]
 },
+"9:15227": {
+"explanation": "terms related to biological or structural measurements and comparisons",
+"frac_nonzero": 0.00291,
+"top_logits": [
+"\u2581both",
+"\u2581Both",
+"Both",
+"owohl",
+"both",
+"\u2581\u05d5\u05d2\u05dd",
+"\u2581entram",
+"\u2581maupun"
+]
+},
 "9:15252": {
 "explanation": "references to news articles and reports with specific timeframes or updates",
 "frac_nonzero": 0.00205,
@@ -12641,6 +14391,48 @@
 "Notae"
 ]
 },
+"9:15258": {
+"explanation": "quantitative references to studies or general findings concerning the majority of a population or sample",
+"frac_nonzero": 0.00366,
+"top_logits": [
+"\u2581meisten",
+"\u2581ProtoMessage",
+"TagMode",
+"\u2581plupart",
+"\u2581\u0431\u043e\u043b\u044c\u0448\u0438\u043d\u0441\u0442\u0432\u043e",
+"\u2581\u00e7o\u011fu",
+"\u2581maioria",
+"\u2581\u0431\u043e\u043b\u044c\u0448\u0438\u043d"
+]
+},
+"9:15287": {
+"explanation": "expressions of certainty or probability about events or situations",
+"frac_nonzero": 0.00196,
+"top_logits": [
+"cz\u0119\u015bciej",
+"mappedBy",
+"\u53c8\u80fd",
+"edly",
+"\uc801\uc73c\ub85c",
+"\u2581have",
+"redge",
+"enteuer"
+]
+},
+"9:15340": {
+"explanation": "terms related to costs, expenses, and financial implications",
+"frac_nonzero": 0.00293,
+"top_logits": [
+"\u2581costs",
+"\u2581cost",
+"\u2581expenses",
+"\u2581Costs",
+"costs",
+"Costs",
+"cost",
+"\u2581COSTS"
+]
+},
 "9:1539": {
 "explanation": "instances of the word \"therefore\" and its variations, indicating logical conclusions or transitions in arguments",
 "frac_nonzero": 0.00141,
@@ -12653,6 +14445,20 @@
 "theless",
 "\u2581Therefore",
 "+#+#"
+]
+},
+"9:15406": {
+"explanation": "references to special features and extras associated with a collection of episodes",
+"frac_nonzero": 0.0038,
+"top_logits": [
+"\u51fa\u7248\u5e74",
+"MLLoader",
+"\u2581esterni",
+"\u2581\u0627\u0644\u062d\u0631\u0647",
+"ValueStyle",
+"issenschaft",
+"\u2581Paglinawan",
+"\u5b58\u4e8e\u4e92\u8054\u7f51\u6863\u6848\u9986"
 ]
 },
 "9:15454": {
@@ -12711,6 +14517,48 @@
 "unknownFields"
 ]
 },
+"9:15487": {
+"explanation": " code structure elements, particularly definitions and function declarations",
+"frac_nonzero": 0.00256,
+"top_logits": [
+"MouseAdapter",
+"CHEZ",
+"\u2581aio",
+"\u2581med",
+"\u2581present",
+"\u2581college",
+"\u2581N",
+"rette"
+]
+},
+"9:15495": {
+"explanation": "discussions about the improvement and balance of societal or political issues",
+"frac_nonzero": 0.005,
+"top_logits": [
+"\u2581ivelany",
+"TargetException",
+"ConstraintMaker",
+"__':\r",
+"\u2581betweenstory",
+"principalTable",
+"\u2581>=\",",
+"IsContent"
+]
+},
+"9:15520": {
+"explanation": "terms related to television broadcast and commentary",
+"frac_nonzero": 0.00134,
+"top_logits": [
+"vestream",
+"\u2581commentator",
+"\u2581commentators",
+"\u2581coverage",
+"\u2581commentary",
+"\u2581livestream",
+"anal",
+"\u2581Stream"
+]
+},
 "9:15569": {
 "explanation": "terms related to environmental science, particularly those discussing weather, cloud composition, and precipitation",
 "frac_nonzero": 0.09713,
@@ -12737,6 +14585,34 @@
 "Her",
 "\u2581she",
 "\u2581His"
+]
+},
+"9:15630": {
+"explanation": "recommendations for improving processes or outcomes",
+"frac_nonzero": 0.00422,
+"top_logits": [
+"\u2581pr\u00e9f\u00e9rable",
+"\u2581sebaiknya",
+"\u2581prefer",
+"\u0e04\u0e27\u0e23",
+"\u2581advisable",
+"\u2581preferable",
+"\u2581preferably",
+"\u2581devriez"
+]
+},
+"9:15640": {
+"explanation": "numerical data or statistics",
+"frac_nonzero": 0.01146,
+"top_logits": [
+"Datuak",
+"\u2581my\u017felf",
+"\u2581Majefty",
+"\u2581Monfieur",
+"\u2581doubtnut",
+"\u2581feroit",
+"\u2581rai\u017f",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627"
 ]
 },
 "9:15646": {
@@ -12767,6 +14643,20 @@
 "\u2581least"
 ]
 },
+"9:15721": {
+"explanation": "terms related to rookie or freshman status in sports contexts",
+"frac_nonzero": 0.00352,
+"top_logits": [
+"\u2581rookies",
+"\u2581rookie",
+"\u2581newcomers",
+"\u2581newbies",
+"\u2581newbie",
+"\u2581Rookie",
+"\u2581newcomer",
+"\u2581freshmen"
+]
+},
 "9:15725": {
 "explanation": "key terms and concepts related to analysis and evaluation in research",
 "frac_nonzero": 0.004670000000000001,
@@ -12793,6 +14683,20 @@
 "SerializedSize",
 "\u2581mergeFrom",
 "\u2581multiple"
+]
+},
+"9:15764": {
+"explanation": "instances of the word \"spell\" and its variations, indicating a focus on magical or computational terms related to spells",
+"frac_nonzero": 0.01611,
+"top_logits": [
+"gud",
+"gare",
+"\u2581\u00e9glises",
+"\u2581Stow",
+"\u2581Kna",
+"\u2581Cud",
+"\u2581Abre",
+"\u0448\u0430\u0439"
 ]
 },
 "9:15780": {
@@ -12851,6 +14755,20 @@
 "\u2581plea\u017fure"
 ]
 },
+"9:159": {
+"explanation": " patterns or structures in data representations, particularly in relation to board states or matrix configurations",
+"frac_nonzero": 0.01142,
+"top_logits": [
+"\u2581kaarangay",
+"\u2581Roskov",
+"\u2581\u0644\u0644\u0627\u0633\u0645\u0627\u0621",
+"tagHelperRunner",
+"InjectAttribute",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc",
+"StoryboardSegue",
+"\u2581\u0628\u064a\u0647\u0627"
+]
+},
 "9:15902": {
 "explanation": "significant actions or attributes that lead to clear and organized results",
 "frac_nonzero": 0.005739999999999999,
@@ -12893,6 +14811,20 @@
 "\u2581B"
 ]
 },
+"9:15976": {
+"explanation": " identifiers and structural elements in a programming context",
+"frac_nonzero": 0.00249,
+"top_logits": [
+"ClientRect",
+"Hentet",
+"\u2581jur\u00eddica",
+"\u2581pursuant",
+"tablename",
+"\u2581commerciales",
+"\u2581poems",
+"SQLException"
+]
+},
 "9:16019": {
 "explanation": "technical terms and jargon related to digital signals and modulation",
 "frac_nonzero": 0.00908,
@@ -12907,6 +14839,34 @@
 "\u2581utafitiHapana"
 ]
 },
+"9:16056": {
+"explanation": "tokens or phrases related to numbers or quantities",
+"frac_nonzero": 0.01198,
+"top_logits": [
+"tagHelperRunner",
+"BrowserModule",
+"\u2581Signalez",
+"\"=>",
+"\u2581'*':",
+"ControllerTest",
+"DoubleQuotes",
+"\u1eb7p"
+]
+},
+"9:1610": {
+"explanation": "dates and times within a text",
+"frac_nonzero": 0.00172,
+"top_logits": [
+"\u2581snippetHide",
+"expandindo",
+"\u2581autorytatywna",
+"\u811a\u6ce8\u306e\u4f7f\u3044\u65b9",
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"\u2581ExecuteAsync",
+"Tikang",
+"BURGH"
+]
+},
 "9:16100": {
 "explanation": "numbers and punctuation in a variety of contexts",
 "frac_nonzero": 0.00276,
@@ -12919,6 +14879,20 @@
 "!}",
 "<?>>",
 "}."
+]
+},
+"9:16126": {
+"explanation": "technical terms and explanations related to programming or systems",
+"frac_nonzero": 0.00455,
+"top_logits": [
+"contentLoaded",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"MENAFN",
+"\u2581Numerade",
+"providedIn",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"\u2581nakalista",
+"\u2581\u0645\u0631\u0626\u064a\u0647"
 ]
 },
 "9:16156": {
@@ -12947,6 +14921,20 @@
 "\u4f55\u3088\u308a",
 "ant",
 "\u2581mimo"
+]
+},
+"9:16224": {
+"explanation": "references to OpenGL and related specifications",
+"frac_nonzero": 0.00082,
+"top_logits": [
+"\u2581gl",
+"\u2581GL",
+"gl",
+"GL",
+"\u2581Gl",
+"Gl",
+"\u2581glu",
+"\u2581GLC"
 ]
 },
 "9:16229": {
@@ -13005,6 +14993,20 @@
 "\u2581ACTUAL"
 ]
 },
+"9:16324": {
+"explanation": "words that express affirmation or agreement",
+"frac_nonzero": 0.00265,
+"top_logits": [
+"\u2581have",
+"erdings",
+"verl\u00e4s",
+"pfung",
+"\u2581propOrder",
+"av\u00eda",
+"NewUrlParser",
+"\u2581did"
+]
+},
 "9:16331": {
 "explanation": "reviews and critical responses regarding film quality and performance",
 "frac_nonzero": 0.00138,
@@ -13031,6 +15033,20 @@
 "\u2581nahilalakip",
 "HasKey",
 "\u2581ImportError"
+]
+},
+"9:16378": {
+"explanation": "specific conditional phrases and instructions",
+"frac_nonzero": 0.008020000000000001,
+"top_logits": [
+"abases",
+"GHIJKLM",
+"\ud5c8",
+"@[+][",
+"BeginContext",
+"Tembelea",
+"ChildScrollView",
+"\u062a\u0642\u0627\u0648\u0649"
 ]
 },
 "9:1641": {
@@ -13075,6 +15091,20 @@
 "SIG"
 ]
 },
+"9:1708": {
+"explanation": "terms related to user login processes",
+"frac_nonzero": 0.00129,
+"top_logits": [
+"AndPassword",
+"\u0627\u0644\u062d\u064a\u0627\u0647",
+"ViewImports",
+"WithEmail",
+"\u2581LoginForm",
+"Kaynak\u00e7a",
+"userdetails",
+"devise"
+]
+},
 "9:1713": {
 "explanation": "terms related to international events and governance issues",
 "frac_nonzero": 0.0007099999999999999,
@@ -13103,6 +15133,20 @@
 "idjan"
 ]
 },
+"9:1735": {
+"explanation": "references to formal or structured phrases, possibly related to programming or data analysis",
+"frac_nonzero": 0.01167,
+"top_logits": [
+"MigrationBuilder",
+"Geplaatst",
+"ValueStyle",
+"matchCondition",
+"XmlAccessType",
+"\u0e16\u0e39\u0e01",
+"is",
+"InjectAttribute"
+]
+},
 "9:1749": {
 "explanation": "details about game quests and quest-related mechanics",
 "frac_nonzero": 0.0024,
@@ -13115,6 +15159,20 @@
 "TemporalType",
 "\u2581tale",
 "Route"
+]
+},
+"9:1766": {
+"explanation": "narratives related to historical events and their outcomes",
+"frac_nonzero": 0.01244,
+"top_logits": [
+"tonode",
+"RegistryLite",
+"sizeCache",
+"\u2581\u043c\u0463",
+"\u2581Paglinawan",
+"EndGlobalSection",
+"\u2581unknownFields",
+"transQ"
 ]
 },
 "9:1787": {
@@ -13159,6 +15217,20 @@
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581"
 ]
 },
+"9:1991": {
+"explanation": "mentions of the word \"extra.\"",
+"frac_nonzero": 0.00084,
+"top_logits": [
+"\u2581extra",
+"\u2581Extra",
+"\u2581EXTRA",
+"Extra",
+"extra",
+"EXTRA",
+"\u2581Extras",
+"extras"
+]
+},
 "9:1997": {
 "explanation": "file path references and directory structures",
 "frac_nonzero": 0.00063,
@@ -13171,6 +15243,20 @@
 "\u2581Rosso",
 "EndContext",
 "\u2581malheure"
+]
+},
+"9:203": {
+"explanation": "terms related to neuroanatomy and brain functions associated with language processing and disorders",
+"frac_nonzero": 0.00657,
+"top_logits": [
+"\u2581gyrus",
+"RenderAtEndOf",
+"\u2581neuroscience",
+"\u7701\u5e02\u9547",
+"\u2581brain",
+"\u2581Brain",
+"ByVersion",
+"\u2581autorytatywna"
 ]
 },
 "9:2063": {
@@ -13201,6 +15287,20 @@
 "\u2581pre\u017fent"
 ]
 },
+"9:2191": {
+"explanation": "legal terminology and concepts",
+"frac_nonzero": 0.03013,
+"top_logits": [
+"LookAnd",
+"\u2581ModelExpression",
+"awtextra",
+"\u2581ExecuteAsync",
+"verwijspagina",
+"IsContent",
+"Personensuche",
+"DockStyle"
+]
+},
 "9:2254": {
 "explanation": "instances of the word \"plate\" and related terms or derivatives",
 "frac_nonzero": 0.00037,
@@ -13213,6 +15313,76 @@
 "\u2581PLATE",
 "\u2581PLATES",
 "Plate"
+]
+},
+"9:2359": {
+"explanation": "terms related to nationalism and self-determination movements",
+"frac_nonzero": 0.00391,
+"top_logits": [
+"\u2581separ",
+"\u2581doulou",
+"\u2581separat",
+"\u2581nationalist",
+"\u2581nationalism",
+"riotic",
+"\u2581sovereignty",
+"hood"
+]
+},
+"9:2360": {
+"explanation": "references to regulatory agencies and organizations related to health and safety",
+"frac_nonzero": 0.00428,
+"top_logits": [
+"\u2581official",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627\u06cc",
+"\u2581\u0935\u093f\u0936\u094d\u0935\u0938\u0928\u0940\u092f\u0924\u093e",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"getDoctrine",
+"annica",
+"\u2581Wikispecies",
+"\u2581Insee"
+]
+},
+"9:2388": {
+"explanation": "references to different forms and aspects of art",
+"frac_nonzero": 0.00052,
+"top_logits": [
+"\u2581art",
+"\u2581ART",
+"\u2581Art",
+"art",
+"Art",
+"ART",
+"\u2581arts",
+"\u2581arte"
+]
+},
+"9:2426": {
+"explanation": " classes and their associated properties or attributes in programming-related contexts",
+"frac_nonzero": 0.00834,
+"top_logits": [
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"fortawesome",
+"\u2581\u0627\u0644\u062d\u0631\u0647",
+"\u2581Gara",
+"\u0442\u0435\u0440\u0438\u0437\u0443",
+"\u00edtulo",
+"MockMvc",
+"Odpo"
+]
+},
+"9:243": {
+"explanation": " phrases related to legal and administrative processes",
+"frac_nonzero": 0.00216,
+"top_logits": [
+"\u2581HasFactory",
+"AnchorStyles",
+"}\\]",
+"IsContent",
+"\u2581viewDidLoad",
+"\u2581attendance",
+"\u2581Gel\u00e4nde",
+"\u2581numberOfRows"
 ]
 },
 "9:2476": {
@@ -13241,6 +15411,20 @@
 "}?",
 "?''",
 "?}"
+]
+},
+"9:2500": {
+"explanation": "references to practical applications or consequences",
+"frac_nonzero": 0.00149,
+"top_logits": [
+"\u2581practical",
+"practical",
+"\u2581Practical",
+"Practical",
+"\u2581practicality",
+"\u2581pragmatic",
+"\u2581pr\u00e1cti",
+"\u2581PRACTICAL"
 ]
 },
 "9:254": {
@@ -13299,6 +15483,20 @@
 "PRNewswire"
 ]
 },
+"9:2625": {
+"explanation": "elements related to user interface components and their event handling in code",
+"frac_nonzero": 0.00116,
+"top_logits": [
+"StoryboardSegue",
+"PageRoute",
+"SceneManagement",
+"routeProvider",
+"Tembelea",
+"\u2581NavController",
+"stateProvider",
+"withIdentifier"
+]
+},
 "9:2679": {
 "explanation": "references to data or information",
 "frac_nonzero": 0.0006900000000000001,
@@ -13311,6 +15509,34 @@
 "\u2581INFORMATION",
 "\u2581informations",
 "\u2581informa"
+]
+},
+"9:2710": {
+"explanation": " institutional affiliations in academic or professional contexts",
+"frac_nonzero": 0.00612,
+"top_logits": [
+"expandindo",
+"\u2581\u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430",
+"\u0628\u0648\u0627\u0628\u0629",
+"GraphicsUnit",
+"\u2581Signalez",
+"ActionCreators",
+"Personensuche",
+"\u2581estim\u00e9s"
+]
+},
+"9:2716": {
+"explanation": "references to batch processing and related concepts",
+"frac_nonzero": 0.0009,
+"top_logits": [
+"\u2581batch",
+"\u2581BATCH",
+"Batch",
+"\u2581Batch",
+"batch",
+"BATCH",
+"\u2581batches",
+"batches"
 ]
 },
 "9:2726": {
@@ -13369,6 +15595,20 @@
 "\u2581Purposes"
 ]
 },
+"9:2799": {
+"explanation": "numbers and their associated quantities",
+"frac_nonzero": 0.00872,
+"top_logits": [
+"\ue315",
+")\");\r",
+"Diweddarwch",
+"BeginContext",
+")\";\r",
+"Enllaces",
+"/>\";",
+"\u0643\u0648\u064a\u0643\u0628"
+]
+},
 "9:2842": {
 "explanation": "terms and functions related to transformations and geometry in programming contexts",
 "frac_nonzero": 0.0005899999999999999,
@@ -13383,6 +15623,20 @@
 "GetComponent"
 ]
 },
+"9:2868": {
+"explanation": " terms related to cellular mechanisms and biological interactions",
+"frac_nonzero": 0.013,
+"top_logits": [
+"endpush",
+"\u2581GenerationType",
+"\u2581propOrder",
+"\u2581Efq",
+"RenderAtEndOf",
+"\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439",
+"expandindo",
+"\u2581useDispatch"
+]
+},
 "9:2883": {
 "explanation": "names of political leaders and governmental positions",
 "frac_nonzero": 0.00225,
@@ -13395,6 +15649,20 @@
 "\u2581Chancellor",
 "\u2581estekak",
 "President"
+]
+},
+"9:2887": {
+"explanation": "phrases related to promotional offers and shipping deals",
+"frac_nonzero": 0.00273,
+"top_logits": [
+"\u2581surla",
+"QPalette",
+"\u306f\u3058\u3081\u306b",
+"ksesta",
+"glBindTexture",
+"\u2581\u062a\u0627\u0646\u064a\u0647",
+"\u0627\u0646\u062c\u0644\u064a\u0632",
+"\u2581tr\u1edf"
 ]
 },
 "9:2973": {
@@ -13537,6 +15805,20 @@
 "\u2581jScrollPane"
 ]
 },
+"9:3184": {
+"explanation": "references to various sports personnel and their roles",
+"frac_nonzero": 0.00415,
+"top_logits": [
+"\u2581Roskov",
+"\u2581VIAF",
+"uxxxx",
+"WriteBarrier",
+"StructEnd",
+"\u2581pullover",
+"cioni",
+"\u2581R\u00e9seau"
+]
+},
 "9:3209": {
 "explanation": "phrases related to legal arguments and assertions",
 "frac_nonzero": 0.00664,
@@ -13563,6 +15845,20 @@
 "IntoConstraints",
 "ViewFeatures",
 "argout"
+]
+},
+"9:3345": {
+"explanation": "determinative phrases that indicate obligations or guidelines",
+"frac_nonzero": 0.008,
+"top_logits": [
+"\u2581AssemblyVersion",
+"\u2581generalmente",
+"\u2581typically",
+"\u2581normalmente",
+"\u2581Offisielt",
+"\u2581StringTokenizer",
+"\u2581geralmente",
+"\u2581Typically"
 ]
 },
 "9:3382": {
@@ -13663,6 +15959,34 @@
 "IBOutlet"
 ]
 },
+"9:3722": {
+"explanation": "numerical values and mathematical operations",
+"frac_nonzero": 0.00375,
+"top_logits": [
+"Datuak",
+"tvguidetime",
+"AddTagHelper",
+"CppMethod",
+"\u2581MainAxisSize",
+"\u2581AssemblyCulture",
+"\u2581CreateTagHelper",
+"\u2581\u043e\u0440\u0438\u0433\u0456\u043d\u0430\u043b\u0443"
+]
+},
+"9:3756": {
+"explanation": "the concept of \"ideal\" conditions or scenarios",
+"frac_nonzero": 0.00097,
+"top_logits": [
+"\u2581my\u017felf",
+"styleType",
+"\u2581it\u017felf",
+"\u2581Efq",
+"\u2581him\u017felf",
+"\u2581auffi",
+"\u2581i\u017ft",
+"\u2581Jefus"
+]
+},
 "9:376": {
 "explanation": " elements and attributes related to class and constructor definitions in programming documentation",
 "frac_nonzero": 0.00602,
@@ -13761,6 +16085,20 @@
 "\u2581lenker"
 ]
 },
+"9:3957": {
+"explanation": "names of ethnic groups or references to ethnicity",
+"frac_nonzero": 0.00206,
+"top_logits": [
+"\u00e9nario",
+"\u2581resourceCulture",
+"\u041d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435",
+"\u2581\u043f\u0440\u043e\u0436\u0438",
+"\u2581minority",
+"\u2581specchio",
+"\u2581population",
+"\u2581ethnic"
+]
+},
 "9:3962": {
 "explanation": " phrases indicating alternatives or options",
 "frac_nonzero": 0.00302,
@@ -13773,6 +16111,34 @@
 "\u4ed5\u65b9\u306a\u3044",
 "\u2581gebre",
 "Choices"
+]
+},
+"9:3973": {
+"explanation": "call-to-action phrases related to clicking and interacting with content",
+"frac_nonzero": 0.00049,
+"top_logits": [
+"\u2581CLICK",
+"\u2581clicks",
+"CLICK",
+"Clicks",
+"\u2581Click",
+"\u2581click",
+"click",
+"\u2581clicking"
+]
+},
+"9:3976": {
+"explanation": " phrases and concepts related to subjective experience and decision-making",
+"frac_nonzero": 0.00651,
+"top_logits": [
+"\u2581informally",
+"\u2581subjective",
+"AndEndTag",
+"\u2581manualmente",
+"\u2581subjek",
+"\u2581initComponents",
+"\u2581intuition",
+"amental"
 ]
 },
 "9:3997": {
@@ -13815,6 +16181,20 @@
 "\u2581Grecs",
 "\u0418\u0441\u043a\u04d9\u0440\u043c\u04d9\u043b\u04d9\u0440",
 "\u2581noastre"
+]
+},
+"9:4096": {
+"explanation": "references to events or meetings related to community or civic activities",
+"frac_nonzero": 0.0008100000000000001,
+"top_logits": [
+"kuuta",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc",
+"\u2581AssemblyCulture",
+"\u5e16\u6700\u540e\u7531",
+"Datuak",
+"\u2581spiritually",
+"MigrationBuilder",
+"SourceChecksum"
 ]
 },
 "9:4151": {
@@ -13957,6 +16337,20 @@
 "\u2581poffible"
 ]
 },
+"9:4286": {
+"explanation": "references to academic contexts and related terminology",
+"frac_nonzero": 0.00053,
+"top_logits": [
+"\u2581Aca",
+"Academics",
+"\u2581academics",
+"\u2581Academic",
+"academic",
+"Aca",
+"\u2581academic",
+"ACADEM"
+]
+},
 "9:4305": {
 "explanation": "the possessive pronouns \"My\" and \"my\" indicating personal ownership or connection",
 "frac_nonzero": 0.0007000000000000001,
@@ -13999,6 +16393,20 @@
 "\u2010"
 ]
 },
+"9:441": {
+"explanation": "discussions about community support and collaboration in various contexts",
+"frac_nonzero": 0.01331,
+"top_logits": [
+"The",
+"\u2019",
+"de",
+"In",
+"ro",
+"\n",
+"or",
+"\n\n"
+]
+},
 "9:4414": {
 "explanation": "the preposition \"\u0432\" (meaning \"in\") used frequently throughout the text",
 "frac_nonzero": 0.00014,
@@ -14025,6 +16433,34 @@
 "masing",
 "\u2581BoxDecoration",
 "opposite"
+]
+},
+"9:4437": {
+"explanation": "technical terms and references related to research studies",
+"frac_nonzero": 0.01487,
+"top_logits": [
+"InputTagHelper",
+"\u2581TAMBI\u00c9N",
+"tagHelperRunner",
+"\u2581also",
+"\u2581rowspan",
+"ateness",
+"\u2581Einwilligung",
+"\u2581another"
+]
+},
+"9:4444": {
+"explanation": "specific dates and times within the text",
+"frac_nonzero": 0.00293,
+"top_logits": [
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"Clik",
+"Jeografia",
+"\u2581\u0644\u0627\u062d",
+"\u2581desto",
+"\u2581sp\u00e4ter",
+"outState",
+"soon"
 ]
 },
 "9:4447": {
@@ -14055,6 +16491,20 @@
 "\u2581organizer"
 ]
 },
+"9:4505": {
+"explanation": "syntax and structure related to programming or coding elements",
+"frac_nonzero": 0.00144,
+"top_logits": [
+"MockMvc",
+"verwijspagina",
+"MLLoader",
+"ConstraintMaker",
+"InjectAttribute",
+"-------------</",
+"]--;",
+"fjspx"
+]
+},
 "9:4549": {
 "explanation": "references to genetic traits, loci, and allele frequencies in biological contexts",
 "frac_nonzero": 0.00981,
@@ -14067,6 +16517,20 @@
 "\u043f\u0435\u0440\u0432\u044b\u0445",
 "KommentareTeilen",
 "\u2581matter"
+]
+},
+"9:4555": {
+"explanation": "references to different group categories or classifications",
+"frac_nonzero": 0.00092,
+"top_logits": [
+"\u2581group",
+"\u2581groups",
+"\u2581getGroup",
+"\u2581Group",
+"\u2581Groups",
+"group",
+"Group",
+"\u2581GROUP"
 ]
 },
 "9:4563": {
@@ -14111,6 +16575,34 @@
 "netje"
 ]
 },
+"9:4681": {
+"explanation": "sections related to chapter formatting and transitions in a narrative",
+"frac_nonzero": 0.00112,
+"top_logits": [
+"Chapter",
+"\u2581Chapter",
+"rasse",
+"\u3051",
+"adre",
+"mybatisplus",
+"\u2581ricco",
+"\u2581planches"
+]
+},
+"9:470": {
+"explanation": " HTML tags and structure in the document",
+"frac_nonzero": 0.01367,
+"top_logits": [
+"\u2581kasarigan",
+"\u2581nahilalakip",
+"\u00e9valuateur",
+"\u2581apla",
+"dumps",
+"\u2581\u064a\u062a\u064a\u0645\u0647",
+"SourceChecksum",
+"\u2581betweenstory"
+]
+},
 "9:4820": {
 "explanation": "terms related to patient engagement and satisfaction in healthcare contexts",
 "frac_nonzero": 0.00101,
@@ -14123,6 +16615,34 @@
 "Patients",
 "\u2581PATIENT",
 "Patient"
+]
+},
+"9:4833": {
+"explanation": "references to structured data or attributes in a context related to systems and modeling",
+"frac_nonzero": 0.00544,
+"top_logits": [
+"setVerticalGroup",
+"\u2581AssemblyCulture",
+"DockStyle",
+"EndContext",
+"jstor",
+"bootstrapcdn",
+"\u2581authorship",
+"InitVars"
+]
+},
+"9:4892": {
+"explanation": "elements of data structures or numerical sequences",
+"frac_nonzero": 0.005719999999999999,
+"top_logits": [
+"\u2581<<<<<<<<<<<<<<",
+"SharedDtor",
+"DoubleQuotes",
+"\u2581ExecuteAsync",
+"\u2581Administrativna",
+"UnsafeEnabled",
+"IsMutable",
+"MigrationBuilder"
 ]
 },
 "9:4918": {
@@ -14151,6 +16671,20 @@
 "\u2581doInBackground",
 "\u2581constat\u00e9",
 "\u2581'{@"
+]
+},
+"9:5001": {
+"explanation": "statements regarding objectives or intentions in various contexts",
+"frac_nonzero": 0.0007099999999999999,
+"top_logits": [
+"\u2581Aims",
+"Aims",
+"\u2581Aim",
+"\u2581AIM",
+"\u2581aims",
+"Aim",
+"AIM",
+"aim"
 ]
 },
 "9:5002": {
@@ -14195,6 +16729,20 @@
 "\u2581Millennium"
 ]
 },
+"9:5138": {
+"explanation": "names or terms related to specific individuals or entities",
+"frac_nonzero": 0.02553,
+"top_logits": [
+"ar",
+"lar",
+"vertx",
+"\u2581paroisse",
+"\u2581Corcoran",
+"Kaynak\u00e7a",
+"\u2581Karin",
+"\u2581Mard"
+]
+},
 "9:5144": {
 "explanation": "names of individuals",
 "frac_nonzero": 0.00775,
@@ -14237,6 +16785,20 @@
 "nother"
 ]
 },
+"9:5201": {
+"explanation": " punctuated elements and sequences within text",
+"frac_nonzero": 0.0032,
+"top_logits": [
+"UrlResolution",
+"glGen",
+"\u2581?>/",
+"}{*}{",
+"ngdoc",
+"\u0421\u043f\u043e\u0459\u0430\u0448\u045a\u0435",
+"&-",
+"pagestyle"
+]
+},
 "9:5217": {
 "explanation": "mentions and details of criminal cases or incidents",
 "frac_nonzero": 0.00236,
@@ -14263,6 +16825,20 @@
 "mal",
 "\u2581girl",
 "\u2581tetto"
+]
+},
+"9:5373": {
+"explanation": "phrases related to gaming controls and user interface interactions",
+"frac_nonzero": 0.00314,
+"top_logits": [
+"\u2581keyboard",
+"\u2581ergonom",
+"\u2581keypad",
+"\u2581ergonomic",
+"\u2581Keyboard",
+"\u2581ergonomics",
+"\u2581keyboards",
+"\u2581gamepad"
 ]
 },
 "9:5375": {
@@ -14293,6 +16869,20 @@
 "olkata"
 ]
 },
+"9:5390": {
+"explanation": " phrases that express conditionality or prerequisites in a discussion or argument, particularly in legal or formal contexts",
+"frac_nonzero": 0.00394,
+"top_logits": [
+"ArrowToggle",
+"])]",
+"}])",
+"enterOuterAlt",
+"<>());",
+"\")))",
+"!');",
+"])){"
+]
+},
 "9:541": {
 "explanation": " references to governmental or regulatory contexts",
 "frac_nonzero": 0.00068,
@@ -14305,6 +16895,20 @@
 "\u2581At",
 "T\u1ea1i",
 "\u2581lest"
+]
+},
+"9:5478": {
+"explanation": "instances of the term \"address\" in various contexts related to data handling or storage",
+"frac_nonzero": 0.00052,
+"top_logits": [
+"\u2581ADDRESS",
+"\u2581address",
+"\u2581Address",
+"address",
+"Address",
+"\u2581Addresses",
+"\u2581addresses",
+"\u2581getAddress"
 ]
 },
 "9:5480": {
@@ -14347,6 +16951,20 @@
 "\u2581iterable",
 "complexContent",
 "ResponseWriter"
+]
+},
+"9:5623": {
+"explanation": "references to beaches and seaside locations",
+"frac_nonzero": 0.00031,
+"top_logits": [
+"\u2581beaches",
+"\u2581Beach",
+"\u2581beach",
+"Beach",
+"beach",
+"\u2581Beaches",
+"\u2581BEACH",
+"\u2581plages"
 ]
 },
 "9:5638": {
@@ -14461,6 +17079,48 @@
 "Whoosh"
 ]
 },
+"9:5958": {
+"explanation": " infinitive verbs and phrases that indicate purpose or intent",
+"frac_nonzero": 0.00484,
+"top_logits": [
+"\u2581\u05db\u05d3\u05d9",
+"\u2581help",
+"\u2581\u0427\u0442\u043e\u0431\u044b",
+"\u2581\u0447\u0442\u043e\u0431\u044b",
+"\u2581\u0449\u043e\u0431",
+"\u2581\u0111\u1ec3",
+"\u2581ensure",
+"KURZBESCHREIBUNG"
+]
+},
+"9:5999": {
+"explanation": "prepositions indicating movement or direction into a specific location or object",
+"frac_nonzero": 0.00109,
+"top_logits": [
+"\u2581INTO",
+"\u2581Into",
+"Into",
+"\u2581into",
+"INTO",
+"into",
+"\u2581onto",
+"=#{"
+]
+},
+"9:6015": {
+"explanation": "direct references to commercial and residential properties",
+"frac_nonzero": 0.00241,
+"top_logits": [
+"\u2581AssemblyProduct",
+"\u2581autorytatywna",
+"\u00e9valuateur",
+"\u2581tartalomaj\u00e1nl\u00f3",
+"Personensuche",
+"\u2581\u05d7\u05d9\u05e6\u05d5\u05e0\u05d9\u05d9\u05dd",
+"Autoritn\u00ed",
+"httphttps"
+]
+},
 "9:6026": {
 "explanation": "  timestamps and scheduling details",
 "frac_nonzero": 0.00036,
@@ -14517,6 +17177,20 @@
 "\u2581him\u017felf"
 ]
 },
+"9:6077": {
+"explanation": " patterns of numerical representations or calculations",
+"frac_nonzero": 0.005370000000000001,
+"top_logits": [
+"getKeyCode",
+"\u2581Dage",
+"+#+#",
+")\")",
+")\");",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"\u2581?\"",
+"adpleegd"
+]
+},
 "9:6115": {
 "explanation": "relational indicators in various contexts",
 "frac_nonzero": 0.00953,
@@ -14529,6 +17203,34 @@
 "!",
 "\u2581,",
 "1"
+]
+},
+"9:6139": {
+"explanation": "references to political intrigue and diplomatic missions",
+"frac_nonzero": 0.00359,
+"top_logits": [
+"\u2581ddelweddau",
+"\u0627\u0644\u062d\u064a\u0627\u0647",
+"\u2581The\u017fe",
+"Personensuche",
+"tvguidetime",
+"\u2581An\u017f",
+"\u2581Efq",
+"\u2581propOrder"
+]
+},
+"9:6160": {
+"explanation": " coding and programming-related terminology, particularly focused on initialization and dependency management functions",
+"frac_nonzero": 0.00285,
+"top_logits": [
+"initComponents",
+"PostConstruct",
+"initializeApp",
+"setContentView",
+"viewDidLoad",
+"Initializable",
+"ngOnInit",
+"ContentLoaded"
 ]
 },
 "9:6166": {
@@ -14571,6 +17273,20 @@
 "ButtonModule",
 "\u2581poids",
 "\u2581crois"
+]
+},
+"9:6227": {
+"explanation": "mathematical formulas or symbols, particularly those involving equations and variables",
+"frac_nonzero": 0.31616,
+"top_logits": [
+").",
+"\u2581[\u2026]",
+").\\\\",
+"\n",
+"\u2581og\u00f3le",
+"')['",
+"\u2581thereon",
+"\n\n"
 ]
 },
 "9:625": {
@@ -14627,6 +17343,34 @@
 "WriteTagHelper",
 "\n\n",
 "."
+]
+},
+"9:6372": {
+"explanation": " programming-related terms and functionalities",
+"frac_nonzero": 0.00649,
+"top_logits": [
+"NSIndexPath",
+"MemoryWarning",
+"\u2581CGSize",
+"SequentialGroup",
+"\u4e00\u6123",
+"\u2581CURIAM",
+"shadowOffset",
+"RectangleBorder"
+]
+},
+"9:6457": {
+"explanation": "references to infectious diseases and their impacts on health",
+"frac_nonzero": 0.00447,
+"top_logits": [
+"\u2581infection",
+"\u2581virus",
+"\u2581contagious",
+"\u2581infections",
+"\u2581epidemic",
+"\u2581disease",
+"\u2581Infection",
+"\u2581contagion"
 ]
 },
 "9:6459": {
@@ -14699,6 +17443,20 @@
 "Why"
 ]
 },
+"9:6541": {
+"explanation": " the phrase \"out of.\"",
+"frac_nonzero": 0.00046,
+"top_logits": [
+"OutOf",
+"\u2581outta",
+"\u2581INTO",
+"\u2581Into",
+"\u2581into",
+"\u2581Dooley",
+"\u2581the",
+"########."
+]
+},
 "9:6601": {
 "explanation": " numerical values and references to specific numbers",
 "frac_nonzero": 0.0125,
@@ -14755,6 +17513,48 @@
 "dotenv"
 ]
 },
+"9:6673": {
+"explanation": " constructs related to counting and aggregation in data contexts",
+"frac_nonzero": 0.005600000000000001,
+"top_logits": [
+"\u2581count",
+"\u2581numberOfRows",
+"\u0411\u0430\u0445\u0430\u0440",
+"\u2581number",
+"WaitGroup",
+"\u2581getItemCount",
+"kh\u00e1u",
+"\u0438\u0441\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u044c"
+]
+},
+"9:6703": {
+"explanation": "references to clusters or clustering in various contexts",
+"frac_nonzero": 0.0006,
+"top_logits": [
+"\u2581cluster",
+"\u2581clusters",
+"\u2581Cluster",
+"Cluster",
+"cluster",
+"CLUSTER",
+"clusters",
+"\u2581Clusters"
+]
+},
+"9:6712": {
+"explanation": "terms related to visibility and clarity in various contexts",
+"frac_nonzero": 0.00319,
+"top_logits": [
+"\u2581Visibility",
+"\u2581visibility",
+"\u2581zicht",
+"\u2581visibles",
+"visibility",
+"Visibility",
+"\u2581visible",
+"lihatan"
+]
+},
 "9:6720": {
 "explanation": "references to individuals and their affiliations or activities",
 "frac_nonzero": 0.00657,
@@ -14797,6 +17597,76 @@
 "InSection"
 ]
 },
+"9:6752": {
+"explanation": "conditional and hypothetical phrases related to past events and their potential outcomes",
+"frac_nonzero": 0.00338,
+"top_logits": [
+"\ue315",
+"\u2581AssemblyCulture",
+"tvguidetime",
+"\u2581gdyby",
+"MigrationBuilder",
+"tagHelperRunner",
+"RenderAtEndOf",
+"WebVitals"
+]
+},
+"9:6801": {
+"explanation": "references to blending and merging in various contexts",
+"frac_nonzero": 0.00418,
+"top_logits": [
+"\u2581\u0627\u0644\u0627\u0637\u0644\u0627\u0639",
+"\u2581submerged",
+"\u2581obscurity",
+"\u2581AssemblyCulture",
+"\u2581submer",
+"\u2581oblivion",
+"\u2581my\u017felf",
+"AndEndTag"
+]
+},
+"9:6804": {
+"explanation": "technical terms related to flexibility and its applications",
+"frac_nonzero": 0.01154,
+"top_logits": [
+"sidemargin",
+"posedge",
+"MessageTagHelper",
+"\u2581wireType",
+"\u2581Bi\u00f4grafia",
+"\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439",
+"InSection",
+"\u2581estekak"
+]
+},
+"9:6891": {
+"explanation": "relationships and connections among concepts",
+"frac_nonzero": 0.00563,
+"top_logits": [
+"bootstrapcdn",
+"\u2581lenker",
+"\u2581betweenstory",
+"\u2581CreateTagHelper",
+"ModelAdmin",
+"\u044c\u0430\u0436",
+"FTFY",
+"\u2581qu\u00e6"
+]
+},
+"9:6946": {
+"explanation": "references to hospitals and medical emergencies",
+"frac_nonzero": 0.0027,
+"top_logits": [
+"\u2581hospital",
+"\u2581Hospital",
+"\u2581hospitals",
+"\u2581Hospitals",
+"\u2581medical",
+"Hospital",
+"hospital",
+"\u2581Medical"
+]
+},
 "9:6952": {
 "explanation": "instances of the pronoun \"she\"",
 "frac_nonzero": 0.00184,
@@ -14837,6 +17707,34 @@
 "ViewFeatures",
 "\u2581antaranya",
 "\u2581\u043c\u04d9\u043a\u0430\u043b"
+]
+},
+"9:7144": {
+"explanation": "elements and functions related to database operations and user interface components",
+"frac_nonzero": 0.00215,
+"top_logits": [
+".",
+"I",
+"!",
+"_",
+"k",
+"\u2581,",
+"\u2581\u2581",
+"\u2581k"
+]
+},
+"9:7167": {
+"explanation": "words related to facilitation, support, and improvement in understanding or capability",
+"frac_nonzero": 0.00912,
+"top_logits": [
+")_/\u00af",
+"\u2581others",
+"dafx",
+"\"):\r",
+"StoryboardSegue",
+"/\r",
+"_\r",
+"TagHelper"
 ]
 },
 "9:7180": {
@@ -14993,6 +17891,20 @@
 "wapV"
 ]
 },
+"9:7432": {
+"explanation": " terminology and phrases related to technical concepts and expertise",
+"frac_nonzero": 0.00037,
+"top_logits": [
+"\u2581technical",
+"\u2581Technical",
+"Technical",
+"TECHNICAL",
+"technical",
+"\u2581Tech",
+"Tech",
+"tech"
+]
+},
 "9:7439": {
 "explanation": "numerical data and statistics related to health and medical studies",
 "frac_nonzero": 0.01148,
@@ -15119,6 +18031,20 @@
 "Parcelable"
 ]
 },
+"9:7661": {
+"explanation": "recurring phrases that express continuation or desire to persist in an action",
+"frac_nonzero": 0.00092,
+"top_logits": [
+"\"):\r",
+"LabelTagHelper",
+")\");\r",
+"\u2581/>\\",
+")\";\r",
+"s\u00e4tzlich",
+"\".\r",
+"\")->"
+]
+},
 "9:771": {
 "explanation": " numerical values or quantifications",
 "frac_nonzero": 0.00622,
@@ -15175,6 +18101,34 @@
 "\u2581Condition"
 ]
 },
+"9:7794": {
+"explanation": "terms and phrases related to peanut butter and its variations",
+"frac_nonzero": 0.00342,
+"top_logits": [
+"\u2581glue",
+"glue",
+"\u2581miel",
+"\u2581goo",
+"honey",
+"jelly",
+"\u2581honey",
+"\u2581butter"
+]
+},
+"9:7800": {
+"explanation": "key terms related to medical conditions, diagnostics, and environmental health impacts",
+"frac_nonzero": 0.02682,
+"top_logits": [
+"ConstraintMaker",
+"CloseOperation",
+"\u2581surla",
+"Personensuche",
+"expandindo",
+"WriteBarrier",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627",
+"\u2581createSprite"
+]
+},
 "9:7872": {
 "explanation": "technical terms and specific scientific language related to various fields of study",
 "frac_nonzero": 0.00958,
@@ -15187,6 +18141,20 @@
 "\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627\u06cc",
 "\u2581categories",
 "\u2581Roskov"
+]
+},
+"9:7881": {
+"explanation": " references to downloadable content, specifically related to video games",
+"frac_nonzero": 0.00293,
+"top_logits": [
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"\u2581teus",
+"jspx",
+"\u2581konkurs",
+"\u2581kasarigan",
+"ktas",
+"\u2581avg",
+"\u2581pertence"
 ]
 },
 "9:7895": {
@@ -15203,6 +18171,20 @@
 "PRNewswire"
 ]
 },
+"9:7936": {
+"explanation": "expressions of positive opinions about books and storytelling",
+"frac_nonzero": 0.00299,
+"top_logits": [
+"\u2581novels",
+"\u2581fiction",
+"\u2581novel",
+"novel",
+"Novel",
+"\u2581novelists",
+"\u2581books",
+"\u2581book"
+]
+},
 "9:794": {
 "explanation": "phrases that indicate exceptions or deviations from a norm",
 "frac_nonzero": 0.00348,
@@ -15217,6 +18199,34 @@
 "EXCEPT"
 ]
 },
+"9:7941": {
+"explanation": "comparative terms and phrases that highlight differences in qualities or effectiveness",
+"frac_nonzero": 0.01093,
+"top_logits": [
+"\u2581than",
+"than",
+"\u2581tighter",
+"\u2581stronger",
+"\u2581THAN",
+"\u2581clearer",
+"Than",
+"\u2581easier"
+]
+},
+"9:7944": {
+"explanation": " various phrases that indicate action or potential development",
+"frac_nonzero": 0.007229999999999999,
+"top_logits": [
+"\u2581it\u017felf",
+"BibitemShut",
+"\u2581help",
+"\u2581\u2015\u2015\u2015\u2015\u2015",
+"\u2581Isso",
+"\u2581bring",
+"bibfield",
+"ArrowToggle"
+]
+},
 "9:7951": {
 "explanation": "references to 'the' and its variants",
 "frac_nonzero": 0.02973,
@@ -15229,6 +18239,34 @@
 "rethe",
 "\u2581entire",
 "enthe"
+]
+},
+"9:7967": {
+"explanation": "terms related to architecture",
+"frac_nonzero": 0.00092,
+"top_logits": [
+"\u2581arch",
+"\u2581Arch",
+"\u2581Ar",
+"\u2581Arches",
+"Ar",
+"Arch",
+"\u2581ar",
+"\u2581ARCH"
+]
+},
+"9:8010": {
+"explanation": "references to notable individuals and their contributions or achievements",
+"frac_nonzero": 0.00413,
+"top_logits": [
+"\u2581pinulongan",
+"\u2581ddelweddau",
+"GraphicsUnit",
+"fromnode",
+"WebElementEntity",
+"\u2581died",
+"\u2581biografias",
+"\u2581posthum"
 ]
 },
 "9:8050": {
@@ -15273,6 +18311,20 @@
 "VISION"
 ]
 },
+"9:81": {
+"explanation": "technical terms related to various fields, particularly regarding systems, biological interactions, and logistics",
+"frac_nonzero": 0.01246,
+"top_logits": [
+"LookAnd",
+"DockStyle",
+"\u2581ModelExpression",
+"StoryboardSegue",
+"IsMutable",
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"\u2581nahilalakip",
+"\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439"
+]
+},
 "9:8104": {
 "explanation": "legal terminology and references",
 "frac_nonzero": 0.0043,
@@ -15285,6 +18337,20 @@
 "\u2581purpo\u017fe",
 "rungsseite",
 "yntaxException"
+]
+},
+"9:8118": {
+"explanation": "numerical values and codes associated with regions or entries",
+"frac_nonzero": 0.00613,
+"top_logits": [
+"\u2581eletr\u00f4nico",
+"\u2581polaire",
+"\u2581prohibido",
+"\u2581InputDecoration",
+"\u51fa\u7248\u5e74",
+"\u2581sup\u00e9rieurs",
+"astify",
+"\u2581vectorielle"
 ]
 },
 "9:8165": {
@@ -15455,6 +18521,48 @@
 "Situ"
 ]
 },
+"9:8444": {
+"explanation": " references to models or roles in a context of advocacy or representation",
+"frac_nonzero": 0.004739999999999999,
+"top_logits": [
+"ContentAsync",
+"empio",
+"oine",
+"\u2581\u0644\u0626\u06d2",
+"Hentet",
+"\u2581Signalez",
+"\u2581\u0635\u0648\u062a\u064a\u0647",
+"\u2581\u0627\u0644\u0627\u0637\u0644\u0627\u0639"
+]
+},
+"9:850": {
+"explanation": "elements related to shadow mapping and graphics rendering",
+"frac_nonzero": 0.01302,
+"top_logits": [
+"protoimpl",
+"\u2581mana",
+"\u2581Pura",
+"\u2581Murat",
+"jspx",
+"LookAnd",
+"geber",
+"\u2581Aal"
+]
+},
+"9:8509": {
+"explanation": "conditional statements in programming contexts",
+"frac_nonzero": 0.007229999999999999,
+"top_logits": [
+"\u2581surla",
+"AndEndTag",
+"dafx",
+"\u2581resourceCulture",
+"UnitTesting",
+"tagHelperRunner",
+"]\")]",
+"\u2581NUnit"
+]
+},
 "9:8510": {
 "explanation": "references to financial planning and budgeting",
 "frac_nonzero": 0.0006900000000000001,
@@ -15553,6 +18661,20 @@
 "\u2581fl\u00e4"
 ]
 },
+"9:8767": {
+"explanation": "specific medical and biological terms related to health conditions and treatments",
+"frac_nonzero": 0.0186,
+"top_logits": [
+"Carriera",
+"\u2581addSubview",
+"\u2581Wikiseite",
+"\u2581TextFormField",
+"\u2581geox",
+"NamedQuery",
+"[++",
+"msgSender"
+]
+},
 "9:8777": {
 "explanation": " phrases that emphasize characteristics or descriptors of specific subjects, particularly focusing on 'this'",
 "frac_nonzero": 0.00181,
@@ -15565,6 +18687,20 @@
 ".)}",
 "\u2581particular",
 "[\r"
+]
+},
+"9:8816": {
+"explanation": "phrases that indicate emphasis or importance in discussions or analyses",
+"frac_nonzero": 0.00968,
+"top_logits": [
+"\u2581Also",
+"\u2581Consequently",
+"\u2581Hence",
+"\u2581However",
+"\u2581Furthermore",
+"\u3057\u304b\u3057",
+"ce\u011fine",
+"\u2581Indeed"
 ]
 },
 "9:8819": {
@@ -15623,6 +18759,34 @@
 "UnusedPrivate"
 ]
 },
+"9:8874": {
+"explanation": "phrases related to awards and recognitions in various fields",
+"frac_nonzero": 0.00273,
+"top_logits": [
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"\ue315",
+"\u2581'\\\\;'",
+"\u2581\u0938\u092e\u0940\u0915\u094d\u0937\u093e\u0913\u0902",
+"\u2581\u0644\u0644\u0627\u0633\u0645\u0627\u0621",
+"webElementXpaths",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"\u2581smtplib"
+]
+},
+"9:8944": {
+"explanation": "terms related to authentication and security protocols",
+"frac_nonzero": 0.00156,
+"top_logits": [
+"jsonwebtoken",
+"\u2581FetchType",
+"jwt",
+"\u2581authentication",
+"\u2581jwt",
+"\u2581security",
+"Jwt",
+"\u2581JWT"
+]
+},
 "9:8969": {
 "explanation": "tabular data representation and numerical information",
 "frac_nonzero": 0.00924,
@@ -15649,6 +18813,48 @@
 "sizeCache",
 "\u2581propOrder",
 "\u2581religieuses"
+]
+},
+"9:8984": {
+"explanation": "HTML and JavaScript code snippets",
+"frac_nonzero": 0.00114,
+"top_logits": [
+"\u2581",
+"\u2581\u2581",
+"\u2581A",
+"<eos>",
+"\u2581,",
+"\u2581K",
+"\u2581I",
+"."
+]
+},
+"9:9001": {
+"explanation": "elements related to academic or research disciplines, particularly in mathematics and statistics",
+"frac_nonzero": 0.00269,
+"top_logits": [
+"MigrationBuilder",
+"\u043a\u043b\u043e\u043f\u0435",
+"t\u0131\u011f\u0131",
+"\u2581RIPRODUZIONE",
+"\u2581snippetHide",
+"Portale",
+"@[+][",
+"Jeografia"
+]
+},
+"9:9035": {
+"explanation": "programming-related commands and functions",
+"frac_nonzero": 0.00268,
+"top_logits": [
+"\u2581",
+"\u2581\u2581",
+"\u2581,",
+"\u2581of",
+"\u2581for",
+".",
+"\u2581and",
+"\u2581C"
 ]
 },
 "9:904": {
@@ -15693,6 +18899,20 @@
 "\u2581Multi"
 ]
 },
+"9:9137": {
+"explanation": "technical terms and concepts related to medical and imaging procedures",
+"frac_nonzero": 0.01597,
+"top_logits": [
+"\u2581plain",
+"UrlResolution",
+"plain",
+"SequentialGroup",
+"\u5b58\u4e8e\u4e92\u8054\u7f51\u6863\u6848\u9986",
+"Plain",
+"\u2581Plain",
+"\u2581Traditional"
+]
+},
 "9:9172": {
 "explanation": "references to spreadsheets and related documentation",
 "frac_nonzero": 0.0006900000000000001,
@@ -15707,6 +18927,48 @@
 "Sheets"
 ]
 },
+"9:9173": {
+"explanation": "names and identifying details of sports players and their teams",
+"frac_nonzero": 0.00178,
+"top_logits": [
+"\u2581An",
+"\u2581is",
+"\u00fchrung",
+"\u2581The",
+"\u2581velkommen",
+"atiker",
+"ANZA",
+"\u2581proudly"
+]
+},
+"9:9187": {
+"explanation": "metadata related to document processing and updates",
+"frac_nonzero": 0.00217,
+"top_logits": [
+"readFileSync",
+"Hentet",
+"decode",
+"\u2581Komunikasi",
+"\u2581Breta\u00f1a",
+"\u2581Pode",
+"FunctionFlags",
+"bersicht"
+]
+},
+"9:9193": {
+"explanation": " instances of array or list length checks in code",
+"frac_nonzero": 0.00058,
+"top_logits": [
+"weile",
+"OrWhiteSpace",
+"aryen",
+"\u2581colspan",
+"deauna",
+"</caption>",
+"ida\u0107",
+"VersionUID"
+]
+},
 "9:9244": {
 "explanation": "specific identifiers and parameters related to programming or data handling",
 "frac_nonzero": 0.01816,
@@ -15719,6 +18981,20 @@
 "\u2581Offisielt",
 "byshire",
 "\u2581\u0441\u043b\u044b"
+]
+},
+"9:9347": {
+"explanation": "terms related to receptor interactions and steroid binding",
+"frac_nonzero": 0.01183,
+"top_logits": [
+"\u2581receptors",
+"\u2581receptor",
+"\u2581Receptors",
+"\u2581Receptor",
+"receptor",
+"\u2581recepto",
+"\u2581\u0418\u0442\u0430\u043b\u0438\u0458\u0430\u043d\u0438",
+"\u2581RECE"
 ]
 },
 "9:9354": {
@@ -15749,6 +19025,20 @@
 "\u2581AppDelegate"
 ]
 },
+"9:9379": {
+"explanation": "phrases discussing or questioning the actions of politicians and their implications",
+"frac_nonzero": 0.00102,
+"top_logits": [
+"\u2581fanfic",
+"\u2581fanfiction",
+"\u2581bil",
+"abuse",
+"\u2581fic",
+"ObjectContext",
+"\u0432\u0430\u0441\u0442\u043e",
+"\u2581\u092d\u093e\u0935"
+]
+},
 "9:94": {
 "explanation": "specific punctuation and formatting characters",
 "frac_nonzero": 0.00315,
@@ -15761,6 +19051,20 @@
 "In",
 "I",
 "When"
+]
+},
+"9:9406": {
+"explanation": "references to citizenship, especially regarding multiple citizenships and associated legal contexts",
+"frac_nonzero": 0.00594,
+"top_logits": [
+"\u2581mellett",
+"\u2581alongside",
+"\u2581naast",
+"\u2581yoksa",
+"\u2581obok",
+"\u044c\u0430\u0436",
+"mybatisplus",
+"\u2581simultaneously"
 ]
 },
 "9:9428": {
@@ -15777,6 +19081,48 @@
 "\u2581renowned"
 ]
 },
+"9:9445": {
+"explanation": "terms related to economic transactions and financial responsibilities",
+"frac_nonzero": 0.00777,
+"top_logits": [
+"\u2581\u0432\u0438\u043f\u0440\u0430\u0432\u0438\u0432\u0448\u0438",
+"\u2581RouterModule",
+"kuuta",
+"\uac13",
+"fromnode",
+"createComponent",
+"EnableWeb",
+"zara"
+]
+},
+"9:9450": {
+"explanation": "HTML button elements, particularly those with specific class names indicating their style",
+"frac_nonzero": 0.0005,
+"top_logits": [
+"\u2581btn",
+"btn",
+"########.",
+"\u2581Btn",
+"\u2581Yeats",
+"httphttps",
+"\u00e9gard",
+"Btn"
+]
+},
+"9:9458": {
+"explanation": " transactional notions/assignments in various contexts",
+"frac_nonzero": 0.00084,
+"top_logits": [
+"\n\n",
+"\u3053\u3068\u306b\u3057\u307e\u3057\u305f",
+"\u2581\u2581",
+"\u304a\u4e16\u8a71",
+"\u2581Rey",
+"\u600e\u9ebc\u8fa6",
+"Rey",
+"/**"
+]
+},
 "9:9496": {
 "explanation": "articles, particularly \"a\" and \"an\"",
 "frac_nonzero": 0.01234,
@@ -15791,6 +19137,20 @@
 "\u2581large"
 ]
 },
+"9:9508": {
+"explanation": "references to medical treatments and protocols related to eye conditions",
+"frac_nonzero": 0.03034,
+"top_logits": [
+"ting",
+"tttt",
+"ttt",
+"thet",
+"tt",
+"tet",
+"tait",
+"lit"
+]
+},
 "9:9543": {
 "explanation": "narrative elements involving deception and manipulation",
 "frac_nonzero": 0.0039,
@@ -15803,6 +19163,34 @@
 "\u2581CreateTagHelper",
 "\u2581my\u017felf",
 "HomeAsUpEnabled"
+]
+},
+"9:9594": {
+"explanation": "references to data collection and analysis methodologies",
+"frac_nonzero": 0.00441,
+"top_logits": [
+"\u2581propOrder",
+"Personendaten",
+"OGND",
+"\u2581ModelExpression",
+"\u2581nakalista",
+"IntoConstraints",
+"\u2581AssemblyVersion",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430"
+]
+},
+"9:962": {
+"explanation": "negative sentiments or criticisms related to music events or experiences",
+"frac_nonzero": 0.0005899999999999999,
+"top_logits": [
+"Revenir",
+"NUMX",
+"\u2581onCreateView",
+"\u2581consultato",
+"ik\u00e4",
+"\u2581useParams",
+"\u5b58\u4e8e\u4e92\u8054\u7f51\u6863\u6848\u9986",
+"InlineData"
 ]
 },
 "9:9624": {
@@ -15847,6 +19235,48 @@
 "\u6a21\u578b"
 ]
 },
+"9:9674": {
+"explanation": " elements or attributes related to method definitions and function syntax in programming",
+"frac_nonzero": 0.00111,
+"top_logits": [
+"setVerticalGroup",
+"BeginInit",
+"}{*}{}",
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"__\":\r",
+"EndInit",
+"GEBURTSDATUM",
+"\u2581{?>"
+]
+},
+"9:9681": {
+"explanation": "elements related to film scores and their composers",
+"frac_nonzero": 0.0012,
+"top_logits": [
+"DockStyle",
+"Soundtrack",
+"\u2581soundtrack",
+"\u2581\u0645\u0631\u0626\u064a\u0647",
+"\u2581Soundtrack",
+"aarrggbb",
+"\u2581\u0635\u0648\u062a\u064a\u0647",
+"\u2581GoogleFonts"
+]
+},
+"9:9718": {
+"explanation": "information related to health statistics and conditions",
+"frac_nonzero": 0.006480000000000001,
+"top_logits": [
+"WindowConstants",
+"ValueGenerated",
+"\u2581InputDecoration",
+"basicConfig",
+"\u2581\u092c\u094d\u0930\u0947\u0915\u0921\u093e\u0909\u0928",
+"\u2581doInBackground",
+"BoxLayout",
+"otis"
+]
+},
 "9:9759": {
 "explanation": "technical terms and references related to processes or measurements",
 "frac_nonzero": 0.01559,
@@ -15859,6 +19289,20 @@
 "millan",
 "\u2581Barbuda",
 "\u2581sehari"
+]
+},
+"9:9762": {
+"explanation": "information about vehicle specifications and conditions",
+"frac_nonzero": 0.00315,
+"top_logits": [
+"zeczy",
+"\u2581Upon",
+"Tracce",
+"\u2581masuk",
+"enetrable",
+"\u2581entry",
+"Upon",
+"\u2581walk"
 ]
 },
 "9:9766": {
@@ -15915,6 +19359,20 @@
 "\u2581\u0648\u062a\u0633\u062c\u064a\u0644\u0627\u062a",
 "competent",
 "\u2581NDEBUG"
+]
+},
+"9:9841": {
+"explanation": "concepts related to decision-making frameworks in organizations",
+"frac_nonzero": 0.00449,
+"top_logits": [
+"ScopeManager",
+"oshin",
+"ldorf",
+"\u2581focus",
+"\u2581focused",
+"\u2581scalable",
+"ILITY",
+"\u2581colspan"
 ]
 }
 }
