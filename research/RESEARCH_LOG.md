@@ -115,3 +115,37 @@ val): x_{t−1}, and the causal mean of x over positions 1…t.
   variance is. Same-token nonlinearity (iteration 3) is tested next.
 * This direction is set aside: it changes the operator's semantics (no
   longer same-token transport) for a small gain.
+
+### Iteration 3: transport + synthesis, a nonlinear correction in a neuron-like basis (`exp3_nonlinear.py`)
+
+ŷ = [A B]·[x; x̂] + b (the frozen iteration-1 map) + W_dec·σ(W_enc x̂ + b_enc).
+The correction is trained with Adam on the linear map's residual, on the
+train split. The epoch is chosen by validation FVE. 4 epochs, CPU.
+
+**5→10 sweep** (test, nobos):
+
+| correction (≈ size) | FVE | median feat R² | frac R²>0.9 | s/epoch |
+|---|---|---|---|---|
+| none (linear, iteration 1) | 0.6548 | 0.021 | 0.178 | – |
+| dense GELU h=2048 | 0.6653 | 0.174 | 0.189 | 33 |
+| GeGLU h=1365 (Gemma's MLP form, matched params) | 0.6620 | 0.126 | 0.184 | ~45 |
+| sign-split top-k, 1024 enc / 2048 poles, k=64 | 0.6598 | 0.137 | 0.184 | ~28 |
+| **top-k ReLU h=2048, k=64** | 0.6644 | 0.178 | 0.188 | 28 |
+| **top-k ReLU h=8192, k=64** | **0.6698** | **0.247** | **0.196** | 84 |
+
+* **Small FVE gains, large feature-metric gains.** A correction worth
+  +0.010–0.015 FVE moves the median feature R² by +0.15 to +0.23. That
+  confirms the regression-to-the-mean diagnosis: the linear map
+  under-predicts on exactly the tokens where a feature fires, and a
+  nonlinear unit that "switches on" fixes this.
+* **A sparse code is enough.** Top-k with 64 of 2048 units active matches
+  dense GELU, and a wider dictionary with the same k keeps improving. This
+  agrees with Shabalin & Piotrowski (arXiv:2610.24521), who find that
+  transcoder-style sparse units ≈ thresholded neurons, and with the
+  "networks are already clean" view. The synthesis between layers is
+  carried by a few sparsely active, neuron-like directions.
+* GeGLU (gated) and sign-split poles did *not* help at matched size and 4
+  epochs. Sign-split halves the number of encoders, and the gated product
+  starts slowly from small init.
+* All models overfit after 2–3 epochs (151k training tokens). Data, not
+  capacity, is the binding constraint, so more activations would help most.
