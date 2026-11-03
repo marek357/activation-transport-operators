@@ -573,6 +573,20 @@
 "\u2581hides"
 ]
 },
+"10:11338": {
+"explanation": "comparative and contrasting structures in discussions about categories or classifications",
+"frac_nonzero": 0.00423,
+"top_logits": [
+"\u2581Either",
+"either",
+"Either",
+"\u2581extremes",
+"\u2581either",
+"Neither",
+"\u2581Neither",
+"neither"
+]
+},
 "10:11343": {
 "explanation": " numerical values or data points within technical contexts",
 "frac_nonzero": 0.00096,
@@ -699,6 +713,20 @@
 "Geplaatst"
 ]
 },
+"10:11672": {
+"explanation": "ingredients and cooking instructions related to traditional recipes",
+"frac_nonzero": 0.00206,
+"top_logits": [
+"\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439",
+"\u2581lenker",
+"MessageOf",
+"\u2581OSError",
+"\u2581AssemblyTitle",
+"HandlerContext",
+"minecraftforge",
+"\u0627\u0646\u062c\u0644\u064a\u0632"
+]
+},
 "10:11806": {
 "explanation": "terms and references related to infections",
 "frac_nonzero": 0.00165,
@@ -769,6 +797,20 @@
 "Select"
 ]
 },
+"10:11974": {
+"explanation": "mathematical expressions and comparisons within textual contexts",
+"frac_nonzero": 0.0103,
+"top_logits": [
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"\u2581\u0644\u0644\u0645\u0639\u0627\u0631\u0641",
+"PreferredItem",
+"Carriera",
+"BeginContext",
+"InjectAttribute",
+"%</",
+"\u2581tartalomaj\u00e1nl\u00f3"
+]
+},
 "10:12004": {
 "explanation": "references to mathematical or numerical concepts",
 "frac_nonzero": 0.00236,
@@ -781,6 +823,20 @@
 "\u2581doubtnut",
 "\u2581it\u017felf",
 "\u2581rai\u017f"
+]
+},
+"10:12043": {
+"explanation": "references to unpublished studies and observational results",
+"frac_nonzero": 0.0105,
+"top_logits": [
+"twimg",
+"jsxFileName",
+"\u24e7",
+"\u2581pinulongan",
+"StoryboardSegue",
+"awaiter",
+"sizeCache",
+"rawDesc"
 ]
 },
 "10:12081": {
@@ -1049,6 +1105,34 @@
 "\u2581never"
 ]
 },
+"10:12653": {
+"explanation": "references to population genetics and clinical trial methodology",
+"frac_nonzero": 0.00959,
+"top_logits": [
+"\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
+"\u6216",
+"\u2581Chum",
+"\u2581esportivo",
+"Erreferentziak",
+"ess\u00e4",
+"\u2581traseiro",
+"your"
+]
+},
+"10:12799": {
+"explanation": "xml-based configuration elements and class declarations in a software context",
+"frac_nonzero": 0.00332,
+"top_logits": [
+"\u2581\u0434\u043e\u043f\u0438\u0441\u0430\u0432\u0448\u0438",
+"PMailer",
+"Geplaatst",
+"Hauptartikel",
+"StoreMessageInfo",
+"richTextPanel",
+"rubin",
+"hoeddwyd"
+]
+},
 "10:1281": {
 "explanation": "connections to lifecycle policies and scheduling in programming or data management contexts",
 "frac_nonzero": 0.005520000000000001,
@@ -1229,6 +1313,20 @@
 "!?",
 "?\u201d",
 "?}"
+]
+},
+"10:13430": {
+"explanation": " references to specific locations or notable places",
+"frac_nonzero": 0.00617,
+"top_logits": [
+"\u2581blah",
+"\u2581bosom",
+"migrationBuilder",
+"\u2581beheld",
+"\u3063\u3066\u304a\u308a\u307e\u3059",
+"...\")",
+"\u2581constexpr",
+"\u0c26\u0c4d\u0c2f"
 ]
 },
 "10:13469": {
@@ -1833,6 +1931,20 @@
 "\u2581Theres"
 ]
 },
+"10:15026": {
+"explanation": "references to accomplishments and notable achievements",
+"frac_nonzero": 0.0254,
+"top_logits": [
+"\u2581Serap",
+"\u2581total",
+"\u2581\u2018",
+"stat",
+"raw",
+"\u2581Viter",
+"He",
+"\\"
+]
+},
 "10:15064": {
 "explanation": " programming-related concepts and attributes",
 "frac_nonzero": 0.00019,
@@ -1861,6 +1973,20 @@
 "tvguidetime"
 ]
 },
+"10:15148": {
+"explanation": "concepts related to financial transactions and economic structures",
+"frac_nonzero": 0.00657,
+"top_logits": [
+"\u0561\u0563\u0580\u0578\u0582\u0569\u0575\u0578\u0582\u0576\u0576\u0565\u0580",
+"AlterField",
+"\u2581giant",
+"\u2581gigantes",
+"\u2581sense",
+"\u2581terbesar",
+"\u5de8\u5927",
+"giant"
+]
+},
 "10:15167": {
 "explanation": "instances of the word \"the\" in various contexts within the text",
 "frac_nonzero": 0.02973,
@@ -1873,6 +1999,48 @@
 "\u2581entire",
 "enthe",
 "rethe"
+]
+},
+"10:15169": {
+"explanation": "phrases that discuss ongoing actions or events",
+"frac_nonzero": 0.004099999999999999,
+"top_logits": [
+"\u907d",
+"\u3053\u3068\u306a\u304f",
+"\u2581consid\u00e9rons",
+"usschuss",
+"\u2581simply",
+"\u2581am",
+"\u2581talk",
+"\ub155"
+]
+},
+"10:15237": {
+"explanation": "references to crime and moral dilemmas",
+"frac_nonzero": 0.00767,
+"top_logits": [
+"\u2581my\u017felf",
+"featureID",
+"\u2581Monfieur",
+"\u2581Re\u017f",
+"\u2581them\u017felves",
+"\u017felves",
+"\u017felf",
+"\u2581it\u017felf"
+]
+},
+"10:1527": {
+"explanation": " entities related to leadership and influence",
+"frac_nonzero": 0.01066,
+"top_logits": [
+"\u2581NSCoder",
+"MLLoader",
+"\ue315",
+"Portail",
+"\u2581ComVisible",
+"\u2581esternos",
+"\u2581nahilalakip",
+"\u2581chi\u030dt"
 ]
 },
 "10:15276": {
@@ -2125,6 +2293,20 @@
 "Language",
 "\u2581languages",
 "\u2581Language"
+]
+},
+"10:16070": {
+"explanation": "words related to writing or textual composition",
+"frac_nonzero": 0.00169,
+"top_logits": [
+"URLException",
+"ActionCreators",
+"\u2581InputDecoration",
+"ErrorListener",
+"ImageContext",
+"\u2581OCS",
+"\u043b\u0442\u0435\u043c\u0435\u043b\u0435\u0440",
+"\u2581Orrell"
 ]
 },
 "10:16072": {
@@ -2491,6 +2673,20 @@
 "XmlAccessType"
 ]
 },
+"10:2656": {
+"explanation": "terms and phrases related to statistical analysis and energy densities in cosmological contexts",
+"frac_nonzero": 0.01618,
+"top_logits": [
+"}=-",
+"negative",
+"\u2581(\u2212",
+"]=-",
+"\u2581n\u00e9gatif",
+"\u2581NEGATIVE",
+"\u2581negative",
+"-(-"
+]
+},
 "10:2739": {
 "explanation": "the mathematical notation for functions or variables labeled with 'l'",
 "frac_nonzero": 0.00233,
@@ -2617,6 +2813,20 @@
 "]))."
 ]
 },
+"10:3003": {
+"explanation": "references to e-commerce platforms and related comparisons",
+"frac_nonzero": 0.00985,
+"top_logits": [
+"\u00e9pend",
+"\u2581puertas",
+"setFlags",
+"\u2581voordeel",
+"ivre",
+"G\u00fcn",
+"\u0431\u044b\u0447\u043d\u043e",
+"\u2581d\u0117"
+]
+},
 "10:305": {
 "explanation": "high-profile political and legal controversies involving presidents and key figures",
 "frac_nonzero": 0.0074,
@@ -2629,6 +2839,20 @@
 "\u2581US",
 "\u2581Washington",
 "\u2581Obama"
+]
+},
+"10:3132": {
+"explanation": "phrases that emphasize the act of pointing out discrepancies or differences",
+"frac_nonzero": 0.0037,
+"top_logits": [
+"SharedDtor",
+"RegressionTest",
+"etheless",
+"\u2581purpo\u017fe",
+"\u2581my\u017felf",
+"\u2581fubject",
+"rentices",
+"\u2581dalamnya"
 ]
 },
 "10:3216": {
@@ -2713,6 +2937,20 @@
 "\u2581\u0648\u0639\u0644\u0649",
 "addOn",
 "isOn"
+]
+},
+"10:336": {
+"explanation": " Java classes and interfaces related to data structures and I/O operations",
+"frac_nonzero": 0.00247,
+"top_logits": [
+"+#+#",
+"PerformLayout",
+"\u2581chi\u030dt",
+"\u2581endforeach",
+"tivit\u00e9",
+"\u2581dolay\u0131",
+"\u2581amargo",
+"\u05d1\u05e8\u05e1"
 ]
 },
 "10:3360": {
@@ -2825,6 +3063,20 @@
 "RANK",
 "\u2581rank",
 "\u2581Ranks"
+]
+},
+"10:3805": {
+"explanation": "terms related to partnerships and contractual agreements",
+"frac_nonzero": 0.00923,
+"top_logits": [
+"\u2581CreateTagHelper",
+"\u0411\u0438\u043b\u0433\u0430\u043b\u0434\u0430\u0445\u0430\u0440\u0448",
+"Jeografia",
+"MigrationBuilder",
+"\u2581\u0644\u0644\u0645\u0639\u0627\u0631\u0641",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"TintMode"
 ]
 },
 "10:3849": {
@@ -3009,6 +3261,20 @@
 "Actual"
 ]
 },
+"10:4176": {
+"explanation": "phrases and terms related to research and authorship contributions in academic articles",
+"frac_nonzero": 0.00842,
+"top_logits": [
+"<bos>",
+"\u2581dernier",
+"\u9177",
+"\u2581mauvaises",
+"\u2581geh",
+"\u2581Protobuf",
+"extr\u00eame",
+"\u721b"
+]
+},
 "10:4186": {
 "explanation": " expressions or phrases that describe actions or occurrences in a narrative context",
 "frac_nonzero": 0.0011,
@@ -3093,6 +3359,20 @@
 "\u2581believes"
 ]
 },
+"10:4460": {
+"explanation": "content related to political manipulation and conspiracy theories",
+"frac_nonzero": 0.005370000000000001,
+"top_logits": [
+"RegressionTest",
+"\u2581\u0644\u0644\u0645\u0639\u0627\u0631\u0641",
+"\u2581attacks",
+"\u2581AssemblyCulture",
+"\u2581Wikimedijinoj",
+"///</",
+"jooq",
+"\u041b\u0456\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430"
+]
+},
 "10:4565": {
 "explanation": "terminology related to sports events and specific games",
 "frac_nonzero": 0.00317,
@@ -3133,6 +3413,20 @@
 "+'",
 "==='",
 ">';\r"
+]
+},
+"10:4651": {
+"explanation": "references to specific technical terms and elements related to programming or algorithms",
+"frac_nonzero": 0.0188,
+"top_logits": [
+"BeginContext",
+"\u043d\u043e\u0432\u043d\u0438\u0448\u0442\u0432\u043e",
+"\u2581becau\u017fe",
+"\u2581The\u017fe",
+"CodedInputStream",
+"\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629",
+"SharedDtor",
+"RTEE"
 ]
 },
 "10:476": {
@@ -3345,6 +3639,20 @@
 "Acad\u00e9mie"
 ]
 },
+"10:5475": {
+"explanation": "features and characteristics of technological products and implementations",
+"frac_nonzero": 0.006770000000000001,
+"top_logits": [
+"GHIJKLM",
+"\u2581ligiloj",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"\u2581\u0644\u0644\u0627\u0633\u0645\u0627\u0621",
+"VIAF",
+"webElementXpaths",
+"]--;",
+"AutoScale"
+]
+},
 "10:5509": {
 "explanation": "terms related to conditions and their variations in discussions or analyses",
 "frac_nonzero": 0.00057,
@@ -3399,6 +3707,20 @@
 "Bird",
 "\u2581BIRD",
 "\u2581BIRDS"
+]
+},
+"10:5737": {
+"explanation": "references to health-related issues and events",
+"frac_nonzero": 0.00094,
+"top_logits": [
+"OrNil",
+"\u2581disambiguazione",
+"writeFieldEnd",
+"\u2581StatefulWidget",
+"\u2581\u05d7\u05d9\u05e6\u05d5\u05e0\u05d9\u05d9\u05dd",
+"StoreMessageInfo",
+"stateProvider",
+"\u2581Autorizaciones"
 ]
 },
 "10:581": {
@@ -3569,6 +3891,20 @@
 "\u2581Albright"
 ]
 },
+"10:6270": {
+"explanation": "structured data points or parameters related to statistical or mathematical models",
+"frac_nonzero": 0.00618,
+"top_logits": [
+"\u2581Normdatei",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"oredCriteria",
+"\u041d\u0430\u0441\u0435\u043b\u0435\u043d\u043d\u044f",
+"SharedDtor",
+"bootstrapcdn",
+"\u2581ostavi",
+"\u2581AssemblyProduct"
+]
+},
 "10:6282": {
 "explanation": "variables or placeholders used in programming",
 "frac_nonzero": 0.00538,
@@ -3667,6 +4003,20 @@
 "\u017felves"
 ]
 },
+"10:6439": {
+"explanation": "references to political leadership and authority, particularly in relation to authoritarian behavior",
+"frac_nonzero": 0.0042,
+"top_logits": [
+"\u2581political",
+"political",
+"\u2581politics",
+"ContextHolder",
+"politics",
+"\u2581Trump",
+"\u2581global",
+"sonaro"
+]
+},
 "10:6516": {
 "explanation": " references to practical approaches and solutions",
 "frac_nonzero": 0.00103,
@@ -3695,6 +4045,20 @@
 "PerformLayout"
 ]
 },
+"10:6639": {
+"explanation": "keywords related to programming structures and mathematical notation",
+"frac_nonzero": 0.03079,
+"top_logits": [
+"\ue315",
+"IsContent",
+"th\u00e2u",
+"L\u00e4hteet",
+"tvguidetime",
+"Atsauces",
+"\u2581IBOutlet",
+"\u2581Drapeau"
+]
+},
 "10:6641": {
 "explanation": "environment variable and configuration-related keywords in the text",
 "frac_nonzero": 0.00195,
@@ -3721,6 +4085,20 @@
 "\u2581WOULD",
 "\u2581Would",
 "\u2581were"
+]
+},
+"10:6655": {
+"explanation": " instances of errors or problems in statements or calculations",
+"frac_nonzero": 0.02973,
+"top_logits": [
+"\u2019",
+"\n\n",
+"'",
+"\u2581\u0627\u0644\u062d\u0631\u0647",
+"\n",
+"\u2581ModelExpression",
+"isHidden",
+"<bos>"
 ]
 },
 "10:673": {
@@ -3763,6 +4141,48 @@
 "\u2581MutableLiveData",
 "lower",
 "SourceChecksum"
+]
+},
+"10:6746": {
+"explanation": "documents related to significant events and historical milestones",
+"frac_nonzero": 0.00736,
+"top_logits": [
+"setVerticalGroup",
+"\u2581\u017ftate",
+"\u2581plea\u017fure",
+"windowFixed",
+"\u2581i\u017ft",
+"\u2581it\u017felf",
+"\u2581chofe",
+"\u51fa\u7248\u5e74"
+]
+},
+"10:6770": {
+"explanation": "references to social issues and injustices related to race and incarceration",
+"frac_nonzero": 0.01064,
+"top_logits": [
+"\u2581ModelExpression",
+"\u2581colpa",
+"\u2581otomatig",
+"\u2581ReactDOM",
+"inerja",
+"onOptions",
+"StoryboardSegue",
+"\u272d\u272d"
+]
+},
+"10:6785": {
+"explanation": "references to specific variables and mathematical constructs related to research or experimental settings",
+"frac_nonzero": 0.01386,
+"top_logits": [
+"IntoConstraints",
+"\u2581\u0627\u0644\u0631\u064a\u0627\u0636\u064a\u0647",
+"\u2581utafitiHapana",
+"\u2581chr\u00e9tiens",
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"onViewCreated",
+"twimg",
+"ValueStyle"
 ]
 },
 "10:6794": {
@@ -3919,6 +4339,20 @@
 "\u2581Atkinson"
 ]
 },
+"10:7284": {
+"explanation": "statements that indicate returning values in code",
+"frac_nonzero": 0.00226,
+"top_logits": [
+"\u51fa\u7248\u5e74",
+"\u2581snippetHide",
+"\u2581\u0635\u0648\u062a\u064a\u0647",
+"\u2581Efq",
+"\u2581emailAlready",
+"\u2581iprot",
+"rawDesc",
+"RenderAtEndOf"
+]
+},
 "10:7411": {
 "explanation": " occurrences of the variable 'y' in mathematical expressions and equations",
 "frac_nonzero": 0.00339,
@@ -3945,6 +4379,20 @@
 "\u2581Geschichten",
 "\u2581unfore",
 "abuse"
+]
+},
+"10:7576": {
+"explanation": "syntax and structural elements in code, particularly brackets and parentheses used in programming",
+"frac_nonzero": 0.01032,
+"top_logits": [
+"IntoConstraints",
+"\u2581pinulongan",
+"saraba",
+"WriteBarrier",
+"ExecuteReader",
+"')\";",
+"\u2581propOrder",
+"Vidite"
 ]
 },
 "10:7603": {
@@ -4043,6 +4491,34 @@
 "\u043d\u0456\u043a\u0430",
 "\u2581chi\u030dt",
 "utom"
+]
+},
+"10:7903": {
+"explanation": "updates and changes related to various topics, especially in the context of newsletters and blog posts",
+"frac_nonzero": 0.009130000000000001,
+"top_logits": [
+"\u2581onCreateView",
+"DispatchToProps",
+"\u2581vouloir",
+"\u2581'\\\\;'",
+"RSpec",
+"\u2581\u0628\u064a\u0647\u0627",
+"\u2581d\u00e9moc",
+"HttpPut"
+]
+},
+"10:7941": {
+"explanation": "words and phrases related to scientific findings and observations",
+"frac_nonzero": 0.00756,
+"top_logits": [
+"PerformLayout",
+"GEBURTSDATUM",
+"\u2581springfox",
+"\u2581okuyay\u0131m",
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"Hauptartikel",
+"\u2581CreateTagHelper",
+"\udb40\udc62"
 ]
 },
 "10:7983": {
@@ -4253,6 +4729,20 @@
 "\u2581student",
 "\u2581STUDENTS",
 "STUDENT"
+]
+},
+"10:8359": {
+"explanation": "terms related to usage and compliance in privacy or licensing policies",
+"frac_nonzero": 0.006500000000000001,
+"top_logits": [
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"\u2581AttributeSet",
+"\u2581fieldNum",
+"\u0628\u0648\u0627\u0628\u0629",
+"\u2581doInBackground",
+"\u2581BoxDecoration",
+"orsz\u00e1gban",
+"PostExecute"
 ]
 },
 "10:8365": {
@@ -4549,6 +5039,20 @@
 "\u2581_"
 ]
 },
+"10:931": {
+"explanation": "references to programming language constructs and operations related to data manipulation",
+"frac_nonzero": 0.00348,
+"top_logits": [
+"FormTagHelper",
+"\u308f",
+"\u2581regis",
+"+#+#",
+"\u0142asz",
+"\u2581meme",
+"\u2581disp",
+"tis"
+]
+},
 "10:933": {
 "explanation": "elements related to visual or aesthetic appeal",
 "frac_nonzero": 0.00275,
@@ -4591,6 +5095,34 @@
 "\u2581gddr"
 ]
 },
+"10:9462": {
+"explanation": "terms related to measurement and evaluation metrics",
+"frac_nonzero": 0.00557,
+"top_logits": [
+"setVerticalGroup",
+"endregion",
+"\u2581endwhile",
+"\u2581Administrativna",
+"contentLoaded",
+"\u2581finally",
+"VIAF",
+"\u2581\u041f\u0440\u0438\u0441\u0442\u0443\u043f\u0459\u0435\u043d\u043e"
+]
+},
+"10:9554": {
+"explanation": "references to political affiliations and campaign activities",
+"frac_nonzero": 0.00538,
+"top_logits": [
+"D\u00e9c\u00e8s",
+"DropTable",
+"lampen",
+"\u2581parall\u00e8le",
+"\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629",
+"\u2581\u0645\u062d\u0641\u0648\u0638\u0629",
+"GEBURTSDATUM",
+"\u2581d\u00e9passe"
+]
+},
 "10:9559": {
 "explanation": "references to specific identifiers or format placeholders in a technical context",
 "frac_nonzero": 0.00431,
@@ -4617,6 +5149,20 @@
 "\u2581protections",
 "\u2581PROTECT",
 "\u2581Protection"
+]
+},
+"10:9770": {
+"explanation": "elements related to collaboration and responsibility in a corporate or organizational context",
+"frac_nonzero": 0.00283,
+"top_logits": [
+"\u2581AssemblyCompany",
+"\u2581my\u017felf",
+"\u2581nece\u017f\u017f",
+"\u2581\u0627\u0644\u0627\u0637\u0644\u0627\u0639",
+"ArgsConstructor",
+"\u2581purpo\u017fe",
+"\u2581who\u017fe",
+"\u2581\u017ftate"
 ]
 },
 "10:9784": {
@@ -11759,6 +12305,20 @@
 "\u2581Tweet"
 ]
 },
+"9:10119": {
+"explanation": "technical symbols and formatting in code or mathematical expressions",
+"frac_nonzero": 0.00943,
+"top_logits": [
+"\u2581\u0641\u0631\u064a\u0628\u064a\u0633",
+"\n",
+"NameInMap",
+"\u2581\u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430",
+"\n\n",
+"\u2581You",
+"uxxxx",
+"<eos>"
+]
+},
 "9:10167": {
 "explanation": " keywords related to medical conditions and treatments",
 "frac_nonzero": 0.00834,
@@ -11857,6 +12417,20 @@
 "9"
 ]
 },
+"9:10332": {
+"explanation": "code-related keywords and syntax pertaining to data types and structures",
+"frac_nonzero": 0.00052,
+"top_logits": [
+"RenderAtEndOf",
+"\u2581\u0635\u0648\u062a\u064a\u0647",
+"########.",
+"IndentedString",
+"Personensuche",
+"\u2581plea\u017fure",
+"XmlAccessorType",
+"ImageContext"
+]
+},
 "9:10349": {
 "explanation": " references to \"page\" within a software or programming context",
 "frac_nonzero": 0.00042,
@@ -11869,6 +12443,20 @@
 "\u2581PAGE",
 "Pages",
 "Page"
+]
+},
+"9:10360": {
+"explanation": "phrases related to statistical data and research findings",
+"frac_nonzero": 0.00065,
+"top_logits": [
+"...');",
+"]}>",
+"\u2581>::",
+"\u2581\u062a\u0627\u0646\u064a\u0647",
+"']\")",
+"writeFieldEnd",
+"\u00b7\u00b7\u00b7",
+"...\");\r"
 ]
 },
 "9:10374": {
@@ -11911,6 +12499,34 @@
 "ning",
 "hen",
 "nin"
+]
+},
+"9:10391": {
+"explanation": "terms related to programming functions and methods",
+"frac_nonzero": 0.0106,
+"top_logits": [
+"\u2581fisuras",
+"midler",
+"\u2581\u00e9toient",
+"\u2581auroit",
+"\u2581vermelhas",
+"\u2581feroit",
+"analyze",
+"\u2581vertes"
+]
+},
+"9:10438": {
+"explanation": " monetary values and their relevant quantities",
+"frac_nonzero": 0.0048,
+"top_logits": [
+"\u2581kasarigan",
+"\u2581ModelExpression",
+"\u2581Efq",
+"\u2581my\u017felf",
+"\u2581SqlDbType",
+"AsUp",
+"\u2581poffible",
+"\u2581surla"
 ]
 },
 "9:10447": {
@@ -12009,6 +12625,20 @@
 "\u2581F\u00fcr",
 "antMatchers",
 "\u2581situe"
+]
+},
+"9:10686": {
+"explanation": "references to sexual acts or related discussions",
+"frac_nonzero": 0.00515,
+"top_logits": [
+"apimachinery",
+"ecore",
+"\u2581stanovnika",
+"EnableWeb",
+"UserScript",
+"crollView",
+"mybatisplus",
+"xsi"
 ]
 },
 "9:10716": {
@@ -12165,6 +12795,20 @@
 "ik"
 ]
 },
+"9:10922": {
+"explanation": " elements related to structured data or programming syntax",
+"frac_nonzero": 0.02803,
+"top_logits": [
+"<bos>",
+"'",
+"\u2019",
+"mathrm",
+"begin",
+"\u20ac\u2122",
+"\n\n",
+"\u2581wasn"
+]
+},
 "9:10923": {
 "explanation": "technical specifications and measurements in a scientific context",
 "frac_nonzero": 0.01332,
@@ -12191,6 +12835,20 @@
 "StatusBadRequest",
 "\u0561\u0563\u0580\u0578\u0582\u0569\u0575\u0578\u0582\u0576\u0576\u0565\u0580",
 "migrationBuilder"
+]
+},
+"9:10933": {
+"explanation": "references to specific components or parameters in technical descriptions",
+"frac_nonzero": 0.009260000000000001,
+"top_logits": [
+"uxxxx",
+"\u2581nakalista",
+"__(/*!",
+"Personendaten",
+"SequentialGroup",
+"\u2581pr\u00e9sidenti",
+"\u2581traditionnels",
+"IGraphics"
 ]
 },
 "9:10943": {
@@ -12361,6 +13019,20 @@
 "\u2581S"
 ]
 },
+"9:112": {
+"explanation": "instances of conjunctions and high-frequency transition words",
+"frac_nonzero": 0.006840000000000001,
+"top_logits": [
+"expandindo",
+"\u0627\u0644\u062d\u064a\u0627\u0647",
+"\u2581chi\u030dt",
+"\u2581doInBackground",
+"N\u00e9pess\u00e9g",
+"InitVars",
+"avadoc",
+"\u2581autorytatywna"
+]
+},
 "9:1125": {
 "explanation": "references to voter fraud and its implications in electoral integrity",
 "frac_nonzero": 0.00171,
@@ -12445,6 +13117,34 @@
 "\u2581intptr"
 ]
 },
+"9:11362": {
+"explanation": "elements related to the structure of questions and scientific components",
+"frac_nonzero": 0.00389,
+"top_logits": [
+"Autoritn\u00ed",
+"\u2581\u0643\u0648\u0645\u0648\u0646\u0632",
+"Sucesor",
+"<tfoot>",
+"\u2581\u043e\u0440\u0438\u0433\u0456\u043d\u0430\u043b\u0443",
+"\u2581\u0633\u0643\u0627\u0646\u064a\u0629",
+"\u2581AssemblyCompany",
+"\u2581Wikispecies"
+]
+},
+"9:11414": {
+"explanation": "terms indicating specificity, variety, and uniqueness in descriptions",
+"frac_nonzero": 0.007019999999999999,
+"top_logits": [
+"VisualStudio",
+"Idem",
+"\u2581bin",
+"tigs",
+"rake",
+"\u2581\u05d5\u05dc\u05d4",
+"\u2581b\u1ecf",
+"aume"
+]
+},
 "9:11424": {
 "explanation": "phrases indicating collaboration or involvement with others",
 "frac_nonzero": 0.00416,
@@ -12501,6 +13201,20 @@
 "\")->"
 ]
 },
+"9:11546": {
+"explanation": "mentions of individuals and entities related to legal or political contexts",
+"frac_nonzero": 0.01042,
+"top_logits": [
+"\u0275",
+"HideFlags",
+"\u2581NDEBUG",
+"\u30d7\u30ea\u30f3\u30b0",
+"\u2581Normdatei",
+"\u2581ex",
+"\u2581trans",
+"principalColumn"
+]
+},
 "9:11570": {
 "explanation": "phrases indicating research objectives or contributions",
 "frac_nonzero": 0.007039999999999999,
@@ -12541,6 +13255,20 @@
 "\u2581croix",
 "RefNanny",
 "\u2581keduanya"
+]
+},
+"9:11607": {
+"explanation": "references to personal narratives and individual experiences",
+"frac_nonzero": 0.00617,
+"top_logits": [
+"ScopeManager",
+"\u2581velkommen",
+"+:+",
+"\u671f\u520a\u8bba\u6587",
+"\u2581northbound",
+"\u2581southbound",
+"\u2581ICollection",
+"uxxxx"
 ]
 },
 "9:11624": {
@@ -12599,6 +13327,20 @@
 "bouncycastle"
 ]
 },
+"9:1175": {
+"explanation": "features and descriptions of diverse topics or items",
+"frac_nonzero": 0.00462,
+"top_logits": [
+"\u2581includes",
+"\u2581include",
+"\u2581Includes",
+"Includes",
+"includes",
+"\u2581INCLUDES",
+"\u2581Include",
+"INCLUDES"
+]
+},
 "9:11756": {
 "explanation": "references to business performance and rankings in professional contexts",
 "frac_nonzero": 0.00177,
@@ -12639,6 +13381,20 @@
 ")\";\r",
 "']);\r",
 "'));\r"
+]
+},
+"9:11836": {
+"explanation": "contrasting pairs of ideas or attributes",
+"frac_nonzero": 0.00362,
+"top_logits": [
+"\u2581beginnetje",
+"MemoryWarning",
+"\u2581<<<<<<<<<<<<<<",
+"LLocation",
+"\u2581nahilalakip",
+"\u2581BETWEEN",
+"D\u00e9c\u00e8s",
+"parametrize"
 ]
 },
 "9:11864": {
@@ -12837,6 +13593,20 @@
 "Nel"
 ]
 },
+"9:12182": {
+"explanation": "terms related to medical procedures and their implications",
+"frac_nonzero": 0.02267,
+"top_logits": [
+"\u0430\u043b\u0443",
+"\u2581UserDao",
+"\u0439\u043e",
+"\u2581taxpayers",
+"\u2581Reviewed",
+"\u2581Rebecca",
+"\u2581\u0420\u0415",
+"Reviewed"
+]
+},
 "9:12190": {
 "explanation": "variations of the word \"which.\"",
 "frac_nonzero": 0.00161,
@@ -12963,6 +13733,20 @@
 "\u2581\u0627\u0644\u062d\u0631\u0647"
 ]
 },
+"9:12339": {
+"explanation": " programming language control flow statements that handle function returns and error checking",
+"frac_nonzero": 0.00046,
+"top_logits": [
+"return",
+"RectangleBorder",
+"SceneManagement",
+"subtype",
+"\u0130stinadlar",
+"\u2581return",
+"l\u00e4ufe",
+"ArgsConstructor"
+]
+},
 "9:12342": {
 "explanation": "references to schema-related concepts or terms",
 "frac_nonzero": 0.00032,
@@ -12975,6 +13759,34 @@
 "\u2581schemas",
 "\u2581SCHE",
 "chema"
+]
+},
+"9:12367": {
+"explanation": "instances of uncertainty or conditional statements",
+"frac_nonzero": 0.00131,
+"top_logits": [
+"\u2581I",
+"ie",
+"\u2581also",
+"I",
+"Band",
+"\u2581bah",
+"pruch",
+"\u2581Sue"
+]
+},
+"9:12409": {
+"explanation": " relationships and interactions between elements, particularly involving quantities and comparisons",
+"frac_nonzero": 0.00857,
+"top_logits": [
+"bootstrapcdn",
+"\u2581AssemblyTitle",
+"\u2581EconPapers",
+"\u0e01\u0e31\u0e1a",
+"spesies",
+"\u2581saites",
+"OrEqualTo",
+"TemporalType"
 ]
 },
 "9:1243": {
@@ -13117,6 +13929,20 @@
 "ALLY"
 ]
 },
+"9:12591": {
+"explanation": "legal terms and concepts related to judicial decisions and processes",
+"frac_nonzero": 0.01486,
+"top_logits": [
+"phir",
+"\u2581units",
+"nsf",
+"\u2581urme",
+"BufferException",
+"\u2581usually",
+"\u0436\u0438\u0434\u0430\u043d",
+"\u2581aquele"
+]
+},
 "9:12604": {
 "explanation": "elements related to queries, mutations, and subscriptions in a programming context",
 "frac_nonzero": 0.00135,
@@ -13201,6 +14027,20 @@
 "\u2581picasso"
 ]
 },
+"9:1277": {
+"explanation": "conjunctions and phrases that indicate contrasting or comparative ideas",
+"frac_nonzero": 0.00279,
+"top_logits": [
+"\u2581andererseits",
+"\u4e00\u65b9\u3067",
+"\u4f46\u4e5f",
+"\u2581also",
+"\u2581saying",
+"\u2581Also",
+"Also",
+"nocze\u015bnie"
+]
+},
 "9:12771": {
 "explanation": " concepts related to historical societal changes and women's roles",
 "frac_nonzero": 0.00525,
@@ -13243,6 +14083,34 @@
 "\u2581DU"
 ]
 },
+"9:12822": {
+"explanation": "phrases that define or describe various inventions and mechanisms",
+"frac_nonzero": 0.00559,
+"top_logits": [
+"\u2581userManager",
+"\ue315",
+"strijd",
+"\u2581sevi",
+"esters",
+"\u2581siglas",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"\u2581nemico"
+]
+},
+"9:12828": {
+"explanation": " technical terms and concepts related to regions, matrices, and structured data",
+"frac_nonzero": 0.02079,
+"top_logits": [
+"MLLoader",
+"uxxxx",
+"MigrationBuilder",
+"RegressionTest",
+"__\":",
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"ChildScrollView",
+"RenderAtEndOf"
+]
+},
 "9:12851": {
 "explanation": "references to universities",
 "frac_nonzero": 0.00047,
@@ -13255,6 +14123,34 @@
 "versities",
 "University",
 "\u2581Universities"
+]
+},
+"9:12878": {
+"explanation": " Java import statements related to servlet and web services frameworks",
+"frac_nonzero": 0.00031,
+"top_logits": [
+"AutoModerator",
+"UserScript",
+"\u2581mxArray",
+".*;\r",
+"\u2581mesmas",
+"seamn\u0103",
+"\u2581paura",
+"\u0103toare"
+]
+},
+"9:12891": {
+"explanation": " phrases that indicate hypocrisy or double standards in political behavior",
+"frac_nonzero": 0.00514,
+"top_logits": [
+"opot",
+"UnknownFields",
+"\u2581[*]",
+"\u0119tr",
+"\u2581Bahadur",
+"\u2581(!__",
+"subsubsection",
+"SuccessListener"
 ]
 },
 "9:12895": {
@@ -13339,6 +14235,20 @@
 "\u2581Re\u017f",
 "\u2581\u017fta",
 "\u2581purpo\u017fe"
+]
+},
+"9:13050": {
+"explanation": "technical terminology related to energy loss and interactions in physics experiments",
+"frac_nonzero": 0.04014,
+"top_logits": [
+"DockStyle",
+"\u2581<<<<<<<<<<<<<<",
+"\u2581ComVisible",
+"setVerticalGroup",
+"\u062a\u0642\u0627\u0648\u0649",
+"\u2581beginnetje",
+"principalColumn",
+"\u2581'{@"
 ]
 },
 "9:13089": {
@@ -13495,6 +14405,20 @@
 "\u0414\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0456\u044f"
 ]
 },
+"9:13530": {
+"explanation": " programming-related terms and concepts, particularly those related to file handling and web application structure",
+"frac_nonzero": 0.00058,
+"top_logits": [
+"sstream",
+"\u2581trajets",
+"\u2581\u0935\u093f\u0936\u094d\u0935\u0938\u0928\u0940\u092f\u0924\u093e",
+"cstring",
+"stdc",
+"halve",
+"\u043a\u043e\u0431\u0440\u0438\u0442\u0430",
+"MessageOf"
+]
+},
 "9:13565": {
 "explanation": " numerical data or measurements within the text",
 "frac_nonzero": 0.00655,
@@ -13507,6 +14431,34 @@
 "ItemBackground",
 "\u2581ki\u1ec7n",
 "\u2581atmospheres"
+]
+},
+"9:13615": {
+"explanation": "text related to formal communication, especially legal or courtroom contexts",
+"frac_nonzero": 0.00184,
+"top_logits": [
+"RTDA",
+"\u2581purpo\u017fe",
+"expandindo",
+"\u2581fhort",
+"\u2581\u017ftate",
+"\u2581fa\u017ft",
+"\u2581\u017fmall",
+"\u2581greate\u017ft"
+]
+},
+"9:13630": {
+"explanation": "elements related to architectural features of buildings",
+"frac_nonzero": 0.00227,
+"top_logits": [
+"\u2581tallest",
+"\u2581erected",
+"\u2581tower",
+"\u2581Skys",
+"\u2581Eiffel",
+"\u2581towers",
+"\u2581sculpture",
+"\u2581towering"
 ]
 },
 "9:1365": {
@@ -13549,6 +14501,20 @@
 "\u2581estekak",
 "\u2581invokingState",
 "jspx"
+]
+},
+"9:13698": {
+"explanation": "references to processes and actions related to evaluation or comparison",
+"frac_nonzero": 0.00096,
+"top_logits": [
+"\u0411\u0438\u043b\u0433\u0430\u043b\u0434\u0430\u0445\u0430\u0440\u0448",
+"ChildScrollView",
+"poran",
+"\u2581contr\u00e1rio",
+"flage",
+"FieldBuilder",
+"IsContent",
+"\u2581ar\u015fivlendi"
 ]
 },
 "9:13699": {
@@ -13605,6 +14571,34 @@
 "\u2581endwhile",
 "\u2581Viitattu",
 "\u2581recover"
+]
+},
+"9:13793": {
+"explanation": "references to technical parameters and variables related to programming or data processing",
+"frac_nonzero": 0.00524,
+"top_logits": [
+"\u2581d\u00e9sol\u00e9s",
+"\u2581ainfi",
+"ButterKnife",
+"R\u00fcyada",
+"\u2581mxArray",
+"orsz\u00e1gban",
+"\u2581staffel",
+"\u2581piti\u00e9"
+]
+},
+"9:13805": {
+"explanation": "terms and concepts related to mathematical or scientific analysis",
+"frac_nonzero": 0.01061,
+"top_logits": [
+"\u2581propOrder",
+"\u2581defaultstate",
+"JspWriter",
+"\u2581CreateTagHelper",
+"\u2581@\"/",
+"saraba",
+"tagext",
+"RegressionTest"
 ]
 },
 "9:13821": {
@@ -13705,6 +14699,20 @@
 "Datuak"
 ]
 },
+"9:13931": {
+"explanation": "statements about relationships and personal opinions",
+"frac_nonzero": 0.00561,
+"top_logits": [
+"\u2581bedo",
+"\u2581mean",
+"\u2581meant",
+"\u2581meaning",
+"tagext",
+"\u2581chodzi",
+"\u2581gemeint",
+"\u2581Mean"
+]
+},
 "9:13962": {
 "explanation": "references to medical conditions or health-related statistics",
 "frac_nonzero": 0.00809,
@@ -13733,6 +14741,20 @@
 "\u2581ayn\u0131"
 ]
 },
+"9:13969": {
+"explanation": "cooking-related instructions and processes",
+"frac_nonzero": 0.00105,
+"top_logits": [
+"mybatisplus",
+"\u2581boil",
+"\u2581cauldron",
+"\u2581Boil",
+"\u2581Normdatei",
+"\u2581cookware",
+"\u2581witches",
+"\u2581ChromeDriver"
+]
+},
 "9:13983": {
 "explanation": " terms related to positioning and layout in design or programming contexts",
 "frac_nonzero": 0.0009,
@@ -13759,6 +14781,20 @@
 "omitempty",
 "\u2581INVENTION",
 "\u2581\u0627\u0644\u0627\u0637\u0644\u0627\u0639"
+]
+},
+"9:14019": {
+"explanation": "instances of comparative analysis between different platforms or products",
+"frac_nonzero": 0.00532,
+"top_logits": [
+"\u2581also",
+"\u064a\u0643\u0628",
+"CLUYE",
+"also",
+"\u3067\u3082\u3042\u308a\u307e\u3059",
+"hept",
+"\u0644\u0633\u0644",
+"\u2581au\u00dferdem"
 ]
 },
 "9:14053": {
@@ -13803,6 +14839,20 @@
 "\u2581customization"
 ]
 },
+"9:14073": {
+"explanation": "comparative phrases or symbols involving variables or datasets",
+"frac_nonzero": 0.00937,
+"top_logits": [
+"IntoConstraints",
+"fjspx",
+"C\u00f2n",
+"bootstrapcdn",
+"WebServlet",
+"against",
+"\u2581htons",
+"Tetapi"
+]
+},
 "9:14101": {
 "explanation": "words that describe varying types of semi-structures or semi-states",
 "frac_nonzero": 0.00063,
@@ -13831,6 +14881,20 @@
 "\n\n\n"
 ]
 },
+"9:14165": {
+"explanation": "mathematical expressions and structures",
+"frac_nonzero": 0.01205,
+"top_logits": [
+"AccessorTable",
+"\u2581initComponents",
+"\u2581InputDecoration",
+"IntoConstraints",
+"\u2581propOrder",
+"AddHtmlAttribute",
+"endphp",
+"\u2581esternos"
+]
+},
 "9:14186": {
 "explanation": " legal terminology and concepts related to consent and procedural correctness",
 "frac_nonzero": 0.008020000000000001,
@@ -13843,6 +14907,34 @@
 "tagHelperRunner",
 "HomeAsUpEnabled",
 "\u2581EconPapers"
+]
+},
+"9:14187": {
+"explanation": "references to academic papers or working documents in economics and physics",
+"frac_nonzero": 0.00285,
+"top_logits": [
+"########.",
+"arXiv",
+"\u2581preprint",
+"\u2581arXiv",
+"\u2581doInBackground",
+"TagMode",
+"Xiv",
+"BufferException"
+]
+},
+"9:14190": {
+"explanation": "words and phrases related to cooking techniques and processes",
+"frac_nonzero": 0.00126,
+"top_logits": [
+"\u2581estekak",
+"\u2581\u0645\u062a\u0639\u0644\u0642\u0647",
+"\u2581crispy",
+"WaitGroup",
+"\u2581censiti",
+"\u2581createSprite",
+"\u2581sempurna",
+"\u2581charred"
 ]
 },
 "9:14192": {
@@ -13873,6 +14965,48 @@
 "spreading"
 ]
 },
+"9:14223": {
+"explanation": "key scientific terms and names related to biology and chemistry",
+"frac_nonzero": 0.00632,
+"top_logits": [
+"Personendaten",
+"tagHelperRunner",
+"\u2581protoimpl",
+"\u2581'\\\\;'",
+"featureID",
+"\u2581lenker",
+"\u2581kaarangay",
+"ScopeManager"
+]
+},
+"9:14230": {
+"explanation": "references to figures and citations in academic writing",
+"frac_nonzero": 0.01509,
+"top_logits": [
+"\u2581nahilalakip",
+"RegressionTest",
+"\u2581snippetHide",
+"\u2581ainfi",
+"nestjs",
+"rawDesc",
+"Tikang",
+"\u9508\u94a2"
+]
+},
+"9:14240": {
+"explanation": "negative performance indicators in sports contexts",
+"frac_nonzero": 0.00291,
+"top_logits": [
+"\u2581AssemblyCulture",
+"InteropServices",
+"\u2581sj\u00f8",
+"\u2581FetchType",
+"\u0636\u0628",
+"bbene",
+"\u2581\"..\\..\\",
+"\u2581incluem"
+]
+},
 "9:14283": {
 "explanation": "descriptive reviews and accolades related to artistic works",
 "frac_nonzero": 0.00155,
@@ -13899,6 +15033,20 @@
 "\u2581('",
 "=\u2019",
 "==='"
+]
+},
+"9:14310": {
+"explanation": "keywords related to positions and roles within political and governmental contexts",
+"frac_nonzero": 0.00499,
+"top_logits": [
+"\u22d9",
+"citep",
+"\u2581client",
+"\u2581potreb",
+"\u0420\u0435\u0444\u0435\u0440\u0435\u043d\u0446\u0435",
+"CodeAnalysis",
+"\u2581bless\u00e9s",
+"\u2581exp\u00e9di"
 ]
 },
 "9:14337": {
@@ -13957,6 +15105,20 @@
 "\u2581coaching"
 ]
 },
+"9:14364": {
+"explanation": " mathematical notation and symbols related to parameters and equations in statistical models",
+"frac_nonzero": 0.01096,
+"top_logits": [
+"\u2581externi",
+"DataAnnotations",
+"\u2581pinulongan",
+"fillType",
+"\u2581Vikipedi",
+"\u2581IRC",
+"matchCondition",
+"andoah"
+]
+},
 "9:14409": {
 "explanation": "terms related to academic study and research methodologies",
 "frac_nonzero": 0.01856,
@@ -13969,6 +15131,48 @@
 "\u2581ChromeDriver",
 "sizeCache",
 "\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430"
+]
+},
+"9:14434": {
+"explanation": "terms related to cancer research and medical conditions",
+"frac_nonzero": 0.03952,
+"top_logits": [
+"<bos>",
+"+#+#",
+"\u51fa\u7248\u5e74",
+"ughty",
+"\u2581or",
+"deburg",
+"Compiled",
+"WriteTagHelper"
+]
+},
+"9:14444": {
+"explanation": "phrases related to authority and judgment in religious or moral contexts",
+"frac_nonzero": 0.00598,
+"top_logits": [
+"\u2581somehow",
+"AnchorStyles",
+"JNIEnv",
+"hashtags",
+"ThemeOverlay",
+"wahati",
+"esModule",
+"ngdoc"
+]
+},
+"9:1448": {
+"explanation": "technical terms and phrases related to programming and structured data",
+"frac_nonzero": 0.01161,
+"top_logits": [
+"\u2581'\\\\;'",
+"\u2581\u0645\u0634\u064a\u0646",
+"N\u00e9pess\u00e9g",
+"migrationBuilder",
+"\u2581it\u017felf",
+"RenderAtEndOf",
+"PRNewswire",
+"tily"
 ]
 },
 "9:14487": {
@@ -13997,6 +15201,20 @@
 "\u2581rate",
 "GeneratedValue",
 "TagMode"
+]
+},
+"9:14564": {
+"explanation": "the word \"nor\" and its grammatical forms in context",
+"frac_nonzero": 0.00111,
+"top_logits": [
+"neither",
+"\u2581neither",
+"Nor",
+"\u2581nor",
+"\u2581NOR",
+"nor",
+"Neither",
+"\u2581Nor"
 ]
 },
 "9:14567": {
@@ -14293,6 +15511,34 @@
 "excl"
 ]
 },
+"9:15037": {
+"explanation": "elements related to news broadcasts and media coverage",
+"frac_nonzero": 0.00954,
+"top_logits": [
+"\u2581propOrder",
+"niaj\u0105ca",
+"\u2581ABR",
+"\u2581iprot",
+"RUnlock",
+"\u2581dsg",
+"prv",
+"hartt"
+]
+},
+"9:15043": {
+"explanation": "syntax and structure related to programming or data schema definitions",
+"frac_nonzero": 0.0079,
+"top_logits": [
+"\u2581CreateTagHelper",
+"citep",
+"MLLoader",
+"Przypisy",
+"\u2581utafitiHapana",
+"Hochspringen",
+"\u2581intptr",
+"N\u00e9pess\u00e9g"
+]
+},
 "9:15045": {
 "explanation": "phrases related to performance and efficiency in various contexts",
 "frac_nonzero": 0.004670000000000001,
@@ -14319,6 +15565,20 @@
 "\uff54",
 "\ud835\ude01",
 "Viitteet"
+]
+},
+"9:15069": {
+"explanation": "phrases related to determining conditions and outcomes, particularly in legal and procedural contexts",
+"frac_nonzero": 0.01011,
+"top_logits": [
+"\u2581problem",
+"\u2581ex",
+"\u4e8b\u7684",
+"viewBox",
+"\u2581fre",
+"aturday",
+"peli",
+"katalog"
 ]
 },
 "9:15115": {
@@ -14405,6 +15665,20 @@
 "\u2581\u0431\u043e\u043b\u044c\u0448\u0438\u043d"
 ]
 },
+"9:15279": {
+"explanation": "concepts related to financial transactions and economic impacts",
+"frac_nonzero": 0.03603,
+"top_logits": [
+"DockStyle",
+"\u2581\u0627\u0644\u062d\u0631\u0647",
+".*\")]",
+"ExtendWith",
+"WebServlet",
+"HasForeignKey",
+"\u00e9valuateur",
+"+#+#"
+]
+},
 "9:15287": {
 "explanation": "expressions of certainty or probability about events or situations",
 "frac_nonzero": 0.00196,
@@ -14431,6 +15705,20 @@
 "Costs",
 "cost",
 "\u2581COSTS"
+]
+},
+"9:15361": {
+"explanation": "self-referential language and themes surrounding personal identity",
+"frac_nonzero": 0.00306,
+"top_logits": [
+"herself",
+"\u2581sendiri",
+"\u2581herself",
+"\u2581himself",
+"\u2581own",
+"himself",
+"\u2581itself",
+"\u2581egne"
 ]
 },
 "9:1539": {
@@ -14473,6 +15761,20 @@
 "RenderAtEndOf",
 "\u2581alfab",
 "\\{\\\\"
+]
+},
+"9:15466": {
+"explanation": " numerical values and their formatting in a technical context",
+"frac_nonzero": 0.01053,
+"top_logits": [
+"ArrowToggle",
+"\u2581OFDb",
+"\u5e16\u6700\u540e\u7531",
+"\u2581consultato",
+"Kaieteur",
+"PhysRevLett",
+"WithIOException",
+"jago"
 ]
 },
 "9:15468": {
@@ -14811,6 +16113,20 @@
 "\u2581B"
 ]
 },
+"9:15941": {
+"explanation": " XML or XML-like syntax elements, particularly related to class definitions and properties",
+"frac_nonzero": 0.00391,
+"top_logits": [
+"\u043d\u043e\u0432\u043d\u0438\u0448\u0442\u0432\u043e",
+"PyExc",
+"FromNib",
+"Geplaatst",
+"\u2581updateTime",
+"\u2581gr\u00e8ve",
+"=$?",
+"rubin"
+]
+},
 "9:15976": {
 "explanation": " identifiers and structural elements in a programming context",
 "frac_nonzero": 0.00249,
@@ -14837,6 +16153,20 @@
 "parsedMessage",
 "\u2581ostavi",
 "\u2581utafitiHapana"
+]
+},
+"9:16047": {
+"explanation": "conditional statements in programming code",
+"frac_nonzero": 0.00161,
+"top_logits": [
+"Personendaten",
+"ApiOperation",
+"PickerController",
+"yargs",
+"\u2581\u0645\u0631\u0626\u064a\u0647",
+"NewUrlParser",
+"SBATCH",
+"\u2581ComVisible"
 ]
 },
 "9:16056": {
@@ -15203,6 +16533,20 @@
 "\u2581xml"
 ]
 },
+"9:1864": {
+"explanation": "references to the performance of sports teams or players",
+"frac_nonzero": 0.00105,
+"top_logits": [
+"\u2581createContext",
+"bootstrapcdn",
+"\u2581gql",
+"\u2581userSchema",
+"StandardCharsets",
+"BrowserModule",
+"ModelSerializer",
+"BagLayout"
+]
+},
 "9:1917": {
 "explanation": "numeric values representing various data types or states",
 "frac_nonzero": 0.00146,
@@ -15215,6 +16559,20 @@
 "\u2581\u2581\u2581\u2581\u2581\u2581",
 "\t\t",
 "\u2581\u2581\u2581\u2581\u2581\u2581\u2581"
+]
+},
+"9:198": {
+"explanation": "references to the collaboration and contributions to research studies and manuscripts",
+"frac_nonzero": 0.005639999999999999,
+"top_logits": [
+"\u2581\u0627\u0644\u0645\u0639\u064a\u0627\u0631\u0649",
+"StoryboardSegue",
+"TagMode",
+"\u2581CreateTagHelper",
+"ValueStyle",
+"\u041f\u043e\u043f\u0438\u0441",
+"SizeMode",
+"principalColumn"
 ]
 },
 "9:1991": {
@@ -15301,6 +16659,20 @@
 "DockStyle"
 ]
 },
+"9:225": {
+"explanation": "legal terminology and phrases related to workplace injuries and liability",
+"frac_nonzero": 0.00623,
+"top_logits": [
+"RectangleBorder",
+"\u2581reCAPTCHA",
+"\u2581/#",
+"AndEndTag",
+"\u2581\u0628\u0631\u0627\u0646\u064a\u0647",
+"\u0012",
+"forKey",
+"verwijspagina"
+]
+},
 "9:2254": {
 "explanation": "instances of the word \"plate\" and related terms or derivatives",
 "frac_nonzero": 0.00037,
@@ -15343,6 +16715,20 @@
 "\u2581Insee"
 ]
 },
+"9:2367": {
+"explanation": "terms and phrases related to structured information and organization, particularly in research and academic contexts",
+"frac_nonzero": 0.00125,
+"top_logits": [
+"\u2581\u0645\u062d\u0641\u0648\u0638\u0629",
+"\u2581\u0627\u0644\u0627\u0637\u0644\u0627\u0639",
+"UnusedPrivate",
+"\u2581\u043e\u0440\u0438\u0433\u0456\u043d\u0430\u043b\u0443",
+"\u2581\u0645\u0631\u0626\u064a\u0647",
+"\u00e9valuateur",
+"\u2581\u0643\u0648\u0645\u0648\u0646\u0632",
+"MLLoader"
+]
+},
 "9:2388": {
 "explanation": "references to different forms and aspects of art",
 "frac_nonzero": 0.00052,
@@ -15355,6 +16741,20 @@
 "ART",
 "\u2581arts",
 "\u2581arte"
+]
+},
+"9:2413": {
+"explanation": "special characters or symbols typically associated with mathematical expressions or functions",
+"frac_nonzero": 0.00186,
+"top_logits": [
+"\u2581autorytatywna",
+"\u2581nahilalakip",
+"fromnode",
+"\u2581CreateTagHelper",
+"SourceChecksum",
+"\u5e16\u6700\u540e\u7531",
+"fjspx",
+"\u2581Signalez"
 ]
 },
 "9:2426": {
@@ -15383,6 +16783,20 @@
 "\u2581attendance",
 "\u2581Gel\u00e4nde",
 "\u2581numberOfRows"
+]
+},
+"9:2436": {
+"explanation": "phrases related to vegetarianism and dietary restrictions",
+"frac_nonzero": 0.01205,
+"top_logits": [
+"\u2581also",
+"\u2581even",
+"twimg",
+"\u2581anche",
+"also",
+"\u2581juga",
+"\u2581alone",
+"\u2581tambi\u00e9n"
 ]
 },
 "9:2476": {
@@ -15427,6 +16841,20 @@
 "\u2581PRACTICAL"
 ]
 },
+"9:2520": {
+"explanation": "negative statements or contradictions in the text",
+"frac_nonzero": 0.01831,
+"top_logits": [
+"\n\n",
+"\u2581It",
+"\u2581You",
+"</em>",
+"\u2581\u2581\u2581\u2581",
+"\u2581They",
+"\n",
+"\u2581\u2581"
+]
+},
 "9:254": {
 "explanation": "information related to medical treatments and prescriptions",
 "frac_nonzero": 0.00285,
@@ -15439,6 +16867,20 @@
 "\n\n",
 "\u2581etc",
 "Key"
+]
+},
+"9:2582": {
+"explanation": " sequences of numbers or numeric representations",
+"frac_nonzero": 0.00249,
+"top_logits": [
+"WriteLiteral",
+"openzeppelin",
+"\u2581typelib",
+"LabelTagHelper",
+"lgari",
+"\n",
+"hline",
+"\u2581Saltar"
 ]
 },
 "9:259": {
@@ -15509,6 +16951,20 @@
 "\u2581INFORMATION",
 "\u2581informations",
 "\u2581informa"
+]
+},
+"9:270": {
+"explanation": "numbers and mathematical expressions",
+"frac_nonzero": 0.01321,
+"top_logits": [
+"\u2581(\u2212",
+"\u2581(-)",
+"=-",
+"\u2581(-",
+"\u2581negative",
+"\u2581$(-",
+"\u2581Negative",
+"\u2581negativ"
 ]
 },
 "9:2710": {
@@ -15595,6 +17051,20 @@
 "\u2581Purposes"
 ]
 },
+"9:2790": {
+"explanation": " references to data type checking and class instance verification in code",
+"frac_nonzero": 0.00129,
+"top_logits": [
+"\u2581instanceof",
+"Hauptartikel",
+"\u2581Wikim\u00e9dia",
+"::<",
+"\u2581\u00f6ffnungszeiten",
+"seamn\u0103",
+"ardoor",
+"\u2581{}),"
+]
+},
 "9:2799": {
 "explanation": "numbers and their associated quantities",
 "frac_nonzero": 0.00872,
@@ -15663,6 +17133,20 @@
 "\u2581\u062a\u0627\u0646\u064a\u0647",
 "\u0627\u0646\u062c\u0644\u064a\u0632",
 "\u2581tr\u1edf"
+]
+},
+"9:2889": {
+"explanation": "details related to mechanical or structural characteristics and transitions of objects, particularly in scientific contexts",
+"frac_nonzero": 0.01218,
+"top_logits": [
+"ReusableCell",
+"OpenHelper",
+"MergeFrom",
+"SceneManagement",
+"\u2581StatefulWidget",
+"\u2581IndexPath",
+"SharedCtor",
+"Parcelize"
 ]
 },
 "9:2973": {
@@ -15833,6 +17317,20 @@
 "\u2581tuttavia"
 ]
 },
+"9:3263": {
+"explanation": "components related to data or structure definitions in programming contexts",
+"frac_nonzero": 0.00135,
+"top_logits": [
+"fjspx",
+"UnknownFieldSet",
+"mergeFrom",
+"styleType",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627",
+"mybatisplus",
+"TemporalType",
+"parseFrom"
+]
+},
 "9:3338": {
 "explanation": " numerical data and relationships among variables in scientific texts",
 "frac_nonzero": 0.00317,
@@ -15861,6 +17359,48 @@
 "\u2581Typically"
 ]
 },
+"9:3358": {
+"explanation": "programming syntax and function calls",
+"frac_nonzero": 0.00265,
+"top_logits": [
+"ReusableCell",
+"AlterField",
+"\u2581thi\u1ec7u",
+"quartered",
+"\u2581oublier",
+"\u2581ayr\u0131ca",
+"MockBean",
+"Obrigada"
+]
+},
+"9:336": {
+"explanation": "legal terminology related to litigation and claims",
+"frac_nonzero": 0.01672,
+"top_logits": [
+"\u2581my\u017felf",
+"\u2581it\u017felf",
+".\"</",
+"Obr\u00e1zky",
+"\u2581AssemblyProduct",
+"\u2581EconPapers",
+"\u2581pinulongan",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627"
+]
+},
+"9:3369": {
+"explanation": "return statements in code",
+"frac_nonzero": 0.0008100000000000001,
+"top_logits": [
+"tagHelperRunner",
+"tvguidetime",
+"\u811a\u6ce8\u306e\u4f7f\u3044\u65b9",
+"\u2581autorytatywna",
+"SequentialGroup",
+"\u2581referrerpolicy",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"\u2581\u062a\u0627\u0646\u064a\u0647"
+]
+},
 "9:3382": {
 "explanation": "scientific notations and citations",
 "frac_nonzero": 0.00968,
@@ -15875,6 +17415,20 @@
 "\n"
 ]
 },
+"9:3392": {
+"explanation": "phrases related to performing tricks or skills",
+"frac_nonzero": 0.00406,
+"top_logits": [
+"mybatisplus",
+"TagMode",
+"WaitGroup",
+"\u2581mostrar\u00e1n",
+"\u2581JpaRepository",
+"tidad",
+"\u2581vuoto",
+"Odin"
+]
+},
 "9:340": {
 "explanation": "references to environmental conservation and agricultural practices",
 "frac_nonzero": 0.00103,
@@ -15887,6 +17441,20 @@
 "\u2581ZEALAND",
 "Auckland",
 "\u2581Otago"
+]
+},
+"9:3431": {
+"explanation": " mathematical expressions and variables in complex scientific contexts",
+"frac_nonzero": 0.0144,
+"top_logits": [
+"\u2581\u201c",
+"\u2581(",
+"\u2581ketahui",
+"\u2581\"",
+"\u2581",
+"\u2581&",
+"\u2581con",
+"\u2581n"
 ]
 },
 "9:348": {
@@ -15959,6 +17527,34 @@
 "IBOutlet"
 ]
 },
+"9:3676": {
+"explanation": " mathematical symbols and operators used in probability and statistical equations",
+"frac_nonzero": 0.00622,
+"top_logits": [
+"\u0902\u0926\u0940\u0916\u0930\u0940\u0926\u093e\u0930\u0940",
+"]-'",
+"}-\\",
+"]-\\",
+"\u2581\u0643\u0648\u0645\u0648\u0646\u0632",
+"\u2581}}-",
+")-\\",
+"\u2581GenerationType"
+]
+},
+"9:369": {
+"explanation": "terms related to positive and negative values in mathematical or statistical analysis",
+"frac_nonzero": 0.00975,
+"top_logits": [
+"ConstraintMaker",
+"\u2581R\u00e9ponses",
+"enumii",
+"saraba",
+"\u2581\u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430",
+"ViewFeatures",
+"BufferException",
+"\u2581MainAxisSize"
+]
+},
 "9:3722": {
 "explanation": "numerical values and mathematical operations",
 "frac_nonzero": 0.00375,
@@ -15999,6 +17595,20 @@
 "\u2581Representing",
 "\u2581Pyrr",
 "\"]();"
+]
+},
+"9:377": {
+"explanation": "terms related to economic struggles and crises",
+"frac_nonzero": 0.004050000000000001,
+"top_logits": [
+"\u2581\u041c\u0435\u043a\u0441\u0438\u0447\u043a\u0430",
+"\u2581BoxFit",
+"Personensuche",
+"protoimpl",
+"\u2581numerus",
+"\u2581OMITBAD",
+"ContentAlignment",
+"\u0902\u0926\u0940\u0916\u0930\u0940\u0926\u093e\u0930\u0940"
 ]
 },
 "9:3783": {
@@ -16183,6 +17793,20 @@
 "\u2581noastre"
 ]
 },
+"9:4089": {
+"explanation": " assignments and declarations related to variables and objects",
+"frac_nonzero": 0.0005600000000000001,
+"top_logits": [
+"AndEndTag",
+"\u2581EClass",
+"tagHelperRunner",
+"\u2581censiti",
+"parsedMessage",
+"contentLoaded",
+"createCanvas",
+"\u2581VizieR"
+]
+},
 "9:4096": {
 "explanation": "references to events or meetings related to community or civic activities",
 "frac_nonzero": 0.0008100000000000001,
@@ -16323,6 +17947,20 @@
 "Luckily"
 ]
 },
+"9:4254": {
+"explanation": "references to politicians and political activities",
+"frac_nonzero": 0.01089,
+"top_logits": [
+"\u2581political",
+"\u2581Political",
+"political",
+"Political",
+"\u2581politicians",
+"\u2581politics",
+"\u2581politische",
+"\u2581politik"
+]
+},
 "9:4259": {
 "explanation": "mathematical expressions and notation",
 "frac_nonzero": 0.00586,
@@ -16449,6 +18087,20 @@
 "\u2581another"
 ]
 },
+"9:4443": {
+"explanation": "descriptions of political roles and responsibilities",
+"frac_nonzero": 0.00597,
+"top_logits": [
+"\u2581mergeFrom",
+"\">//",
+"\u0411\u0438\u043b\u0433\u0430\u043b\u0434\u0430\u0445\u0430\u0440\u0448",
+"R\u00fcyada",
+"idste",
+"\u2581\"..\\..\\",
+"\u2581\"..\\..\\..\\",
+"\u2581Numerade"
+]
+},
 "9:4444": {
 "explanation": "specific dates and times within the text",
 "frac_nonzero": 0.00293,
@@ -16475,6 +18127,20 @@
 "\u2581generator",
 "\u2581Generator",
 "generated"
+]
+},
+"9:4450": {
+"explanation": "mathematical expressions and equations related to statistical distributions",
+"frac_nonzero": 0.009260000000000001,
+"top_logits": [
+"\u2581gynhyrchwyd",
+"CLUYE",
+"\u2581EconPapers",
+"\u043d\u0446\u0438\u043a\u043b\u043e\u043f\u0435",
+"erees",
+"SharedDtor",
+"Derbyniad",
+"\u2581Combo"
 ]
 },
 "9:4459": {
@@ -16589,6 +18255,20 @@
 "\u2581planches"
 ]
 },
+"9:4683": {
+"explanation": "elements related to verification and assessment processes",
+"frac_nonzero": 0.02122,
+"top_logits": [
+"\u2581\u0635\u0648\u062a\u064a\u0647",
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627\u06cc",
+"bootstrapcdn",
+"SourceChecksum",
+"\u2581resourceCulture",
+"SaveVideo",
+"\u2581OnInit",
+"\u2581StringField"
+]
+},
 "9:470": {
 "explanation": " HTML tags and structure in the document",
 "frac_nonzero": 0.01367,
@@ -16601,6 +18281,20 @@
 "\u2581\u064a\u062a\u064a\u0645\u0647",
 "SourceChecksum",
 "\u2581betweenstory"
+]
+},
+"9:4783": {
+"explanation": "mentions of healthcare-related issues and debates surrounding societal policies",
+"frac_nonzero": 0.0066,
+"top_logits": [
+"CloseOperation",
+"AnchorStyles",
+"\u2581AssemblyCulture",
+"bihan",
+"protoimpl",
+"StoryboardSegue",
+"\u2581Terminal",
+"\u51fa\u7248\u5e74"
 ]
 },
 "9:4820": {
@@ -16629,6 +18323,20 @@
 "bootstrapcdn",
 "\u2581authorship",
 "InitVars"
+]
+},
+"9:4865": {
+"explanation": "scientific terms related to gene presence and variation in populations, particularly focusing on genetic differences in organisms",
+"frac_nonzero": 0.01196,
+"top_logits": [
+"\u2581neuve",
+"\u2581noastre",
+"StoryboardSegue",
+"\u2581sonno",
+"\u2581beroep",
+"\u2581marinho",
+"\u2581modernas",
+"\u2581imprim\u00e9e"
 ]
 },
 "9:4892": {
@@ -16713,6 +18421,20 @@
 "THERE",
 "Theres",
 "\u2581Theres"
+]
+},
+"9:5059": {
+"explanation": "activities or behaviors involving manipulation, strategy, and intent to exploit",
+"frac_nonzero": 0.00482,
+"top_logits": [
+"\u2581trick",
+"\u2581cunning",
+"\u3042\u3048\u3066",
+"\u2581avantage",
+"\u2581tactic",
+"\u2581tricks",
+"clever",
+"\u2581ruse"
 ]
 },
 "9:5074": {
@@ -16827,6 +18549,20 @@
 "\u2581tetto"
 ]
 },
+"9:5367": {
+"explanation": "expressions of emotion and personal struggle",
+"frac_nonzero": 0.00156,
+"top_logits": [
+"\u811a\u6ce8\u306e\u4f7f\u3044\u65b9",
+"\u2581tin",
+"\u2581Bo",
+"\u2581Ro",
+"\u2581Cap",
+"\u0628\u0647",
+"lcccccc",
+"\u2581qu"
+]
+},
 "9:5373": {
 "explanation": "phrases related to gaming controls and user interface interactions",
 "frac_nonzero": 0.00314,
@@ -16855,6 +18591,20 @@
 "\u2581<=\","
 ]
 },
+"9:5376": {
+"explanation": "phrases related to legal actions and consequences",
+"frac_nonzero": 0.00409,
+"top_logits": [
+"ValueStyle",
+"Tikang",
+"thmetic",
+"bcryptjs",
+"KAY",
+"\u2581}}\"></",
+"queryInterface",
+"\u3093\u3067\u3044\u307e\u3059"
+]
+},
 "9:5382": {
 "explanation": " information related to family relationships and legacies in obituaries",
 "frac_nonzero": 0.00044,
@@ -16881,6 +18631,20 @@
 "\")))",
 "!');",
 "])){"
+]
+},
+"9:5404": {
+"explanation": " references to well-known films and their details",
+"frac_nonzero": 0.00625,
+"top_logits": [
+"########.",
+"\u2581popular",
+"\u2581\u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"Beloved",
+"encodeWith",
+"lus",
+"rik"
 ]
 },
 "9:541": {
@@ -17051,6 +18815,20 @@
 "\u2581Lawson"
 ]
 },
+"9:5844": {
+"explanation": "terms related to technical and computational concepts",
+"frac_nonzero": 0.01016,
+"top_logits": [
+"\u2581CreateTagHelper",
+"MigrationBuilder",
+"\u2581nor",
+"\u2581anymore",
+"########.",
+"\u2581melainkan",
+"\u2581\u05d0\u05dc\u05d0",
+"\u2581ddelweddau"
+]
+},
 "9:5859": {
 "explanation": " repetitive phrases that emphasize continuity or connection",
 "frac_nonzero": 0.00125,
@@ -17079,6 +18857,20 @@
 "Whoosh"
 ]
 },
+"9:5921": {
+"explanation": "technical or code-related keywords and structures in text",
+"frac_nonzero": 0.07739,
+"top_logits": [
+"\u2581also",
+"also",
+"\u2581\u0442\u0430\u043a\u0436\u0435",
+"\u2581\u03b5\u03c0\u03af\u03c3\u03b7\u03c2",
+"\u2581idem",
+"\u2581te\u017c",
+"\u2581likewise",
+"\u2581pula"
+]
+},
 "9:5958": {
 "explanation": " infinitive verbs and phrases that indicate purpose or intent",
 "frac_nonzero": 0.00484,
@@ -17093,6 +18885,20 @@
 "KURZBESCHREIBUNG"
 ]
 },
+"9:5967": {
+"explanation": "phrases indicating preference or choice, particularly in the context of favoring something over another",
+"frac_nonzero": 0.00368,
+"top_logits": [
+"\u2581sp",
+"\u800c\u662f",
+"tdessen",
+"\u2581\u0437\u0430\u0442\u043e",
+"\u2581pr\u00e9f\u00e8re",
+"Focus",
+"\u4ee3\u308f\u308a\u306b",
+"\u2581focus"
+]
+},
 "9:5999": {
 "explanation": "prepositions indicating movement or direction into a specific location or object",
 "frac_nonzero": 0.00109,
@@ -17105,6 +18911,20 @@
 "into",
 "\u2581onto",
 "=#{"
+]
+},
+"9:6013": {
+"explanation": "patterns and relationships in mathematical or logical expressions",
+"frac_nonzero": 0.01274,
+"top_logits": [
+"uxxxx",
+"scalatest",
+"\u2581<<<<<<<<<<<<<<",
+"\u2581autorytatywna",
+"\u2581EnglishChoose",
+"\u2581initComponents",
+"\u2581\u0645\u0634\u064a\u0646",
+"\u2581pairs"
 ]
 },
 "9:6015": {
@@ -17345,6 +19165,20 @@
 "."
 ]
 },
+"9:6314": {
+"explanation": "information related to companies and their activities",
+"frac_nonzero": 0.01576,
+"top_logits": [
+"ViewImports",
+"GroupLayout",
+"RectangleBorder",
+"\u2581fieldNum",
+"AntiForgeryToken",
+"\u0445\u044c\u0442\u0430\u043d",
+"EndGlobalSection",
+"WriteTagHelper"
+]
+},
 "9:6372": {
 "explanation": " programming-related terms and functionalities",
 "frac_nonzero": 0.00649,
@@ -17457,6 +19291,20 @@
 "########."
 ]
 },
+"9:6551": {
+"explanation": "phrases indicating contradiction or hypocrisy",
+"frac_nonzero": 0.00274,
+"top_logits": [
+"\u2581\u0432\u0438\u043f\u0440\u0430\u0432\u0438\u0432\u0448\u0438",
+"IntoConstraints",
+"TagMode",
+"\u2581\u0645\u0634\u064a\u0646",
+"\u0445\u044c\u0442\u0430\u043d",
+"\u2581AssemblyCulture",
+"AndEndTag",
+"AccessorTable"
+]
+},
 "9:6601": {
 "explanation": " numerical values and references to specific numbers",
 "frac_nonzero": 0.0125,
@@ -17553,6 +19401,20 @@
 "Visibility",
 "\u2581visible",
 "lihatan"
+]
+},
+"9:6715": {
+"explanation": "expressions of gratitude and acknowledgment in conversations",
+"frac_nonzero": 0.00156,
+"top_logits": [
+"fjspx",
+"\u2581\u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430",
+"EndInit",
+"\u2581GetEnumerator",
+"ConstraintMaker",
+"Bronnen",
+"\u2581NUKAT",
+"InputBorder"
 ]
 },
 "9:6720": {
@@ -17667,6 +19529,20 @@
 "\u2581Medical"
 ]
 },
+"9:6951": {
+"explanation": "conditional phrases indicating options or choices",
+"frac_nonzero": 0.00345,
+"top_logits": [
+"\u2581or",
+"\u2581ho\u1eb7c",
+"\u2581\u043b\u0438\u0431\u043e",
+"\u2581Alternatively",
+"\u8981\u4e48",
+"\uac70\ub098",
+"\u2581either",
+"\u2581oder"
+]
+},
 "9:6952": {
 "explanation": "instances of the pronoun \"she\"",
 "frac_nonzero": 0.00184,
@@ -17679,6 +19555,48 @@
 "He",
 "\u2581He",
 "SHE"
+]
+},
+"9:6956": {
+"explanation": "terms related to political manipulation and authoritarian governance",
+"frac_nonzero": 0.008539999999999999,
+"top_logits": [
+"RegressionTest",
+"\u2581\u0645\u0631\u0626\u064a\u0647",
+"ThroughAttribute",
+"\u2581\u0644\u0644\u0645\u0639\u0627\u0631\u0641",
+"\u2581kasarigan",
+"\u2581hypocrite",
+"arXiv",
+"\u0645\u0635\u0627\u062f\u0631"
+]
+},
+"9:6957": {
+"explanation": "situations involving personal or professional struggle and adaptation",
+"frac_nonzero": 0.00371,
+"top_logits": [
+"stood",
+"\u672c\u5f53\u306f",
+"\u2581reasons",
+"HandlerContext",
+"\u00e1bb",
+"\u2581tired",
+"Tired",
+"\u2581perchance"
+]
+},
+"9:7053": {
+"explanation": "specific terms and phrases related to information systems and technology",
+"frac_nonzero": 0.01197,
+"top_logits": [
+"\u2581CreateTagHelper",
+"\u0628\u0648\u0627\u0628\u0629",
+"Geplaatst",
+"popo",
+"\u2581CommonModule",
+"\u2581Popo",
+"\u2581ttk",
+"\u2581Dede"
 ]
 },
 "9:7115": {
@@ -17807,6 +19725,20 @@
 "InjectAttribute"
 ]
 },
+"9:7341": {
+"explanation": "terms related to figurative representations and constructs, particularly in artistic or decorative contexts",
+"frac_nonzero": 0.00853,
+"top_logits": [
+"niaj\u0105ca",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"writeFieldEnd",
+"\u2581Audiodateien",
+"\u51fa\u7248\u5e74",
+"featureID",
+"\u2581CURIAM",
+"IVEREF"
+]
+},
 "9:7344": {
 "explanation": "terms related to Boolean values and their attributes in programming contexts",
 "frac_nonzero": 0.00524,
@@ -17891,6 +19823,20 @@
 "wapV"
 ]
 },
+"9:7426": {
+"explanation": "references to content management or data processing in a technical context",
+"frac_nonzero": 0.00874,
+"top_logits": [
+"\u2581\u0627\u0644\u062d\u0631\u0647",
+"RRect",
+"\u2581ar\u015fivlendi",
+"gypti",
+"oubtedly",
+"ellingham",
+"\u2581DevComponents",
+"specialchars"
+]
+},
 "9:7432": {
 "explanation": " terminology and phrases related to technical concepts and expertise",
 "frac_nonzero": 0.00037,
@@ -17919,6 +19865,20 @@
 "yn"
 ]
 },
+"9:7444": {
+"explanation": " references to Java collection classes and related utility functions",
+"frac_nonzero": 0.00019,
+"top_logits": [
+"\u2581AssemblyCulture",
+"#+#",
+"+#+#",
+"########.",
+"ChildScrollView",
+"</caption>",
+"THINK",
+"AddTagHelper"
+]
+},
 "9:7449": {
 "explanation": "punctuation marks, particularly periods and commas",
 "frac_nonzero": 0.00163,
@@ -17945,6 +19905,20 @@
 "\u2581E\u017f",
 "\u2581Jefus",
 "\u2581pre\u017fent"
+]
+},
+"9:7550": {
+"explanation": " phrases indicating research methodology and findings",
+"frac_nonzero": 0.0067,
+"top_logits": [
+"chent",
+"MERCIAL",
+"bila",
+"\u2581serp",
+"f\u00f8lgelig",
+"G\u00f6n",
+"formKey",
+"ufac"
 ]
 },
 "9:7557": {
@@ -18045,6 +20019,20 @@
 "\")->"
 ]
 },
+"9:77": {
+"explanation": " numerical values and measurements related to scientific observations",
+"frac_nonzero": 0.00844,
+"top_logits": [
+"UpdateCommand",
+":\u2728",
+"saco",
+"\u5e16\u6700\u540e\u7531",
+"\u2581tail",
+"DropColumn",
+"RegistryLite",
+"zyms"
+]
+},
 "9:771": {
 "explanation": " numerical values or quantifications",
 "frac_nonzero": 0.00622,
@@ -18087,6 +20075,20 @@
 "\u2581MainAxisSize"
 ]
 },
+"9:7763": {
+"explanation": " expressions of humor that critique social issues",
+"frac_nonzero": 0.00447,
+"top_logits": [
+"Regret",
+"\u2581\u0627\u0644\u0631\u064a\u0627\u0636\u064a\u0647",
+"\u2581cioccolato",
+"\u2581Molto",
+"\u2581PTE",
+"VERY",
+"\u2581cries",
+"\u2581censiti"
+]
+},
 "9:7792": {
 "explanation": "the term \"condition\" and its variations, indicating a focus on predefined circumstances or requirements in various contexts",
 "frac_nonzero": 0.0006,
@@ -18127,6 +20129,20 @@
 "WriteBarrier",
 "\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc\u0627",
 "\u2581createSprite"
+]
+},
+"9:7848": {
+"explanation": "words and phrases related to familial relationships and personal connections",
+"frac_nonzero": 0.004079999999999999,
+"top_logits": [
+"GEBURTSDATUM",
+"\u2581\u043d\u0430\u0441\u0435\u0459\u0443",
+"BeginInit",
+"PointerException",
+"\u041b\u0438\u0447\u043d\u0430\u044f",
+"\u2581pessoais",
+"\u2581estim\u00e9s",
+"GIVEREF"
 ]
 },
 "9:7872": {
@@ -18269,6 +20285,20 @@
 "\u2581posthum"
 ]
 },
+"9:802": {
+"explanation": "programming concepts related to loops and iterations",
+"frac_nonzero": 0.0039,
+"top_logits": [
+"LookAnd",
+"CompilerServices",
+"DebuggerStep",
+"FieldNumber",
+"contentLoaded",
+"\u2581OFDb",
+"ItemBackground",
+"reactstrap"
+]
+},
 "9:8050": {
 "explanation": "the repetition of the word \"we,\" implying a focus on collective experiences or actions",
 "frac_nonzero": 0.00189,
@@ -18325,6 +20355,20 @@
 "\u0446\u0435\u0437\u0434\u0430\u0442\u043d\u0438\u0439"
 ]
 },
+"9:8103": {
+"explanation": " words and phrases related to actions or events, particularly those involving verbs in various forms",
+"frac_nonzero": 0.00144,
+"top_logits": [
+"parsedMessage",
+"LookAnd",
+"TintMode",
+"\u51fa\u7248\u5e74",
+"StructEnd",
+"\u2581IndexPath",
+"\u0c32\u0c3e\u0c32\u0c41",
+"\u2581Precambrian"
+]
+},
 "9:8104": {
 "explanation": "legal terminology and references",
 "frac_nonzero": 0.0043,
@@ -18351,6 +20395,34 @@
 "\u2581sup\u00e9rieurs",
 "astify",
 "\u2581vectorielle"
+]
+},
+"9:8135": {
+"explanation": "specific variables and syntax elements related to programming or scripting languages",
+"frac_nonzero": 0.00878,
+"top_logits": [
+"NUMX",
+"+#+#",
+"\u2581ReSharper",
+"\u2581useHistory",
+"sizlik",
+"\u2581m\u00f6ge",
+"Ford\u00edt\u00e1s",
+"\u2581locator"
+]
+},
+"9:8163": {
+"explanation": "phrases related to export controls and regulations",
+"frac_nonzero": 0.00277,
+"top_logits": [
+"<tfoot>",
+"\u2581regulated",
+"\u2581permit",
+"\u2581pubblici",
+"\u2581licensed",
+"TProtocol",
+"\u2581business",
+"\u2581permita"
 ]
 },
 "9:8165": {
@@ -18409,6 +20481,34 @@
 "\u2581nakalista"
 ]
 },
+"9:8202": {
+"explanation": " code structures relating to error handling and control flow statements",
+"frac_nonzero": 0.00409,
+"top_logits": [
+"\u2581plea\u017fure",
+"\u2581Majefty",
+"\u2581my\u017felf",
+"\u2581Monfieur",
+"awtextra",
+"\u2581Nebel",
+"\u2581Neel",
+"Portale"
+]
+},
+"9:821": {
+"explanation": "expressions of disbelief or disapproval towards societal issues",
+"frac_nonzero": 0.00357,
+"top_logits": [
+":\u2728",
+"\u2581StatelessWidget",
+"\u2581MonoBehaviour",
+"\u2581angeb",
+"tamol",
+"GetProperty",
+"\u2581Barrington",
+"LEncoder"
+]
+},
 "9:8220": {
 "explanation": "references to familial relationships and legacies",
 "frac_nonzero": 0.00455,
@@ -18423,6 +20523,20 @@
 "\u2581undone"
 ]
 },
+"9:8249": {
+"explanation": " punctuation marks and their interaction within sentences",
+"frac_nonzero": 0.00567,
+"top_logits": [
+"AndEndTag",
+"InjectAttribute",
+"interopRequire",
+"\u2581Wikispecies",
+"\u2581\u062a\u0636\u064a\u0641\u0644\u0647\u0627",
+"WireFormat",
+"\u2581&___",
+"\u0437\u0443\u043b\u0442\u0430"
+]
+},
 "9:8255": {
 "explanation": "scientific measurements and data, particularly in the context of astronomy or similar fields",
 "frac_nonzero": 0.00486,
@@ -18435,6 +20549,20 @@
 "\u2581angles",
 "\u2581him\u017felf",
 "\u2581\u017fhe"
+]
+},
+"9:8293": {
+"explanation": "references to cancer and healthcare discussions",
+"frac_nonzero": 0.01534,
+"top_logits": [
+"endom",
+"enna",
+"\u2581\u043a\u0430\u043c\u043f\u0430",
+"\u2581lagt",
+"\u2581libre",
+"yer",
+"timo",
+"unggulan"
 ]
 },
 "9:8310": {
@@ -18605,6 +20733,20 @@
 "AddTagHelper"
 ]
 },
+"9:8533": {
+"explanation": "terms related to tobacco tax and cigarette sales",
+"frac_nonzero": 0.00569,
+"top_logits": [
+"devam\u0131n\u0131",
+"\u2581useHistory",
+"\u2581ventral",
+"\u2581Empieza",
+"convertView",
+"TextWatcher",
+"\u2581Reverso",
+"\u2581viewDidLoad"
+]
+},
 "9:8564": {
 "explanation": "medical terminology and metrics related to health assessment",
 "frac_nonzero": 0.00597,
@@ -18617,6 +20759,20 @@
 "\u2581\u2581",
 "Pozn\u00e1m",
 "\u2581raz\u00f3n"
+]
+},
+"9:8579": {
+"explanation": "scientific and academic formatting terms and structures",
+"frac_nonzero": 0.00597,
+"top_logits": [
+"ScopeManager",
+"migrationBuilder",
+"AutoScaleMode",
+"tvguidetime",
+"CloseOperation",
+"\u2581insuffisamment",
+"Hochspringen",
+"mtable"
 ]
 },
 "9:8581": {
@@ -18645,6 +20801,20 @@
 "\u2581ModelExpression",
 "RuleContext",
 "\u2581nakalista"
+]
+},
+"9:8685": {
+"explanation": "quantitative comparisons and evaluations in text",
+"frac_nonzero": 0.00578,
+"top_logits": [
+"__':\r",
+"__\":\r",
+"CppMethod",
+"\u2581The\u017fe",
+"\u2581purpo\u017fe",
+"\u2581\u017ftate",
+"\u2581AssemblyCulture",
+"SourceChecksum"
 ]
 },
 "9:8705": {
@@ -18843,6 +21013,20 @@
 "Jeografia"
 ]
 },
+"9:9020": {
+"explanation": "narrative elements related to actions and interactions involving movement and attention",
+"frac_nonzero": 0.00178,
+"top_logits": [
+"cinnati",
+"\u2581stop",
+"TagMode",
+"popd",
+"EndContext",
+"consult\u00e9",
+"mbing",
+"enumi"
+]
+},
 "9:9035": {
 "explanation": "programming-related commands and functions",
 "frac_nonzero": 0.00268,
@@ -18869,6 +21053,20 @@
 "\u2581costly",
 "\u2581pricey",
 "Cheap"
+]
+},
+"9:9045": {
+"explanation": "financial terms related to expenditures, valuations, and legal documentation",
+"frac_nonzero": 0.00412,
+"top_logits": [
+"\u2581\u0648\u06cc\u06a9\u06cc\u200c\u067e\u062f\u06cc",
+"artney",
+"\u2581\"..\\..\\..\\",
+"URLException",
+"\u2581GeoNames",
+"ConverterFactory",
+"GEBURTSDATUM",
+"ogr\u00e1ficas"
 ]
 },
 "9:9086": {
@@ -18981,6 +21179,20 @@
 "\u2581Offisielt",
 "byshire",
 "\u2581\u0441\u043b\u044b"
+]
+},
+"9:9265": {
+"explanation": "negative sentiments and experiences related to various subjects",
+"frac_nonzero": 0.01076,
+"top_logits": [
+"Personensuche",
+"\u2581<=\",",
+"\u2581\u0421\u0430\u0432\u0435\u0437\u043d\u0435",
+"Jeografia",
+"\u2581wireType",
+"saraba",
+"Tembelea",
+"queryInterface"
 ]
 },
 "9:9347": {
