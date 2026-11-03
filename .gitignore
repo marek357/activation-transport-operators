@@ -7,3 +7,8 @@ venv/
 
 activations*/
 cache/
+
+# research artefacts (large binaries / logs)
+research/results/*.npz
+research/results/*.pt
+research/results/*.log

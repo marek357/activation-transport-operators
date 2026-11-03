@@ -1,0 +1,238 @@
+"""Improved activation transport operators (see research/RESEARCH_LOG.md).
+
+`NormAwareTransportOperator` is a drop-in replacement for
+`TransportOperator` (same `fit(dataset)` / `predict(X)` /
+`get_transport_matrix()` / `get_bias()` interface). It changes four things,
+each validated on held-out data in research/:
+
+1. **BOS special-casing.** In Gemma-2 the <bos> residual is a constant vector
+   (norm ~10x a normal token). The repo's ridge fit treats its ~700 identical
+   copies as extreme-leverage points. We drop BOS rows from the fit, detect
+   them at predict time (cosine > 0.95 to the stored BOS activation; ordinary
+   tokens reach <= 0.79), and output the stored downstream BOS activation.
+2. **Identity prior.** Ridge shrinks toward W = I (the residual stream
+   carries x forward), not toward 0.
+3. **Norm-aware features.** Gemma-2 sublayers read RMSNorm(x) and write
+   through a post-norm, so the update y - x depends (almost) only on
+   x_hat = x / rms(x). We regress on [x, x_hat]:
+       y_hat = A x + B x_hat + b.
+4. **Alpha chosen on the validation split** from a relative grid (alpha =
+   c * mean eigenvalue of the train covariance) using exact closed-form
+   validation FVE, instead of 5-fold CV over a fixed absolute grid.
+
+An optional nonlinear "synthesis" correction (research/exp3_nonlinear.py)
+can be attached with `attach_correction`.
+"""
+from __future__ import annotations
+
+import os
+import pickle
+import time
+from typing import Optional
+
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+
+REL_ALPHAS = (1e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1.0)
+
+
+def _rms_normalize(X: np.ndarray) -> np.ndarray:
+    return X / (np.sqrt((X.astype(np.float32) ** 2).mean(1, keepdims=True)) + 1e-6)
+
+
+class _Moments:
+    """Streaming centred second moments in float64."""
+
+    def __init__(self, dx: int, dy: int):
+        self.n = 0
+        self.sx = np.zeros(dx)
+        self.sy = np.zeros(dy)
+        self.Sxx = torch.zeros(dx, dx, dtype=torch.float64)
+        self.Sxy = torch.zeros(dx, dy, dtype=torch.float64)
+        self.syy = np.zeros(dy)
+        self.shift_x = None
+        self.shift_y = None
+
+    def add(self, F: np.ndarray, Y: np.ndarray):
+        if self.shift_x is None:  # shift by first batch mean for stability
+            self.shift_x = F.mean(0)
+            self.shift_y = Y.mean(0)
+        f = torch.from_numpy((F - self.shift_x).astype(np.float32))
+        y = torch.from_numpy((Y - self.shift_y).astype(np.float32))
+        self.n += F.shape[0]
+        self.sx += f.sum(0).double().numpy()
+        self.sy += y.sum(0).double().numpy()
+        self.Sxx += (f.T @ f).double()
+        self.Sxy += (f.T @ y).double()
+        self.syy += (y * y).sum(0).double().numpy()
+
+    def finalize(self):
+        n = self.n
+        mx_s, my_s = self.sx / n, self.sy / n
+        Cxx = self.Sxx.numpy() - n * np.outer(mx_s, mx_s)
+        Cxy = self.Sxy.numpy() - n * np.outer(mx_s, my_s)
+        cyy = self.syy - n * my_s ** 2
+        return n, mx_s + self.shift_x, my_s + self.shift_y, Cxx, Cxy, cyy
+
+
+class NormAwareTransportOperator:
+    def __init__(
+        self,
+        L: int,
+        k: int,
+        norm_aware: bool = True,
+        identity_prior: bool = True,
+        special_case_bos: bool = True,
+        bos_cos_threshold: float = 0.95,
+        rel_alphas=REL_ALPHAS,
+        batch_size: int = 4096,
+    ):
+        self.L, self.k = L, k
+        self.norm_aware = norm_aware
+        self.identity_prior = identity_prior
+        self.special_case_bos = special_case_bos
+        self.bos_cos_threshold = bos_cos_threshold
+        self.rel_alphas = tuple(rel_alphas)
+        self.batch_size = batch_size
+        self.W = None  # [d_feat, d_out]
+        self.b = None
+        self.bos_x = None
+        self.bos_y = None
+        self.alpha_rel_ = None
+        self.val_curve_ = None
+        self.correction = None
+        self.is_fitted_ = False
+        self.method = "normaware_identity_ridge"
+
+    # ------------------------------------------------------------------
+    def _features(self, X: np.ndarray) -> np.ndarray:
+        if self.norm_aware:
+            return np.concatenate([X, _rms_normalize(X)], axis=1)
+        return X
+
+    def _is_bos(self, X: np.ndarray) -> np.ndarray:
+        if not self.special_case_bos or self.bos_x is None:
+            return np.zeros(X.shape[0], dtype=bool)
+        cos = (X @ self.bos_x) / (np.linalg.norm(X, axis=1) * np.linalg.norm(self.bos_x) + 1e-9)
+        return cos > self.bos_cos_threshold
+
+    def _stream_moments(self, dataset, find_bos: bool):
+        mom = None
+        bos_x, bos_y, n_bos = None, None, 0
+        loader = DataLoader(dataset, batch_size=self.batch_size, num_workers=0)
+        first = True
+        for xb, yb in loader:
+            X = xb.numpy().astype(np.float32)
+            Y = yb.numpy().astype(np.float32)
+            if first and find_bos and self.special_case_bos and self.bos_x is None:
+                # datasets iterate sequences from position 0, i.e. row 0 is <bos>
+                self.bos_x = X[0].copy()
+            first = False
+            is_bos = self._is_bos(X)
+            if is_bos.any():
+                bos_y = Y[is_bos].sum(0) + (0 if bos_y is None else bos_y)
+                n_bos += int(is_bos.sum())
+                X, Y = X[~is_bos], Y[~is_bos]
+            if X.shape[0] == 0:
+                continue
+            F = self._features(X)
+            if mom is None:
+                mom = _Moments(F.shape[1], Y.shape[1])
+            mom.add(F, Y)
+        if find_bos and n_bos:
+            self.bos_y = (bos_y / n_bos).astype(np.float32)
+        return mom.finalize()
+
+    def fit(self, dataset, val_dataset=None) -> "NormAwareTransportOperator":
+        t0 = time.time()
+        n, mx, my, Cxx, Cxy, cyy = self._stream_moments(dataset, find_bos=True)
+        d_in, d_out = Cxx.shape[0], Cxy.shape[1]
+        prior = np.zeros((d_in, d_out))
+        if self.identity_prior:
+            prior[: d_out, :] = np.eye(d_out)
+        w, V = np.linalg.eigh(Cxx)
+        w = np.clip(w, 0, None)
+        VtC, VtP = V.T @ Cxy, V.T @ prior
+        scale = float(w.mean())
+
+        def solve(c):
+            a = c * scale
+            W = V @ ((VtC + a * VtP) / (w + a)[:, None])
+            return W, my - mx @ W
+
+        if val_dataset is None or len(self.rel_alphas) == 1:
+            c_best = self.rel_alphas[len(self.rel_alphas) // 2] if val_dataset is None \
+                else self.rel_alphas[0]
+            self.W, self.b = solve(c_best)
+        else:
+            vn, vmx, vmy, vCxx, vCxy, vcyy = self._stream_moments(val_dataset, find_bos=False)
+            best, self.val_curve_ = None, {}
+            for c in self.rel_alphas:
+                W, b = solve(c)
+                off = vmy - vmx @ W - b
+                ss = (vcyy - 2 * np.einsum("ij,ij->j", W, vCxy)
+                      + np.einsum("ij,ij->j", W, vCxx @ W) + vn * off ** 2)
+                fve = 1 - ss.sum() / vcyy.sum()
+                self.val_curve_[c] = float(fve)
+                if best is None or fve > best[0]:
+                    best = (fve, c, W, b)
+            _, c_best, self.W, self.b = best
+        self.alpha_rel_ = c_best
+        self.W = self.W.astype(np.float32)
+        self.b = self.b.astype(np.float32)
+        self.is_fitted_ = True
+        print(f"NormAwareTransportOperator L={self.L} k={self.k}: fitted on {n} tokens "
+              f"(alpha_rel={c_best}) in {time.time() - t0:.1f}s")
+        return self
+
+    # ------------------------------------------------------------------
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        if not self.is_fitted_:
+            raise ValueError("operator must be fitted first")
+        X = np.asarray(X, dtype=np.float32)
+        Y = self._features(X) @ self.W + self.b
+        if self.correction is not None:
+            with torch.no_grad():
+                Y = Y + self.correction(torch.from_numpy(_rms_normalize(X).astype(np.float32))).numpy() \
+                    * self.correction_scale
+        bos = self._is_bos(X)
+        if bos.any() and self.bos_y is not None:
+            Y[bos] = self.bos_y
+        return Y
+
+    transform = predict
+
+    def attach_correction(self, module: torch.nn.Module, scale: float = 1.0):
+        """Attach a nonlinear correction r(x_hat) (trained on this operator's residual)."""
+        self.correction = module.eval()
+        self.correction_scale = scale
+        return self
+
+    def get_transport_matrix(self) -> np.ndarray:
+        """Effective linear map [d_in, d_out] at a typical token.
+
+        The operator is A x + B x_hat; around a token with rms(x) = r the x_hat
+        block contributes approximately B / r. We return A + B / r_typ with
+        r_typ the median train rms, so rank/efficiency analyses still apply.
+        """
+        d = self.W.shape[1]
+        if not self.norm_aware:
+            return self.W
+        return self.W[:d] + self.W[d:] / getattr(self, "typical_rms_", 1.0)
+
+    def get_bias(self) -> np.ndarray:
+        return self.b
+
+    # ------------------------------------------------------------------
+    def save(self, path: str):
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "wb") as f:
+            pickle.dump(self.__dict__, f)
+
+    @classmethod
+    def load(cls, path: str) -> "NormAwareTransportOperator":
+        obj = cls.__new__(cls)
+        with open(path, "rb") as f:
+            obj.__dict__.update(pickle.load(f))
+        return obj
