@@ -299,3 +299,26 @@ and the oracle partner's test correlation:
   Assembled features combine related upstream concepts, e.g. L10
   "governors" from L5 "positions of authority within government" and
   neighbours.
+
+### Iteration 6: SAE-code metrics on all pairs (`exp6_codeeval.py`)
+
+Does the best operator (linear + top-k 8192 correction, MSE-trained)
+reproduce the downstream SAE code? Test, nobos.
+
+| pair | code F1, linear → +corr | precision | recall | code FVE, linear → +corr |
+|---|---|---|---|---|
+| 9→10 | 0.756 → **0.767** | 0.886 → 0.880 | 0.660 → 0.680 | 0.882 → **0.891** |
+| 5→10 | 0.492 → **0.528** | 0.834 → 0.804 | 0.349 → 0.393 | 0.664 → **0.698** |
+| 1→10 | 0.292 → **0.313** | 0.760 → 0.749 | 0.181 → 0.198 | 0.444 → **0.486** |
+| 19→20 | 0.827 → **0.837** | 0.888 → 0.884 | 0.773 → 0.794 | 0.905 → **0.919** |
+| 15→20 | 0.551 → **0.601** | 0.821 → 0.790 | 0.415 → 0.485 | 0.576 → **0.661** |
+| 11→20 | 0.400 → **0.485** | 0.791 → 0.747 | 0.267 → 0.358 | 0.408 → **0.530** |
+| **mean** | **0.553 → 0.588** | | | **0.646 → 0.698** |
+
+* The gains are not an artifact of the active-tokens-only feature R². Code
+  F1 and code FVE improve on every pair, again most in the late,
+  synthesis-heavy pairs.
+* For every operator, errors are dominated by **missed** features
+  (recall 0.18–0.79) rather than spurious ones (precision 0.75–0.89).
+  Transported vectors are "quieter" than real ones. The predicted L0 is
+  19–68 against a true L0 of ≈70–80.
