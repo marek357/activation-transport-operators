@@ -357,3 +357,21 @@ reproduce the downstream SAE code? Test, nobos.
   doubles the dense encoder cost.
 * With 151k training tokens, all of these still peak at epoch 2–3, so a
   larger activation set is the most promising next lever.
+
+### Iteration 4c: wide correction with a light feature loss (5→10)
+
+| correction | residual FVE | median feat R² | frac R²>0.9 | code F1 | code FVE |
+|---|---|---|---|---|---|
+| top-k 8192, MSE | **0.670** | 0.247 | 0.196 | 0.528 | 0.698 |
+| **top-k 8192, λ=0.3** | 0.655 | **0.410** | **0.202** | **0.542** | **0.700** |
+| top-k 8192, λ=1 | 0.626 | 0.491 | 0.202 | 0.538 | 0.694 |
+
+**Recommendation.**
+* To **reproduce downstream SAE features** (feature transport, the paper's
+  question), use top-k 8192 with feature loss λ≈0.3. It has the best code
+  F1 and code FVE, 1.7× the median feature R² of the MSE model, and
+  residual FVE equal to the linear map.
+* For **residual fidelity** (e.g. patching transported activations back
+  into the model, as in the paper's causal perplexity test), use the
+  MSE-trained correction. That is the repo default in
+  `train_improved_operators.py`.
