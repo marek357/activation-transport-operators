@@ -167,3 +167,43 @@ feature R² instead of FVE.
 * The effect is small next to the nonlinear correction (+0.23 at 5→10).
   So the repo operator keeps FVE selection by default, and the
   `rel_alphas` grid lets a user pick the feature-oriented setting.
+
+### Iteration 4: optimize the paper's metric directly? Feature-aware loss and SAE-code metrics (`exp3 --feat_lambda`, `exp6_codeeval.py`)
+
+The loss adds λ·Σ_{f active on y} (⟨d_f, y−ŷ⟩²/var_f) / L0 to the residual
+MSE. This is the paper's per-feature R² made differentiable. Because that
+metric only scores tokens where a feature *truly* fires, it cannot see a
+feature being switched on where it should be off. A new guard metric
+re-encodes ŷ with the target SAE and compares codes:
+precision/recall/F1 of the active set and the FVE of the code
+activations ("code FVE").
+
+5→10, test, nobos:
+
+| operator | residual FVE | median feat R² | code F1 | code prec. | code recall | code FVE | pred L0 (true ≈79) |
+|---|---|---|---|---|---|---|---|
+| identity | −0.104 | −1.051 | 0.326 | 0.506 | 0.241 | −0.138 | 37.9 |
+| linear (iteration 1) | 0.655 | 0.021 | 0.492 | **0.834** | 0.349 | 0.664 | 33.2 |
+| + GELU 2048 (MSE) | 0.665 | 0.175 | 0.517 | 0.816 | 0.379 | 0.689 | 36.9 |
+| + top-k 2048 (MSE) | 0.664 | 0.179 | 0.516 | 0.814 | 0.377 | 0.688 | 36.9 |
+| + top-k 8192 (MSE) | **0.670** | 0.247 | 0.528 | 0.804 | 0.393 | **0.698** | 38.8 |
+| + top-k 2048, feature loss λ=1 | 0.623 | 0.492 | **0.535** | 0.745 | **0.417** | 0.691 | 44.5 |
+| + top-k 2048, feature loss λ=3 | 0.563 | **0.550** | 0.512 | 0.730 | 0.394 | 0.675 | 42.9 |
+
+* **The linear map's errors are mostly missing features, not wrong
+  ones.** Precision is 0.83 and recall 0.35, with 33 features predicted
+  per token against 79 true ones. Shrinkage leaves many features just
+  below their JumpReLU thresholds. This is the same regression-to-the-mean
+  effect seen from a third angle.
+* **Every correction raises recall**, and with it F1 and code FVE.
+* **λ=1 is a real improvement in feature transport.** Against its
+  same-size MSE twin it has higher code F1 (0.535 vs 0.516) and code FVE
+  (0.691 vs 0.688). The cost is residual MSE, presumably in directions the
+  SAE does not represent.
+* **λ=3 Goodharts the paper's metric.** Median feature R² rises to 0.55,
+  but code F1 and code FVE fall below the MSE model. **The
+  active-tokens-only feature R² should not be reported alone. Pair it with
+  a false-positive-aware measure such as code F1 or code FVE.**
+* The default operator stays MSE-trained (best residual FVE and code FVE).
+  The feature loss at λ≈1 is an option for when the goal is to reproduce
+  downstream SAE features.
