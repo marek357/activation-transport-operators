@@ -121,6 +121,16 @@ def main():
         score[~up_ok] = big
         return score.argmax(0)
 
+    def csls(U):
+        """Cross-domain similarity local scaling (Conneau et al. 2018): penalise
+        'hub' features that are close to everything. U: unit rows [F_L, D]."""
+        S = U @ DT.T                                   # [F_L, F_T] cosines
+        rL = S.topk(10, dim=1).values.mean(1)          # hubness of upstream i
+        rT = S.topk(10, dim=0).values.mean(0)          # hubness of downstream j
+        out = 2 * S[:, j_idx] - rL[:, None] - rT[j_idx][None, :]
+        del S
+        return out
+
     res = {}
     oracle = argmax_over_up(C_tr[:, j_idx])
     best_te = C_te[oracle, j_idx]
@@ -130,6 +140,8 @@ def main():
         "oracle(train-corr)": oracle,
         "dec-cos": argmax_over_up(DL @ DT[j_idx].T),
         "ato-dec": argmax_over_up(pushed_n @ DT[j_idx].T),
+        "dec-cos-csls": argmax_over_up(csls(DL)),
+        "ato-dec-csls": argmax_over_up(csls(pushed_n)),
         "ato-enc": argmax_over_up((pushed * (saeL.W_dec.norm(dim=1, keepdim=True)
                                              * act_mean_L[:, None])) @ saeT.W_enc[:, j_idx]),
     }
@@ -182,7 +194,7 @@ def main():
     print(f"[L={L},k={k}] taxonomy over {len(jj)} downstream features: {counts}", flush=True)
 
     # --- table of feature pairs for inspection
-    ato_m = rules["ato-enc"].numpy()
+    ato_m = rules["ato-dec-csls"].numpy()
     dec_m = rules["dec-cos"].numpy()
     rows = []
     for t, j in enumerate(jj):
