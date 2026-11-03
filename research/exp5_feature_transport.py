@@ -43,6 +43,10 @@ def codes_sparse(X, sae, chunk=2048):
     return out
 
 
+def _unit(M):
+    return M / M.norm(dim=1, keepdim=True).clamp_min(1e-9)
+
+
 def comoments(CL, CT, F=16384):
     S = torch.zeros(F, F)  # float32 accumulator of sum_t a_i^L a_j^T
     sL = torch.zeros(F, dtype=torch.float64); qL = torch.zeros(F, dtype=torch.float64)
@@ -82,6 +86,12 @@ def main():
     W, b = lin["W"], lin["b"]
     A, B = W[:D], W[D:]
 
+    corr_model, rs_corr = None, None
+    if a.corr:
+        from exp6_codeeval import load_corr
+        corr_model, rs_corr = load_corr(a.corr, L, k)
+    J = {}
+
     # --- codes + co-moments (train for oracle, test for scoring)
     stats = {}
     for sp in ("train", "test"):
@@ -90,6 +100,9 @@ def main():
         if sp == "train":
             rms_typ = float(np.median(np.sqrt((X ** 2).mean(1))))
             X, Y = X[::2], Y[::2]  # 75k tokens is plenty for co-activation stats
+            # average Jacobian of the fitted operator (data-driven J-lens), train tokens
+            from jacobian import average_jacobian
+            J["jac-lin"], J["jac-full"] = average_jacobian(X[::3], A, B, corr_model, rs_corr or 1.0)
         CL, CT = codes_sparse(X, saeL), codes_sparse(Y, saeT)
         stats[sp] = comoments(CL, CT)
         if sp == "test":
@@ -141,6 +154,8 @@ def main():
         "oracle(train-corr)": oracle,
         "dec-cos": argmax_over_up(DL @ DT[j_idx].T),
         "ato-dec": argmax_over_up(pushed_n @ DT[j_idx].T),
+        **{name: argmax_over_up(_unit(DL @ torch.from_numpy(Jm)) @ DT[j_idx].T)
+           for name, Jm in J.items() if Jm is not None},
         "dec-cos-csls": argmax_over_up(csls(DL)),
         "ato-dec-csls": argmax_over_up(csls(pushed_n)),
         "ato-enc": argmax_over_up((pushed * (saeL.W_dec.norm(dim=1, keepdim=True)
@@ -160,22 +175,23 @@ def main():
     # --- per-downstream-feature R^2 for linear ATO (+ optional nonlinear)
     Yh_lin = phi_norm(Xte) @ W + b
     _, pf_lin = feature_metrics(Yte, Yh_lin, saeT, min_count=a.min_count)
+    A_eff_np = A + B / rms_typ
+    jdiag = {}
+    for name, Jm in J.items():
+        if Jm is None:
+            continue
+        # J as a linear predictor around the train means (first-order expansion)
+        Yh_j = (Xte - Xte.mean(0)) @ Jm + Yte.mean(0)
+        rr = residual_metrics(Yte, Yh_j)
+        jdiag[name] = {"rel_diff_to_ols": float(np.linalg.norm(Jm - A_eff_np) / np.linalg.norm(A_eff_np)),
+                       "fve_as_linear_map": rr["fve"]}
+        print(f"[L={L},k={k}] {name}: ||J - A_eff||/||A_eff|| = {jdiag[name]['rel_diff_to_ols']:.3f}, "
+              f"FVE as linear map = {rr['fve']:.4f} (OLS {residual_metrics(Yte, Yh_lin)['fve']:.4f})", flush=True)
     r2_lin = np.full(16384, np.nan); r2_lin[pf_lin["idx"]] = pf_lin["r2"]
     r2_nl = None
     if a.corr:
         import exp3_nonlinear as e3
-        kind, h = a.corr.split("_h")[0], int(a.corr.split("_h")[1].split("_")[0])
-        tk = int(a.corr.split("_k")[1]) if "_k" in a.corr else 64
-        model = e3.Corr(D, h, kind, tk)
-        model.load_state_dict(torch.load(f"results/corr_{a.corr}_L{L}_k{k}.pt"))
-        model.eval()
-        info = json.load(open(f"results/exp3_{a.corr}_L{L}_k{k}.json"))
-        rs = info.get("resid_scale")
-        if rs is None:  # older runs: recompute residual scale on a train subsample
-            Xtr_, _, _ = layer_tokens(L, "train", drop_bos=True)
-            Ytr_, _, _ = layer_tokens(T, "train", drop_bos=True)
-            Xtr_, Ytr_ = Xtr_[::3].copy(), Ytr_[::3].copy()
-            rs = float((Ytr_ - (phi_norm(Xtr_) @ W + b)).std()); del Xtr_, Ytr_
+        model, rs = corr_model, rs_corr
         Xh = e3.rmsn(Xte).astype(np.float32)
         P = torch.cat([model(torch.from_numpy(Xh[i:i + 4096])) for i in range(0, len(Xh), 4096)]).numpy() * rs
         _, pf_nl = feature_metrics(Yte, Yh_lin + P, saeT, min_count=a.min_count)
@@ -210,7 +226,7 @@ def main():
             "class": cls[t], "down_count_test": int(nT_te[j]),
         })
     save_result(f"exp5_features_L{L}_k{k}", {"matching": res, "taxonomy": counts, "rows": rows,
-                                             "rms_typ": rms_typ})
+                                             "rms_typ": rms_typ, "jacobian": jdiag})
 
 
 if __name__ == "__main__":
