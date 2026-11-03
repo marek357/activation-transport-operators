@@ -207,3 +207,26 @@ activations ("code FVE").
 * The default operator stays MSE-trained (best residual FVE and code FVE).
   The feature loss at λ≈1 is an option for when the goal is to reproduce
   downstream SAE features.
+
+### Iteration 3b: the best correction on all six pairs (top-k ReLU, 8192 units, k=64, 3 epochs)
+
+Test, nobos. Repo → norm-aware linear → + sparse correction:
+
+| pair | FVE | median feature R² | frac R²>0.9 |
+|---|---|---|---|
+| 9→10 | 0.875 → 0.878 → **0.884** | 0.916 → 0.927 → **0.942** | 0.540 → 0.568 → **0.617** |
+| 5→10 | 0.648 → 0.655 → **0.670** | −0.077 → 0.021 → **0.247** | 0.171 → 0.178 → **0.196** |
+| 1→10 | 0.430 → 0.448 → **0.473** | −1.896 → −1.634 → **−1.424** | 0.013 → 0.020 → **0.025** |
+| 19→20 | 0.883 → 0.887 → **0.898** | 0.920 → 0.927 → **0.948** | 0.564 → 0.586 → **0.662** |
+| 15→20 | 0.578 → 0.589 → **0.633** | −0.177 → −0.100 → **0.246** | 0.004 → 0.005 → **0.037** |
+| 11→20 | 0.445 → 0.460 → **0.523** | −0.949 → −0.845 → **−0.298** | 0.000 → 0.000 → **0.004** |
+| **mean** | **0.643 → 0.653 → 0.680** | **−0.211 → −0.118 → +0.110** | **0.215 → 0.226 → 0.257** |
+
+* The correction helps every pair, and helps **later layers more**.
+  Targeting layer 20 from 11 or 15, it adds +0.04 to +0.06 FVE and
+  +0.35 to +0.55 median feature R². Targeting layer 10 from 1 or 5, it adds
+  +0.015 to +0.025 FVE. This fits the paper's "evict and synthesise"
+  regime in later layers: more of what layer 20 holds is computed in
+  between, and a sparse same-token code can learn a good part of it.
+* 1→10 stays hard. The layer-1 residual barely encodes what 9 layers of
+  attention will add.
