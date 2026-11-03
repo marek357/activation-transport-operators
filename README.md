@@ -148,6 +148,43 @@ L: [5, 6, 10]      # Source layers
 k: [1, 2, 4, 8]    # Target layer offsets
 ```
 
+#### 4b. Improved transport operators
+
+`train_improved_operators.py` trains `NormAwareTransportOperator`
+(`src/improved_transport_operator.py`). It is a drop-in replacement for
+`TransportOperator`, and on all six benchmark pairs it predicts held-out
+activations better than the ridge operator above:
+
+- **Norm-aware features.** It regresses on `[x, x / rms(x)]`, so
+  `ŷ = A·x + B·x̂ + b`. Gemma-2 sublayers read `RMSNorm(x)`, so the
+  update depends on the direction of `x`.
+- **Identity prior.** Ridge shrinks toward `W = I` instead of `0`.
+- **BOS lookup.** The constant `<bos>` residual (≈12× the norm of a normal
+  token) is predicted exactly by lookup and excluded from the fit.
+- **Validation-chosen ridge strength.** α is picked on the validation split
+  from a relative grid.
+- **Optional sparse correction.** A top-k "synthesis" term,
+  `W_dec·topk₆₄(ReLU(W_enc x̂))`, can be trained on the linear operator's
+  residual (`improved.correction.enabled=true`).
+
+```bash
+python train_improved_operators.py experiment.L=[5,9] experiment.k=[1,5]
+python train_improved_operators.py improved.correction.enabled=true
+python eval.py eval_mode=improved eval.Ls=[5] eval.ks=[5]
+```
+
+Mean over six layer pairs (test split, `<bos>` excluded):
+
+| operator | residual FVE | median SAE-feature R² |
+|---|---|---|
+| ridge `TransportOperator` | 0.643 | −0.211 |
+| `NormAwareTransportOperator` | 0.653 | −0.118 |
+| + sparse correction | **0.680** | **+0.110** |
+
+Experiments, ablations and the feature-transport analysis (which SAE
+features are carried, assembled or synthesised between layers) are in
+`research/`, with the full write-up in `research/RESEARCH_LOG.md`.
+
 ### 5. Evaluating Transport Operators & Matched-Rank Analysis
 
 Evaluate the quality of trained transport operators and run matched-rank analysis:
