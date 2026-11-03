@@ -168,6 +168,12 @@ details ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; font-
     <div class="tablebox"><table id="match"></table></div>
   </section>
 
+  <section id="floss-sec">
+    <h2>Optimizing the feature metric directly</h2>
+    <p class="prose muted">The paper's per-feature R² only scores tokens where a feature truly fires, so it cannot see a feature switched on where it should be off. Training the correction on that metric (a "feature loss" with weight λ) raises it quickly. The SAE code metrics show where that stops being real. At λ = 1 the transported vector reproduces the downstream SAE code better, with higher F1 and code FVE than the MSE-trained twin. At λ = 3 the paper's metric keeps rising while F1 and code FVE fall. Layer 5 → 10, test split.</p>
+    <div class="tablebox"><table id="floss"></table></div>
+  </section>
+
   <section>
     <div class="row" style="justify-content: space-between">
       <h2>Feature explorer</h2>
@@ -234,13 +240,15 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 const METRICS = {
   feat_r2_median: ["Median feature R²", "Median over all active target-layer SAE features of the R² of their decoder-direction projection, on tokens where the feature fires. 1 is perfect, and below 0 is worse than predicting the feature's mean."],
   fve: ["Residual FVE", "Fraction of the target residual's variance explained (variance-weighted R²)."],
-  "feat_frac_r2>0.9": ["Features with R² > 0.9", "Share of active target-layer features predicted with R² above 0.9."]
+  "feat_frac_r2>0.9": ["Features with R² > 0.9", "Share of active target-layer features predicted with R² above 0.9."],
+  code_f1: ["SAE code F1", "Encode the prediction with the target-layer SAE and compare its active features with those of the true activation. F1 of that active set counts features switched on wrongly as well as features missed."],
+  code_fve: ["SAE code FVE", "Variance of the target SAE's feature activations explained when the predicted vector is encoded instead of the true one."]
 };
 let metric = "feat_r2_median";
 function renderScore() {
   const S = DATA.score, methods = Object.keys(S), pairs = DATA.pairs;
   document.getElementById("metricHelp").textContent = METRICS[metric][1];
-  const isPct = metric === "feat_frac_r2>0.9";
+  const isPct = metric === "feat_frac_r2>0.9" || metric === "code_f1";
   const val = (m, p) => S[m][p]?.[metric];
   let h = `<thead><tr><th>method</th>${pairs.map(p => `<th>${pairName(p)}</th>`).join("")}<th>mean</th></tr></thead><tbody>`;
   const best = {};
@@ -376,7 +384,17 @@ function renderList() {
   if (more) more.onclick = () => { shown += 20; renderList(); };
 }
 
-renderFindings(); renderScore(); renderTax(); renderMatch();
+function renderFloss() {
+  const R = DATA.floss || [];
+  if (!R.length) { document.getElementById("floss-sec").hidden = true; return; }
+  const cols = [["fve", "residual FVE"], ["feat_r2_median", "median feat R²"], ["code_f1", "code F1"],
+                ["code_precision", "precision"], ["code_recall", "recall"], ["code_fve", "code FVE"]];
+  const best = {}; cols.forEach(([k]) => best[k] = Math.max(...R.map(r => r[k])));
+  let h = `<thead><tr><th>operator</th>${cols.map(c => `<th>${c[1]}</th>`).join("")}</tr></thead><tbody>`;
+  R.forEach(r => { h += `<tr><td>${esc(r.name)}</td>${cols.map(([k]) => `<td class="${r[k] === best[k] ? "best" : ""}">${fmt(r[k])}</td>`).join("")}</tr>`; });
+  document.getElementById("floss").innerHTML = h + "</tbody>";
+}
+renderFindings(); renderScore(); renderTax(); renderMatch(); renderFloss();
 if (DATA.feat[curPair]?.rows?.length) renderExplorer();
 else document.getElementById("list").innerHTML = `<p class="empty">Feature data is still being computed.</p>`;
 </script>
