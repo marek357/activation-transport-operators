@@ -20,9 +20,10 @@ For a pair (L -> T=L+k) with Gemma Scope SAEs at both ends:
                    and the linear ATO predicts it (feature R^2 >= 0.8)
      assembled   : linear ATO predicts it (R^2 >= 0.8), no single upstream
                    partner does (corr < 0.8)
-     synthesized : linear ATO fails (R^2 < 0.5) but the nonlinear correction
-                   lifts R^2 by >= 0.2
-     other       : everything else
+     synthesized : linear ATO R^2 < 0.8, nonlinear correction reaches R^2 >= 0.5
+                   and adds >= 0.2
+     partial     : best R^2 in [0.5, 0.8) otherwise
+     unexplained : best R^2 < 0.5 (context-dependent / not predictable)
 """
 import argparse
 import json
@@ -185,12 +186,15 @@ def main():
     corr_best = best_te.numpy()
     rl = r2_lin[jj]
     rn = r2_nl[jj] if r2_nl is not None else np.full_like(rl, np.nan)
-    cls = np.full(len(jj), "other", dtype=object)
+    best = np.fmax(rl, rn)  # rn is NaN when no correction is given
+    cls = np.full(len(jj), "unexplained", dtype=object)
+    cls[best >= 0.5] = "partial"
+    if r2_nl is not None:
+        cls[(rl < 0.8) & (rn >= 0.5) & (rn - rl >= 0.2)] = "synthesized"
     cls[(rl >= 0.8) & (corr_best < 0.8)] = "assembled"
     cls[(rl >= 0.8) & (corr_best >= 0.8)] = "transported"
-    if r2_nl is not None:
-        cls[(rl < 0.5) & (rn - rl >= 0.2)] = "synthesized"
-    counts = {c: int((cls == c).sum()) for c in ("transported", "assembled", "synthesized", "other")}
+    counts = {c: int((cls == c).sum())
+              for c in ("transported", "assembled", "synthesized", "partial", "unexplained")}
     print(f"[L={L},k={k}] taxonomy over {len(jj)} downstream features: {counts}", flush=True)
 
     # --- table of feature pairs for inspection
