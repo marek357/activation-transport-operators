@@ -93,3 +93,25 @@ constant).
   architecture: every Gemma-2 sublayer sees RMSNorm(x) and writes through a
   post-norm, so the update is ≈ a function of x̂. Note that the H3 run also
   picked smaller α (c≈1e-3).
+
+### Iteration 2: is the gap cross-token? (`exp2_context.py`, diagnostic)
+
+This adds source-layer context to the norm-aware map (closed-form, α on
+val): x_{t−1}, and the causal mean of x over positions 1…t.
+
+| test, nobos | 9→10 FVE | 9→10 median feat R² | 5→10 FVE | 5→10 median feat R² |
+|---|---|---|---|---|
+| x, x̂ | 0.8779 | 0.9267 | 0.6548 | 0.0205 |
+| + x_{t−1} | **0.8800** | **0.9305** | **0.6569** | **0.0514** |
+| + x_{t−1} + causal mean | 0.8795 | 0.9283 | 0.6566 | 0.0057 |
+
+* The previous token gives a small, real gain: +0.002 FVE and +0.03 median
+  feature R².
+* The causal mean adds nothing. Validation picks heavy regularization
+  (c=0.1) once it is included.
+* **Linearly-accessible cross-token information is small.** Attention is
+  content-addressed, so it can still matter nonlinearly. But the cheap,
+  linear j-policy extensions are not where the remaining 12–35% of
+  variance is. Same-token nonlinearity (iteration 3) is tested next.
+* This direction is set aside: it changes the operator's semantics (no
+  longer same-token transport) for a small gain.
