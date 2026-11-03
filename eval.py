@@ -1644,6 +1644,22 @@ def main(cfg: DictConfig) -> dict:
         logger.info("Loading trained transport operators...")
         transport_operators = load_trained_transport_operators(cfg, activation_loader)
 
+    elif eval_mode == "improved":
+        # Norm-aware identity-prior operators (+ optional sparse correction)
+        # written by train_improved_operators.py; see research/RESEARCH_LOG.md
+        from src.improved_transport_operator import NormAwareTransportOperator
+
+        op_dir = Path(cfg.get("improved_operators_dir", "./cache/improved"))
+        logger.info("Loading improved transport operators from %s", op_dir)
+        for layer_l in cfg.eval.Ls:
+            for k in cfg.eval.ks:
+                for j_policy in cfg.eval.j_policy:
+                    transport_operators[(layer_l, k, j_policy)] = (
+                        NormAwareTransportOperator.load(
+                            str(op_dir / f"improved_L{layer_l}_k{k}.pkl")
+                        )
+                    )
+
     else:
         # Default mode: create dummy transport operators for testing
         logger.info("Creating dummy transport operators...")

@@ -1,0 +1,26 @@
+# Improved transport operators (see research/RESEARCH_LOG.md)
+defaults:
+  - _self_
+  - logger: wandb_disabled
+  - model: gemma_2_2b
+  - experiment: residual_stream
+
+seed: 42
+experiment_name: improved_transport_operators
+activation_dir: "./activations-gemma2-2b-slimpajama-250k"
+output_dir: "./cache/improved"
+
+improved:
+  norm_aware: true          # regress on [x, x / rms(x)]
+  identity_prior: true      # ridge shrinks toward W = I
+  special_case_bos: true    # constant <bos> residual predicted by lookup
+  # relative ridge grid (alpha = c * mean eigenvalue of train covariance),
+  # c chosen on the validation split by FVE. Use [1e-5] to favour the
+  # paper's per-feature R^2 (iteration 1b).
+  rel_alphas: [1e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1.0]
+  correction:
+    enabled: false          # sparse top-k "synthesis" correction (iteration 3)
+    width: 8192
+    k: 64
+    epochs: 3
+    lr: 1e-3

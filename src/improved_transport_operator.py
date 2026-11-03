@@ -122,6 +122,7 @@ class NormAwareTransportOperator:
         bos_x, bos_y, n_bos = None, None, 0
         loader = DataLoader(dataset, batch_size=self.batch_size, num_workers=0)
         first = True
+        rms_samples = []
         for xb, yb in loader:
             X = xb.numpy().astype(np.float32)
             Y = yb.numpy().astype(np.float32)
@@ -136,12 +137,16 @@ class NormAwareTransportOperator:
                 X, Y = X[~is_bos], Y[~is_bos]
             if X.shape[0] == 0:
                 continue
+            if find_bos:
+                rms_samples.append(np.sqrt((X[::16] ** 2).mean(1)))
             F = self._features(X)
             if mom is None:
                 mom = _Moments(F.shape[1], Y.shape[1])
             mom.add(F, Y)
         if find_bos and n_bos:
             self.bos_y = (bos_y / n_bos).astype(np.float32)
+        if find_bos and rms_samples:
+            self.typical_rms_ = float(np.median(np.concatenate(rms_samples)))
         return mom.finalize()
 
     def fit(self, dataset, val_dataset=None) -> "NormAwareTransportOperator":
@@ -194,8 +199,9 @@ class NormAwareTransportOperator:
         Y = self._features(X) @ self.W + self.b
         if self.correction is not None:
             with torch.no_grad():
-                Y = Y + self.correction(torch.from_numpy(_rms_normalize(X).astype(np.float32))).numpy() \
-                    * self.correction_scale
+                Xh = torch.from_numpy(_rms_normalize(X).astype(np.float32))
+                Y = Y + np.concatenate([self.correction(Xh[i:i + 8192]).numpy()
+                                        for i in range(0, len(Xh), 8192)]) * self.correction_scale
         bos = self._is_bos(X)
         if bos.any() and self.bos_y is not None:
             Y[bos] = self.bos_y
@@ -236,3 +242,80 @@ class NormAwareTransportOperator:
         with open(path, "rb") as f:
             obj.__dict__.update(pickle.load(f))
         return obj
+
+
+# ----------------------------------------------------------------------------
+# Optional nonlinear "synthesis" correction
+# ----------------------------------------------------------------------------
+class SparseCorrection(torch.nn.Module):
+    """r(x_hat) = W_dec topk(ReLU(W_enc x_hat + b_enc)) + b_dec.
+
+    A transcoder-like sparse code over the RMS-normalised upstream vector,
+    trained on the residual of the linear operator. In research/ this beat
+    dense GELU / GeGLU MLPs at matched size; k=64 follows Shabalin &
+    Piotrowski (arXiv:2610.24521)."""
+
+    def __init__(self, d: int = 2304, h: int = 8192, k: int = 64):
+        super().__init__()
+        self.k = k
+        self.enc = torch.nn.Linear(d, h)
+        self.dec_w = torch.nn.Parameter(torch.randn(h, d) * (1e-3 / k ** 0.5))
+        self.dec_b = torch.nn.Parameter(torch.zeros(d))
+
+    def codes(self, xh: torch.Tensor):
+        v, i = torch.relu(self.enc(xh)).topk(self.k, dim=1)
+        return v, i
+
+    def forward(self, xh: torch.Tensor) -> torch.Tensor:
+        v, i = self.codes(xh)
+        return torch.nn.functional.embedding_bag(i, self.dec_w, per_sample_weights=v,
+                                                 mode="sum") + self.dec_b
+
+
+def _materialize(op: NormAwareTransportOperator, dataset):
+    """(x_hat, residual) arrays over non-BOS rows of a dataset."""
+    xs, rs = [], []
+    for xb, yb in DataLoader(dataset, batch_size=op.batch_size, num_workers=0):
+        X, Y = xb.numpy().astype(np.float32), yb.numpy().astype(np.float32)
+        keep = ~op._is_bos(X)
+        X, Y = X[keep], Y[keep]
+        xs.append(_rms_normalize(X).astype(np.float32))
+        rs.append(Y - (op._features(X) @ op.W + op.b))
+    return np.concatenate(xs), np.concatenate(rs)
+
+
+def fit_sparse_correction(op: NormAwareTransportOperator, train_dataset, val_dataset,
+                          h: int = 8192, k: int = 64, epochs: int = 3, lr: float = 1e-3,
+                          batch_size: int = 1024, seed: int = 0) -> NormAwareTransportOperator:
+    """Train a SparseCorrection on the residual of a fitted linear operator,
+    keep the epoch with the best validation FVE, and attach it to `op`."""
+    torch.manual_seed(seed)
+    Xtr, Rtr = _materialize(op, train_dataset)
+    Xva, Rva = _materialize(op, val_dataset)
+    scale = float(Rtr.std())
+    model = SparseCorrection(Xtr.shape[1], h, k)
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    steps = max(1, epochs * (len(Xtr) // batch_size))
+    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=lr, total_steps=steps, pct_start=0.05)
+    Xt, Rt = torch.from_numpy(Xtr), torch.from_numpy(Rtr / scale)
+    Xv = torch.from_numpy(Xva)
+    best, best_state = np.inf, None
+    for ep in range(epochs):
+        perm = torch.randperm(len(Xt))
+        model.train()
+        for s in range(len(Xt) // batch_size):
+            idx = perm[s * batch_size:(s + 1) * batch_size]
+            loss = ((model(Xt[idx]) - Rt[idx]) ** 2).sum(1).mean()
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            opt.step()
+            sched.step()
+        model.eval()
+        with torch.no_grad():
+            P = torch.cat([model(Xv[i:i + 8192]) for i in range(0, len(Xv), 8192)]).numpy() * scale
+        err = float(((Rva - P) ** 2).sum())
+        print(f"  correction epoch {ep}: val residual SSE {err:.4g} (linear only {float((Rva ** 2).sum()):.4g})")
+        if err < best:
+            best, best_state = err, {kk: vv.clone() for kk, vv in model.state_dict().items()}
+    model.load_state_dict(best_state)
+    return op.attach_correction(model, scale)
