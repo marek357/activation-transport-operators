@@ -322,3 +322,22 @@ reproduce the downstream SAE code? Test, nobos.
   (recall 0.18–0.79) rather than spurious ones (precision 0.75–0.89).
   Transported vectors are "quieter" than real ones. The predicted L0 is
   19–68 against a true L0 of ≈70–80.
+
+### Iteration 4b: the feature-loss sweet spot (5→10, test, nobos)
+
+| correction | residual FVE | median feat R² | code F1 | precision | recall | code FVE |
+|---|---|---|---|---|---|---|
+| top-k 2048, MSE | 0.664 | 0.179 | 0.516 | 0.814 | 0.377 | 0.688 |
+| top-k 2048, λ=0.3 | 0.652 | 0.397 | 0.537 | 0.770 | 0.412 | 0.695 |
+| top-k 2048, λ=1 | 0.623 | 0.492 | 0.535 | 0.745 | 0.417 | 0.691 |
+| top-k 2048, λ=3 | 0.563 | **0.550** | 0.512 | 0.730 | 0.394 | 0.675 |
+| top-k 8192, MSE | **0.670** | 0.247 | 0.528 | 0.804 | 0.393 | **0.698** |
+| top-k 8192, λ=1 | 0.626 | 0.491 | **0.538** | 0.739 | **0.422** | 0.694 |
+
+* **λ≈0.3 is the best trade-off.** It doubles the median feature R² of
+  the MSE model (0.18 → 0.40), and improves code F1 (+0.021) and code FVE
+  (+0.007) over its MSE twin. Residual FVE costs only −0.013, and it stays
+  ≈ the linear map's.
+* Raising λ further keeps inflating the paper's metric. Code F1 and FVE
+  peak at λ ∈ [0.3, 1], and residual FVE drops steadily.
+* Width helps the MSE objective more than the feature objective.
