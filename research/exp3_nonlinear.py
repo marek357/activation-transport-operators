@@ -72,6 +72,8 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--wd", type=float, default=0.0)
     ap.add_argument("--max_train", type=int, default=0)
+    ap.add_argument("--feat_lambda", type=float, default=0.0,
+                    help="weight of the SAE-decoder-space loss on active features (0 = plain MSE)")
     a = ap.parse_args()
     torch.manual_seed(0)
     L, k = a.L, a.k
@@ -88,9 +90,32 @@ def main():
         del X
         return Xh, R, Y, Ylin, p
 
-    Xtr, Rtr, _, _, _ = prep("train")
+    Xtr, Rtr, Ytr, _, _ = prep("train")
     if a.max_train:
-        Xtr, Rtr = Xtr[: a.max_train], Rtr[: a.max_train]
+        Xtr, Rtr, Ytr = Xtr[: a.max_train], Rtr[: a.max_train], Ytr[: a.max_train]
+    sae = SAE(T)
+    if a.feat_lambda > 0:
+        # Feature-aware loss: per token, squared error of the projections onto the
+        # unit decoder directions of the SAE features active on the *true* y,
+        # each normalised by that feature's active-token variance (so the loss is
+        # a sum of per-feature (1 - R^2)-like terms, as in the paper's metric).
+        F = sae.Dn.shape[0]
+        packed = np.zeros((len(Ytr), F // 8), np.uint8)
+        cnt = torch.zeros(F, dtype=torch.float64); s1 = torch.zeros(F, dtype=torch.float64)
+        s2 = torch.zeros(F, dtype=torch.float64)
+        with torch.no_grad():
+            for i in range(0, len(Ytr), 2048):
+                yb = torch.from_numpy(Ytr[i:i + 2048])
+                act = sae.active(yb)
+                packed[i:i + 2048] = np.packbits(act.numpy(), axis=1)
+                at = (yb @ sae.Dn.T) * act
+                cnt += act.sum(0).double(); s1 += at.sum(0).double(); s2 += (at * at).sum(0).double()
+        var_f = (s2 / cnt.clamp_min(1) - (s1 / cnt.clamp_min(1)) ** 2).clamp_min(1e-6)
+        rs_ = float(Rtr.std())
+        inv_v = torch.where(cnt >= 10, rs_ ** 2 / var_f, torch.zeros_like(var_f)).float()
+        avg_l0 = float(cnt.sum() / len(Ytr))
+        print(f"feature loss: lambda={a.feat_lambda}, avg L0={avg_l0:.1f}", flush=True)
+    del Ytr
     Xva, Rva, Yva, Ylva, _ = prep("val")
     rs = float(Rtr.std())  # scale residual targets to ~unit variance
     sst_va = float(((Yva - Yva.mean(0)) ** 2).sum())
@@ -120,14 +145,29 @@ def main():
         tot = 0.0
         for s in range(n // a.bs):
             idx = perm[s * a.bs:(s + 1) * a.bs]
-            loss = ((model(Xtr_t[idx]) - Rtr_t[idx]) ** 2).sum(1).mean()
+            e = model(Xtr_t[idx]) - Rtr_t[idx]
+            if a.feat_lambda > 0:
+                m = torch.from_numpy(np.unpackbits(packed[idx.numpy()], axis=1)).float()
+                p = e @ sae.Dn.T
+                feat_term = (p * p * m * inv_v).sum(1).mean() / avg_l0
+                loss = (e * e).sum(1).mean() / D + a.feat_lambda * feat_term
+            else:
+                loss = (e * e).sum(1).mean()
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step(); sched.step()
             tot += loss.item()
         v = val_fve()
-        print(f"  ep {ep} train_loss={tot / (n // a.bs):.4f} val FVE={v:.4f} ({time.time() - t0:.0f}s)",
-              flush=True)
+        msg = f"  ep {ep} train_loss={tot / (n // a.bs):.4f} val FVE={v:.4f}"
+        if a.feat_lambda > 0:  # select on the metric we target
+            model.eval()
+            with torch.no_grad():
+                Pv = torch.cat([model(Xva_t[i:i + 8192]) for i in range(0, len(Xva_t), 8192)]).numpy() * rs
+            model.train()
+            fv = feature_metrics(Yva, Ylva + Pv, sae)[0]["feat_r2_median"]
+            msg += f" val fmed={fv:.4f}"
+            v = fv
+        print(msg + f" ({time.time() - t0:.0f}s)", flush=True)
         if v > best:
             best, best_state = v, {kk: vv.clone() for kk, vv in model.state_dict().items()}
     model.load_state_dict(best_state)
@@ -137,11 +177,11 @@ def main():
     model.eval()
     with torch.no_grad():
         Pte = torch.cat([model(torch.from_numpy(Xte[i:i + 8192])) for i in range(0, len(Xte), 8192)]).numpy() * rs
-    sae = SAE(T)
     Yh = Ylte + Pte
     r_lin = {**residual_metrics(Yte, Ylte), **feature_metrics(Yte, Ylte, sae)[0]}
     r_nl = {**residual_metrics(Yte, Yh), **feature_metrics(Yte, Yh, sae)[0]}
-    tag = f"{a.kind}_h{a.h}" + (f"_k{a.topk}" if a.kind == "topk" else "")
+    tag = f"{a.kind}_h{a.h}" + (f"_k{a.topk}" if a.kind == "topk" else "") \
+        + (f"_fl{a.feat_lambda:g}" if a.feat_lambda > 0 else "")
     print(f"[L={L},k={k}] linear   {fmt({'nobos': r_lin})}")
     print(f"[L={L},k={k}] {tag} {fmt({'nobos': r_nl})}")
     save_result(f"exp3_{tag}_L{L}_k{k}", {"args": vars(a), "val_best_fve": best, "resid_scale": rs,
