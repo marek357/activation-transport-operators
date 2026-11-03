@@ -45,3 +45,51 @@ Operators (ATOs), measured on held-out data with the repo's metrics.
 ## Iterations
 
 (appended below as experiments finish)
+
+### Iteration 0: reproduce the repo baseline (`exp0_baseline.py`)
+
+The repo ridge is sklearn `Ridge(fit_intercept=True)`, with α picked by
+5-fold contiguous CV (r2 scoring) over the repo grid {0.1…10⁴}, trained on
+all train positions including BOS. Here it is reproduced exactly from
+fold-wise sufficient statistics.
+
+* At 9→10 it matches the paper: median feature R² is 0.951 on all
+  positions, i.e. "small leaps transport many features with R²>0.95".
+* At every k ≥ 5 pair, and at 19→20, **CV picks α = 10⁴, the edge of the
+  grid**. The grid is too narrow.
+* **BOS inflates the paper-style metric.** At 5→10 the median feature R²
+  is 0.317 on all positions but −0.077 without BOS: features that fire on
+  the huge constant BOS vector get enormous between-token variance. From here
+  the primary protocol is **nobos**.
+* Large leaps have positive FVE (0.43–0.65) but strongly negative median
+  feature R² (down to −1.9). Feature R² is computed only on tokens where a
+  feature fires. A weak linear predictor regresses toward the unconditional
+  mean, so it under-predicts exactly there.
+
+### Iteration 1: linear hypotheses (`exp1_linear.py`)
+
+α is chosen on **val** by FVE from a relative grid c·mean-eig(Σ_xx). The
+fit uses non-BOS tokens only, and BOS is predicted by lookup (it is
+constant).
+
+| mean over 6 pairs (test, nobos) | FVE | median feat R² |
+|---|---|---|
+| repo ridge | 0.6432 | −0.211 |
+| H1: fit without BOS (shrink→0) | 0.6441 | −0.264 |
+| H2: + identity prior | 0.6443 | −0.228 |
+| **H3: + norm-aware [x, x/rms(x)]** | **0.6526** | **−0.118** |
+
+* **H1 (BOS)** is neutral on FVE and *negative* on features. Choosing α by
+  validation FVE gave more shrinkage (c≈0.03–0.1) than the repo's
+  α=10⁴. That supports the regression-to-the-mean explanation, and exp1b
+  tests it directly.
+* **H2 (identity prior)** is a small, consistent gain. With 151k tokens
+  for 2304 dims, the prior matters little. Under Gaussian inputs OLS equals
+  the average Jacobian (Stein's lemma), so the data already pins the
+  "Jacobian-lens" map down.
+* **H3 (norm-aware)** improves FVE and median feature R² on **all 6
+  pairs**. The gains grow with the leap: +0.002 FVE at k=1, +0.011–0.018
+  at k=5–9, and +0.10–0.26 median feature R² at k=9. This matches the
+  architecture: every Gemma-2 sublayer sees RMSNorm(x) and writes through a
+  post-norm, so the update is ≈ a function of x̂. Note that the H3 run also
+  picked smaller α (c≈1e-3).
