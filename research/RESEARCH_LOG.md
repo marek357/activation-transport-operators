@@ -149,3 +149,21 @@ train split. The epoch is chosen by validation FVE. 4 epochs, CPU.
   starts slowly from small init.
 * All models overfit after 2–3 epochs (151k training tokens). Data, not
   capacity, is the binding constraint, so more activations would help most.
+
+### Iteration 1b: choose α for the feature metric? (`exp1b_featsel.py`)
+
+The same norm-aware identity-prior map, with α picked on val by median
+feature R² instead of FVE.
+
+| mean over 6 pairs (test, nobos) | FVE | median feat R² | frac R²>0.9 |
+|---|---|---|---|
+| α by val FVE (iteration 1) | **0.6526** | −0.118 | 0.226 |
+| α by val median feat R² | 0.6489 | **−0.091** | **0.228** |
+
+* The feature metric always prefers the **smallest** α in the grid
+  (c = 1e-5 to 1e-4), while FVE prefers c ≈ 1e-3 to 3e-3. This confirms
+  the shrinkage / regression-to-the-mean mechanism of iteration 0. It is a
+  genuine trade-off: −0.004 FVE for +0.027 median feature R².
+* The effect is small next to the nonlinear correction (+0.23 at 5→10).
+  So the repo operator keeps FVE selection by default, and the
+  `rel_alphas` grid lets a user pick the feature-oriented setting.
