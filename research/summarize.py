@@ -15,10 +15,11 @@ def load(name):
 
 def collect():
     rows = {}  # method -> pair -> {"all":..., "nobos":...}
-    for exp in ("exp0_baseline", "exp1_linear", "exp4_final"):
+    for exp in ("exp0_baseline", "exp1_linear", "exp1b_featsel", "exp4_final"):
         for pair, d in load(exp).items():
             for m, r in d.items():
-                rows.setdefault(m, {})[pair] = r
+                if isinstance(r, dict) and "nobos" in r:
+                    rows.setdefault(m, {})[pair] = r
     for p in glob.glob(os.path.join(HERE, "results", "exp3_*.json")):
         d = json.load(open(p))
         a = d["args"]
