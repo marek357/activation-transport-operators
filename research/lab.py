@@ -320,3 +320,29 @@ class Timer:
 
     def __exit__(self, *a):
         self.dt = time.time() - self.t
+
+
+def code_metrics(Y: np.ndarray, Yh: np.ndarray, sae: SAE, chunk_rows: int = 2048):
+    """Does the predicted vector light up the same downstream SAE features?
+    Encode both y and y_hat with the target SAE and compare codes. Unlike the
+    paper's feature R^2 (scored only where a feature truly fires), this also
+    penalises features switched on where they should be off."""
+    tp = fp = fn = 0
+    ss_res = ss_tot = 0.0
+    s1 = torch.zeros(sae.thr.shape[0], dtype=torch.float64); n = 0
+    s2 = torch.zeros_like(s1)
+    cos_sum = 0.0
+    for i in range(0, Y.shape[0], chunk_rows):
+        a = sae.encode(torch.from_numpy(Y[i:i + chunk_rows]))
+        ah = sae.encode(torch.from_numpy(Yh[i:i + chunk_rows].astype(np.float32)))
+        pa, ph = a > 0, ah > 0
+        tp += int((pa & ph).sum()); fp += int((~pa & ph).sum()); fn += int((pa & ~ph).sum())
+        ss_res += float(((a - ah) ** 2).sum())
+        s1 += a.sum(0).double(); s2 += (a * a).sum(0).double(); n += a.shape[0]
+        cos_sum += float(torch.nn.functional.cosine_similarity(a, ah, dim=1).nan_to_num(0).sum())
+    ss_tot = float((s2 - s1 ** 2 / n).sum())
+    prec, rec = tp / max(tp + fp, 1), tp / max(tp + fn, 1)
+    return {"code_precision": prec, "code_recall": rec,
+            "code_f1": 2 * prec * rec / max(prec + rec, 1e-12),
+            "code_fve": 1 - ss_res / ss_tot, "code_cos": cos_sum / n,
+            "pred_l0": (tp + fp) / n, "true_l0": (tp + fn) / n}
