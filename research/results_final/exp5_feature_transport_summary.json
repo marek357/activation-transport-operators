@@ -1,0 +1,326 @@
+{
+ "L9_k1": {
+  "matching": {
+   "oracle(train-corr)": {
+    "test_corr_mean": 0.6069571375846863,
+    "test_corr_median": 0.6608269214630127,
+    "frac_corr>0.8": 0.34804588556289673,
+    "frac_corr>0.5": 0.6371661424636841,
+    "agree_with_oracle": 1.0
+   },
+   "dec-cos": {
+    "test_corr_mean": 0.6034429669380188,
+    "test_corr_median": 0.6588134765625,
+    "frac_corr>0.8": 0.3466123342514038,
+    "frac_corr>0.5": 0.6343744993209839,
+    "agree_with_oracle": 0.8082088232040405
+   },
+   "ato-dec": {
+    "test_corr_mean": 0.6043187975883484,
+    "test_corr_median": 0.6588055491447449,
+    "frac_corr>0.8": 0.3467632532119751,
+    "frac_corr>0.5": 0.6352044939994812,
+    "agree_with_oracle": 0.812886655330658
+   },
+   "dec-cos-csls": {
+    "test_corr_mean": 0.6032717823982239,
+    "test_corr_median": 0.6587281823158264,
+    "frac_corr>0.8": 0.346914142370224,
+    "frac_corr>0.5": 0.6344499588012695,
+    "agree_with_oracle": 0.8046627640724182
+   },
+   "ato-dec-csls": {
+    "test_corr_mean": 0.6037834286689758,
+    "test_corr_median": 0.6588055491447449,
+    "frac_corr>0.8": 0.3472159206867218,
+    "frac_corr>0.5": 0.634827196598053,
+    "agree_with_oracle": 0.8074543476104736
+   },
+   "ato-enc": {
+    "test_corr_mean": 0.5346271395683289,
+    "test_corr_median": 0.6120054721832275,
+    "frac_corr>0.8": 0.329938143491745,
+    "frac_corr>0.5": 0.5788441300392151,
+    "agree_with_oracle": 0.6998642086982727
+   }
+  },
+  "taxonomy": {
+   "transported": 4525,
+   "assembled": 4743,
+   "synthesized": 107,
+   "partial": 2414,
+   "unexplained": 1465
+  },
+  "rms_typ": 2.435537576675415
+ },
+ "L5_k5": {
+  "matching": {
+   "oracle(train-corr)": {
+    "test_corr_mean": 0.4419745206832886,
+    "test_corr_median": 0.3955395817756653,
+    "frac_corr>0.8": 0.17768220603466034,
+    "frac_corr>0.5": 0.3985966444015503,
+    "agree_with_oracle": 1.0
+   },
+   "dec-cos": {
+    "test_corr_mean": 0.43058687448501587,
+    "test_corr_median": 0.37709367275238037,
+    "frac_corr>0.8": 0.17549419403076172,
+    "frac_corr>0.5": 0.3861475884914398,
+    "agree_with_oracle": 0.6119661927223206
+   },
+   "ato-dec": {
+    "test_corr_mean": 0.43512600660324097,
+    "test_corr_median": 0.38261619210243225,
+    "frac_corr>0.8": 0.1759468913078308,
+    "frac_corr>0.5": 0.3912026584148407,
+    "agree_with_oracle": 0.6318846940994263
+   },
+   "dec-cos-csls": {
+    "test_corr_mean": 0.43104875087738037,
+    "test_corr_median": 0.38010746240615845,
+    "frac_corr>0.8": 0.17617322504520416,
+    "frac_corr>0.5": 0.388863742351532,
+    "agree_with_oracle": 0.6147578358650208
+   },
+   "ato-dec-csls": {
+    "test_corr_mean": 0.43242064118385315,
+    "test_corr_median": 0.38130664825439453,
+    "frac_corr>0.8": 0.17556963860988617,
+    "frac_corr>0.5": 0.38976913690567017,
+    "agree_with_oracle": 0.6229062676429749
+   },
+   "ato-enc": {
+    "test_corr_mean": 0.2927047610282898,
+    "test_corr_median": 0.11138022691011429,
+    "frac_corr>0.8": 0.14818167686462402,
+    "frac_corr>0.5": 0.2776520252227783,
+    "agree_with_oracle": 0.3700769543647766
+   }
+  },
+  "taxonomy": {
+   "transported": 1981,
+   "assembled": 1132,
+   "synthesized": 376,
+   "partial": 1712,
+   "unexplained": 8053
+  },
+  "rms_typ": 1.884955644607544
+ },
+ "L1_k9": {
+  "matching": {
+   "oracle(train-corr)": {
+    "test_corr_mean": 0.29141440987586975,
+    "test_corr_median": 0.18856370449066162,
+    "frac_corr>0.8": 0.11181530356407166,
+    "frac_corr>0.5": 0.2175946831703186,
+    "agree_with_oracle": 1.0
+   },
+   "dec-cos": {
+    "test_corr_mean": 0.23074792325496674,
+    "test_corr_median": 0.09260888397693634,
+    "frac_corr>0.8": 0.10291232913732529,
+    "frac_corr>0.5": 0.18311452865600586,
+    "agree_with_oracle": 0.3060208261013031
+   },
+   "ato-dec": {
+    "test_corr_mean": 0.2553083598613739,
+    "test_corr_median": 0.13090546429157257,
+    "frac_corr>0.8": 0.10502489656209946,
+    "frac_corr>0.5": 0.19556359946727753,
+    "agree_with_oracle": 0.36871886253356934
+   },
+   "dec-cos-csls": {
+    "test_corr_mean": 0.22861342132091522,
+    "test_corr_median": 0.06543515622615814,
+    "frac_corr>0.8": 0.10668477416038513,
+    "frac_corr>0.5": 0.194431871175766,
+    "agree_with_oracle": 0.3060208261013031
+   },
+   "ato-dec-csls": {
+    "test_corr_mean": 0.2461422085762024,
+    "test_corr_median": 0.11150499433279037,
+    "frac_corr>0.8": 0.10676022619009018,
+    "frac_corr>0.5": 0.19903425872325897,
+    "agree_with_oracle": 0.3494039475917816
+   },
+   "ato-enc": {
+    "test_corr_mean": 0.13868185877799988,
+    "test_corr_median": 0.0055555300787091255,
+    "frac_corr>0.8": 0.07974950969219208,
+    "frac_corr>0.5": 0.11717217415571213,
+    "agree_with_oracle": 0.1402595490217209
+   }
+  },
+  "taxonomy": {
+   "transported": 762,
+   "assembled": 197,
+   "synthesized": 48,
+   "partial": 1264,
+   "unexplained": 10983
+  },
+  "rms_typ": 1.662649393081665
+ },
+ "L19_k1": {
+  "matching": {
+   "oracle(train-corr)": {
+    "test_corr_mean": 0.6979478597640991,
+    "test_corr_median": 0.7812868356704712,
+    "frac_corr>0.8": 0.47083425521850586,
+    "frac_corr>0.5": 0.7813485860824585,
+    "agree_with_oracle": 1.0
+   },
+   "dec-cos": {
+    "test_corr_mean": 0.6941487193107605,
+    "test_corr_median": 0.7796730399131775,
+    "frac_corr>0.8": 0.4688531756401062,
+    "frac_corr>0.5": 0.7747450470924377,
+    "agree_with_oracle": 0.8525203466415405
+   },
+   "ato-dec": {
+    "test_corr_mean": 0.6945794224739075,
+    "test_corr_median": 0.7796854972839355,
+    "frac_corr>0.8": 0.4688531756401062,
+    "frac_corr>0.5": 0.7749651670455933,
+    "agree_with_oracle": 0.8552351593971252
+   },
+   "dec-cos-csls": {
+    "test_corr_mean": 0.6943133473396301,
+    "test_corr_median": 0.7796854972839355,
+    "frac_corr>0.8": 0.4687798023223877,
+    "frac_corr>0.5": 0.7751119136810303,
+    "agree_with_oracle": 0.8511262536048889
+   },
+   "ato-dec-csls": {
+    "test_corr_mean": 0.6948123574256897,
+    "test_corr_median": 0.7798431515693665,
+    "frac_corr>0.8": 0.4690732955932617,
+    "frac_corr>0.5": 0.7757722735404968,
+    "agree_with_oracle": 0.8545014262199402
+   },
+   "ato-enc": {
+    "test_corr_mean": 0.6840032339096069,
+    "test_corr_median": 0.7768132090568542,
+    "frac_corr>0.8": 0.4640105664730072,
+    "frac_corr>0.5": 0.7638124823570251,
+    "agree_with_oracle": 0.8459901809692383
+   }
+  },
+  "taxonomy": {
+   "transported": 6023,
+   "assembled": 4387,
+   "synthesized": 229,
+   "partial": 2128,
+   "unexplained": 862
+  },
+  "rms_typ": 6.399200439453125
+ },
+ "L15_k5": {
+  "matching": {
+   "oracle(train-corr)": {
+    "test_corr_mean": 0.4341552257537842,
+    "test_corr_median": 0.4031444489955902,
+    "frac_corr>0.8": 0.1330251693725586,
+    "frac_corr>0.5": 0.38997724652290344,
+    "agree_with_oracle": 1.0
+   },
+   "dec-cos": {
+    "test_corr_mean": 0.41206544637680054,
+    "test_corr_median": 0.3700147569179535,
+    "frac_corr>0.8": 0.12898965179920197,
+    "frac_corr>0.5": 0.364736944437027,
+    "agree_with_oracle": 0.5863232612609863
+   },
+   "ato-dec": {
+    "test_corr_mean": 0.41772449016571045,
+    "test_corr_median": 0.37768542766571045,
+    "frac_corr>0.8": 0.12913639843463898,
+    "frac_corr>0.5": 0.3697997033596039,
+    "agree_with_oracle": 0.6093623638153076
+   },
+   "dec-cos-csls": {
+    "test_corr_mean": 0.41148513555526733,
+    "test_corr_median": 0.3723631203174591,
+    "frac_corr>0.8": 0.129429891705513,
+    "frac_corr>0.5": 0.36679139733314514,
+    "agree_with_oracle": 0.5855895280838013
+   },
+   "ato-dec-csls": {
+    "test_corr_mean": 0.41283056139945984,
+    "test_corr_median": 0.37351194024086,
+    "frac_corr>0.8": 0.12920977175235748,
+    "frac_corr>0.5": 0.3676718771457672,
+    "agree_with_oracle": 0.5974759459495544
+   },
+   "ato-enc": {
+    "test_corr_mean": 0.20730479061603546,
+    "test_corr_median": 0.00024357781512662768,
+    "frac_corr>0.8": 0.1000807136297226,
+    "frac_corr>0.5": 0.20126201212406158,
+    "agree_with_oracle": 0.27632254362106323
+   }
+  },
+  "taxonomy": {
+   "transported": 270,
+   "assembled": 235,
+   "synthesized": 2388,
+   "partial": 2310,
+   "unexplained": 8426
+  },
+  "rms_typ": 4.182753562927246
+ },
+ "L11_k9": {
+  "matching": {
+   "oracle(train-corr)": {
+    "test_corr_mean": 0.37829074263572693,
+    "test_corr_median": 0.32509303092956543,
+    "frac_corr>0.8": 0.11071978509426117,
+    "frac_corr>0.5": 0.3014894723892212,
+    "agree_with_oracle": 1.0
+   },
+   "dec-cos": {
+    "test_corr_mean": 0.34313973784446716,
+    "test_corr_median": 0.27100369334220886,
+    "frac_corr>0.8": 0.10690439492464066,
+    "frac_corr>0.5": 0.2733876407146454,
+    "agree_with_oracle": 0.502384603023529
+   },
+   "ato-dec": {
+    "test_corr_mean": 0.3522357642650604,
+    "test_corr_median": 0.28261464834213257,
+    "frac_corr>0.8": 0.10763812810182571,
+    "frac_corr>0.5": 0.279624342918396,
+    "agree_with_oracle": 0.5331279039382935
+   },
+   "dec-cos-csls": {
+    "test_corr_mean": 0.3394656479358673,
+    "test_corr_median": 0.26996007561683655,
+    "frac_corr>0.8": 0.10763812810182571,
+    "frac_corr>0.5": 0.27309414744377136,
+    "agree_with_oracle": 0.49490058422088623
+   },
+   "ato-dec-csls": {
+    "test_corr_mean": 0.345380038022995,
+    "test_corr_median": 0.27743229269981384,
+    "frac_corr>0.8": 0.10734463483095169,
+    "frac_corr>0.5": 0.2774231433868408,
+    "agree_with_oracle": 0.5100154280662537
+   },
+   "ato-enc": {
+    "test_corr_mean": 0.11149116605520248,
+    "test_corr_median": -0.0016723716398701072,
+    "frac_corr>0.8": 0.0684569701552391,
+    "frac_corr>0.5": 0.10712451487779617,
+    "agree_with_oracle": 0.14219678938388824
+   }
+  },
+  "taxonomy": {
+   "transported": 8,
+   "assembled": 7,
+   "synthesized": 1961,
+   "partial": 521,
+   "unexplained": 11132
+  },
+  "rms_typ": 2.8923957347869873
+ }
+}

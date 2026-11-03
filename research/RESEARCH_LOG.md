@@ -230,3 +230,72 @@ Test, nobos. Repo → norm-aware linear → + sparse correction:
   between, and a sparse same-token code can learn a good part of it.
 * 1→10 stays hard. The layer-1 residual barely encodes what 9 layers of
   attention will add.
+
+### Iteration 5: which SAE features move between layers? (`exp5_feature_transport.py`, `build_explorer_data.py`)
+
+This uses Gemma Scope 16k residual SAEs at both ends of each pair. For
+each downstream feature j that fires ≥20 times on train and test:
+
+* **Oracle partner.** The upstream feature with the highest activation
+  correlation on train (75k tokens). It is scored by its correlation on
+  test.
+* **Matching rules that use only weights.**
+  * `dec-cos`: raw decoder cosine (the identity-map assumption of prior
+    work, e.g. Balagansky et al. 2024; Laptev et al. 2025).
+  * `ato-dec`: cosine after pushing upstream decoders through the
+    linearised operator A + B/rms.
+  * `+csls`: hubness-corrected versions of both.
+  * `ato-enc`: predicted contribution to j's encoder pre-activation.
+
+Agreement with the oracle on test:
+
+| pair | oracle median test corr | partner corr>0.8 | dec-cos | **ato-dec** | dec-cos+CSLS | ato-dec+CSLS | ato-enc |
+|---|---|---|---|---|---|---|---|
+| 9→10 | 0.661 | 34.8% | 80.8% | **81.3%** | 80.5% | 80.7% | 70.0% |
+| 5→10 | 0.396 | 17.8% | 61.2% | **63.2%** | 61.5% | 62.3% | 37.0% |
+| 1→10 | 0.189 | 11.2% | 30.6% | **36.9%** | 30.6% | 34.9% | 14.0% |
+| 19→20 | 0.781 | 47.1% | 85.3% | **85.5%** | 85.1% | 85.5% | 84.6% |
+| 15→20 | 0.403 | 13.3% | 58.6% | **60.9%** | 58.6% | 59.7% | 27.6% |
+| 11→20 | 0.325 | 11.1% | 50.2% | **53.3%** | 49.5% | 51.0% | 14.2% |
+
+* **Pushing decoders through the operator is the best weights-only
+  matching rule on every pair.** Its advantage over raw decoder cosine
+  grows with the leap and with depth: +0.2 points at k=1, +2 at k=5,
+  +3 to +6 at k=9. The residual basis rotates, and the ATO accounts for it.
+* CSLS hubness correction does not help. Encoder-side scoring is poor:
+  JumpReLU encoders are not aligned with decoders, and the score favours
+  high-norm hubs.
+
+**Taxonomy of target-layer features.** Classes use test R² of the linear
+operator, test R² of the linear operator plus the top-k 8192 correction,
+and the oracle partner's test correlation:
+
+| pair | n | transported | assembled | synthesized | partial | unexplained |
+|---|---|---|---|---|---|---|
+| 9→10 | 13,254 | 34.1% | 35.8% | 0.8% | 18.2% | 11.1% |
+| 5→10 | 13,254 | 14.9% | 8.5% | 2.8% | 12.9% | 60.8% |
+| 1→10 | 13,254 | 5.7% | 1.5% | 0.4% | 9.5% | 82.9% |
+| 19→20 | 13,629 | 44.2% | 32.2% | 1.7% | 15.6% | 6.3% |
+| 15→20 | 13,629 | 2.0% | 1.7% | **17.5%** | 16.9% | 61.8% |
+| 11→20 | 13,629 | 0.1% | 0.1% | **14.4%** | 3.8% | 81.7% |
+
+* **Adjacent layers mostly carry features.** 70–76% of features are
+  transported 1:1 or linearly assembled from the previous layer.
+* **Two regimes at the same leap size (k=5).** Into layer 10, 15% of
+  features are still carried 1:1 from layer 5 and only 3% are synthesized.
+  Into layer 20, only 2% are carried from layer 15, and 17.5% are
+  synthesized: same-token computation that a 64-of-8192 sparse code
+  reproduces with R² ≥ 0.5. This is a feature-level, quantitative version
+  of the paper's "accept new features early / evict and synthesise late"
+  picture.
+* **Most features at distance ≥5 are "unexplained" (61–83%).** No
+  same-token map, linear or sparse-nonlinear, reaches R² 0.5. These are
+  the candidates for attention-written, context-dependent features. The
+  paper's richer j-policies are aimed at exactly this, and our linear
+  context probe (iteration 2) showed it is not linearly accessible.
+* Qualitative check with Neuronpedia labels (the `report/` explorer).
+  Transported pairs are near-identical concepts: L9 "the word 'at.'" →
+  L10 "the word 'at'"; L5 "interleukins and cytokines" → L10 the same.
+  Assembled features combine related upstream concepts, e.g. L10
+  "governors" from L5 "positions of authority within government" and
+  neighbours.
