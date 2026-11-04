@@ -446,3 +446,13 @@ in code metrics.
   tokens.
 * **Cross-token transport** for the 61–83% "unexplained" features at k ≥ 5,
   e.g. attention-weighted context features.
+
+## Round 2, step 0 (2026-11-04): gated model access check: FAILED, round 2 not started
+
+Checked whether `google/gemma-2-2b` can be downloaded. The token was never printed.
+- `HF_TOKEN` is **not set** in the session environment.
+- `GET https://huggingface.co/google/gemma-2-2b/resolve/main/config.json` returns **401**, both with no header (relying on proxy injection) and with an `Authorization: Bearer <dummy>` header for the proxy to replace.
+- `GET /api/whoami-v2` returns **401** "Invalid username or password." both ways, so no valid credential reaches huggingface.co.
+- Controls: public metadata `/api/models/google/gemma-2-2b` gives 200, and the ungated Gemma Scope SAE `params.npz` gives 302 (a normal redirect), so the network path works. Only the authenticated part fails.
+
+Round-2 goals 1-3 (network Jacobian lens, neuron-initialised sparse correction, causal perplexity patching) all need the real model weights, so none were run. No results were made up or approximated.
