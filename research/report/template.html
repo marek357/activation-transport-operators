@@ -164,7 +164,7 @@ details ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; font-
 
   <section>
     <h2>Matching features across layers</h2>
-    <p class="prose muted">To say which upstream feature a downstream feature came from, prior work compares raw decoder directions. That assumes the residual stream does not rotate. We push upstream decoders through the learned operator first, with and without CSLS hubness correction. The oracle is the partner with the highest activation correlation on the train split. The table shows how often each rule picks it on test.</p>
+    <p class="prose muted">To say which upstream feature a downstream feature came from, prior work compares raw decoder directions. That assumes the residual stream does not rotate. We push upstream decoders through the learned operator first. We also try the operator's average Jacobian, a data-driven version of the Jacobian lens, and a CSLS hubness correction. The oracle is the partner with the highest activation correlation on the train split. The table shows how often each rule picks it on test.</p>
     <div class="tablebox"><table id="match"></table></div>
   </section>
 
@@ -314,7 +314,7 @@ function renderTax() {
 
 /* ---------- matching ---------- */
 function renderMatch() {
-  const RULES = [["dec-cos", "decoder cosine"], ["ato-dec", "through operator"], ["dec-cos-csls", "decoder cosine + CSLS"], ["ato-dec-csls", "through operator + CSLS"]];
+  const RULES = [["dec-cos", "decoder cosine"], ["ato-dec", "through operator"], ["jac-full", "through avg. Jacobian"], ["ato-dec-csls", "through operator + CSLS"]];
   let h = `<thead><tr><th>pair</th>${RULES.map(r => `<th>${r[1]}</th>`).join("")}<th>oracle corr (median)</th></tr></thead><tbody>`;
   DATA.pairs.forEach(p => {
     const m = DATA.feat[p]?.meta?.matching; if (!m) return;

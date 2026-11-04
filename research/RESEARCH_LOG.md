@@ -375,3 +375,74 @@ reproduce the downstream SAE code? Test, nobos.
   into the model, as in the paper's causal perplexity test), use the
   MSE-trained correction. That is the repo default in
   `train_improved_operators.py`.
+
+### Iteration 8: a data-driven Jacobian lens for transport (`jacobian.py`)
+
+The Jacobian lens maps an activation through the *average* Jacobian of
+the downstream computation. Without Gemma-2 weights we cannot form
+E[∂h_{L+k}/∂h_L] of the real network. We can form it exactly for our
+fitted operator f̂ (linear + sparse correction):
+
+J̄ = A + Q·B + rs·Gᵀ·W_dec, with Q = E[(I − x̂x̂ᵀ/d)/rms] and
+G_u = E[1{u active}·(I − x̂x̂ᵀ/d)·enc_u/rms]. This is computed in closed form
+and unit-tested against autograd (max error 1e-7).
+
+| pair | ‖J̄_lin − A_eff‖/‖A_eff‖ | ‖J̄_full − A_eff‖/‖A_eff‖ | FVE of J̄ as linear map (OLS-based) | match: dec-cos | ato-dec | J̄_lin | J̄_full |
+|---|---|---|---|---|---|---|---|
+| 1→10 | 0.130 | 0.187 | 0.375 (0.448) | 30.6% | 36.9% | 36.7% | **37.1%** |
+| 5→10 | 0.040 | 0.047 | 0.633 (0.655) | 61.2% | 63.2% | 63.2% | 63.2% |
+| 11→20 | 0.009 | 0.019 | 0.426 (0.460) | 50.2% | 53.3% | 53.3% | 53.3% |
+| 15→20 | 0.026 | 0.029 | 0.571 (0.589) | 58.6% | 60.9% | **61.0%** | **61.0%** |
+
+* **The average Jacobian of the learned operator is within 1–5% of the
+  linearised regression map**, except from layer 1 (13–19%). Each sparse
+  synthesis unit fires on few tokens, so their local sensitivities nearly
+  cancel in the average. This is the empirical counterpart of Stein's
+  lemma (OLS = E[J] for Gaussian inputs).
+* As a predictor, J̄ is worse than OLS, as theory says. As a basis for
+  feature matching, it ties with the regression map. **What matters is
+  accounting for the rotation of the residual stream, and both do.**
+* The real network's J-lens could still differ, since it sees the
+  attention and MLP Jacobians directly. That needs the model weights.
+
+## Summary of this round
+
+| | FVE | median feat R² | frac R²>0.9 | code F1 | code FVE |
+|---|---|---|---|---|---|
+| repo ATO (ridge, CV α) | 0.643 | −0.211 | 0.215 | – | – |
+| norm-aware linear ATO (iteration 1) | 0.653 | −0.118 | 0.226 | 0.553 | 0.646 |
+| + top-k 8192 sparse correction (iteration 3b, 6) | **0.680** | **+0.110** | **0.257** | **0.588** | **0.698** |
+
+All numbers are means over 6 layer pairs (targets 10 and 20, k = 1/5/9),
+on the test split with BOS excluded. The feature-loss variant (λ≈0.3,
+iteration 4c) raises median feature R² further at 5→10 (0.41), at no cost
+in code metrics.
+
+**Main findings**
+1. The repo ridge is mis-specified for the residual stream. A norm-aware,
+   identity-prior map that handles BOS is better on every pair.
+2. The remaining error of linear maps is dominated by **missed features**:
+   shrinkage pushes features under their JumpReLU thresholds. A sparse,
+   neuron-like correction (64 of 8192 units) recovers a large part of
+   this, most in late layers.
+3. **Operator-based feature matching beats raw decoder cosine** on every
+   pair, by up to +6 points at k=9. The average Jacobian of the learned
+   operator ties with it.
+4. **Two regimes.** Adjacent layers carry or linearly assemble 70–76% of
+   features. Over 5 layers, layer 10 still carries 15% of features from
+   layer 5, but layer 20 carries only 2% from layer 15 and *synthesizes*
+   17.5%.
+5. **The paper's active-tokens-only feature R² can be gamed.** Training on
+   it at λ=3 raises it while code F1 falls. Report it together with a
+   false-positive-aware metric.
+
+**Next steps** (most need what this container lacked)
+* **Gemma-2-2B weights** (gated; no HF token here). They would enable:
+  * the true network J-lens between layers L and L+k;
+  * initialising the sparse correction from the real MLP neurons of layers
+    L+1…L+k ("neuron initialisation", Shabalin & Piotrowski 2026);
+  * the paper's causal perplexity test for the new operators.
+* **More activations.** Every nonlinear model peaks at epoch 2–3 on 151k
+  tokens.
+* **Cross-token transport** for the 61–83% "unexplained" features at k ≥ 5,
+  e.g. attention-weighted context features.

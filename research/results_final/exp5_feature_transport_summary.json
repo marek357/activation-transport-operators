@@ -76,6 +76,20 @@
     "frac_corr>0.5": 0.3912026584148407,
     "agree_with_oracle": 0.6318846940994263
    },
+   "jac-lin": {
+    "test_corr_mean": 0.43513810634613037,
+    "test_corr_median": 0.38261619210243225,
+    "frac_corr>0.8": 0.17602233588695526,
+    "frac_corr>0.5": 0.3910517692565918,
+    "agree_with_oracle": 0.6321865320205688
+   },
+   "jac-full": {
+    "test_corr_mean": 0.4352615177631378,
+    "test_corr_median": 0.38261815905570984,
+    "frac_corr>0.8": 0.1760977804660797,
+    "frac_corr>0.5": 0.39127811789512634,
+    "agree_with_oracle": 0.632412850856781
+   },
    "dec-cos-csls": {
     "test_corr_mean": 0.43104875087738037,
     "test_corr_median": 0.38010746240615845,
@@ -105,7 +119,17 @@
    "partial": 1712,
    "unexplained": 8053
   },
-  "rms_typ": 1.884955644607544
+  "rms_typ": 1.884955644607544,
+  "jacobian": {
+   "jac-lin": {
+    "rel_diff_to_ols": 0.040180504322052,
+    "fve_as_linear_map": 0.6339496348826579
+   },
+   "jac-full": {
+    "rel_diff_to_ols": 0.04678400978446007,
+    "fve_as_linear_map": 0.6325075549925852
+   }
+  }
  },
  "L1_k9": {
   "matching": {
@@ -129,6 +153,20 @@
     "frac_corr>0.8": 0.10502489656209946,
     "frac_corr>0.5": 0.19556359946727753,
     "agree_with_oracle": 0.36871886253356934
+   },
+   "jac-lin": {
+    "test_corr_mean": 0.2546347677707672,
+    "test_corr_median": 0.13012267649173737,
+    "frac_corr>0.8": 0.10457220673561096,
+    "frac_corr>0.5": 0.194431871175766,
+    "agree_with_oracle": 0.36720991134643555
+   },
+   "jac-full": {
+    "test_corr_mean": 0.25589218735694885,
+    "test_corr_median": 0.13188062608242035,
+    "frac_corr>0.8": 0.10517579317092896,
+    "frac_corr>0.5": 0.19548815488815308,
+    "agree_with_oracle": 0.37135958671569824
    },
    "dec-cos-csls": {
     "test_corr_mean": 0.22861342132091522,
@@ -159,7 +197,17 @@
    "partial": 1264,
    "unexplained": 10983
   },
-  "rms_typ": 1.662649393081665
+  "rms_typ": 1.662649393081665,
+  "jacobian": {
+   "jac-lin": {
+    "rel_diff_to_ols": 0.12980365753173828,
+    "fve_as_linear_map": 0.37542705673319643
+   },
+   "jac-full": {
+    "rel_diff_to_ols": 0.18650001287460327,
+    "fve_as_linear_map": 0.3750109597782877
+   }
+  }
  },
  "L19_k1": {
   "matching": {
@@ -238,6 +286,20 @@
     "frac_corr>0.5": 0.3697997033596039,
     "agree_with_oracle": 0.6093623638153076
    },
+   "jac-lin": {
+    "test_corr_mean": 0.4177854657173157,
+    "test_corr_median": 0.3776015043258667,
+    "frac_corr>0.8": 0.12913639843463898,
+    "frac_corr>0.5": 0.3700198233127594,
+    "agree_with_oracle": 0.6102428436279297
+   },
+   "jac-full": {
+    "test_corr_mean": 0.41782522201538086,
+    "test_corr_median": 0.37764835357666016,
+    "frac_corr>0.8": 0.12906302511692047,
+    "frac_corr>0.5": 0.3700198233127594,
+    "agree_with_oracle": 0.6102428436279297
+   },
    "dec-cos-csls": {
     "test_corr_mean": 0.41148513555526733,
     "test_corr_median": 0.3723631203174591,
@@ -267,7 +329,17 @@
    "partial": 2310,
    "unexplained": 8426
   },
-  "rms_typ": 4.182753562927246
+  "rms_typ": 4.182753562927246,
+  "jacobian": {
+   "jac-lin": {
+    "rel_diff_to_ols": 0.02614504098892212,
+    "fve_as_linear_map": 0.5711121730749397
+   },
+   "jac-full": {
+    "rel_diff_to_ols": 0.028919801115989685,
+    "fve_as_linear_map": 0.5708392114804179
+   }
+  }
  },
  "L11_k9": {
   "matching": {
@@ -291,6 +363,20 @@
     "frac_corr>0.8": 0.10763812810182571,
     "frac_corr>0.5": 0.279624342918396,
     "agree_with_oracle": 0.5331279039382935
+   },
+   "jac-lin": {
+    "test_corr_mean": 0.3520534336566925,
+    "test_corr_median": 0.28244176506996155,
+    "frac_corr>0.8": 0.1074913814663887,
+    "frac_corr>0.5": 0.27925747632980347,
+    "agree_with_oracle": 0.5326876640319824
+   },
+   "jac-full": {
+    "test_corr_mean": 0.35219115018844604,
+    "test_corr_median": 0.2826879620552063,
+    "frac_corr>0.8": 0.10756475478410721,
+    "frac_corr>0.5": 0.279477596282959,
+    "agree_with_oracle": 0.5332746505737305
    },
    "dec-cos-csls": {
     "test_corr_mean": 0.3394656479358673,
@@ -321,6 +407,16 @@
    "partial": 521,
    "unexplained": 11132
   },
-  "rms_typ": 2.8923957347869873
+  "rms_typ": 2.8923957347869873,
+  "jacobian": {
+   "jac-lin": {
+    "rel_diff_to_ols": 0.00920693390071392,
+    "fve_as_linear_map": 0.42601792768122115
+   },
+   "jac-full": {
+    "rel_diff_to_ols": 0.018615595996379852,
+    "fve_as_linear_map": 0.42551611455570937
+   }
+  }
  }
 }
